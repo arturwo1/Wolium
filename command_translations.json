@@ -1,0 +1,1702 @@
+{
+  "You write commands so fast,": {
+    "ru": "Вы пишете команды так быстро,",
+    "en": "You write commands so fast,"
+  },
+  "you can write commands.": {
+    "ru": "Вы можете написать команды.",
+    "en": "you can write commands."
+  },
+  "Вызвал Команду:": {
+    "en": "Called the command:",
+    "ru": "Вызвал Команду:",
+    "th": "เรียกว่าคำสั่ง:",
+    "lt": "Paskambino komandai:"
+  },
+  "Всего Денег:": {
+    "en": "All money:",
+    "ru": "Всего Денег:"
+  },
+  "Главная Информация О": {
+    "en": "Main information about"
+  },
+  "Перенаправления Этой Ссылки": {
+    "en": "Redirection This Link"
+  },
+  "Ссылка": {
+    "en": "Link"
+  },
+  "Эта команда покажет вам всю информацию обо мне, а также список всех моих команд.": {
+    "en": "This team will show you all the information about me, as well as a list of all my teams.",
+    "ru": "Эта команда покажет вам всю информацию обо мне, а также список всех моих команд.",
+    "da": "Dette team viser dig alle oplysninger om mig såvel som en liste over alle mine teams."
+  },
+  "помощь": {
+    "en": "help",
+    "ru": "помощь",
+    "da": "hjælp"
+  },
+  "Показывает **Абсолютно** всю информацию о пользователе которую он *не скрывает*.": {
+    "en": "Shows **absolutely** all the information about the user that he*does not hide*.",
+    "ru": "Показывает **Абсолютно** всю информацию о пользователе которую он *не скрывает*.",
+    "da": "Viser ** absolut ** alle oplysninger om brugeren, som han*ikke skjuler*."
+  },
+  "профиль": {
+    "en": "profile",
+    "ru": "профиль",
+    "da": "profil"
+  },
+  "Вы можете вставить сюда любую ссылку, а я вам покажу некоторые ее параметры!": {
+    "en": "You can insert any link here, and I will show you some of its parameters!",
+    "ru": "Вы можете вставить сюда любую ссылку, а я вам покажу некоторые ее параметры!",
+    "da": "Du kan indsætte ethvert link her, og jeg vil vise dig nogle af dets parametre!"
+  },
+  "ссылка": {
+    "en": "link",
+    "ru": "ссылка",
+    "da": "forbindelse"
+  },
+  "Позволяет перевести **абсолютно** любое сообщение на **ваш язык** с любого языка!": {
+    "en": "Allows you to translate **Absolutely** Any message to **your language** from any language!",
+    "ru": "Позволяет перевести **абсолютно** любое сообщение на **ваш язык** с любого языка!",
+    "da": "Giver dig mulighed for at oversætte ** absolut ** enhver besked til*din tunge ** fra ethvert sprog!"
+  },
+  "перевести": {
+    "en": "Transfer",
+    "ru": "перевести",
+    "da": "Overførsel"
+  },
+  "Самый простой способ получить экономическую валюту которая очень важна в моих командах, использование этой команды самый простой.": {
+    "en": "The easiest way to get an economic currency that is very important in my teams, the use of this team is the easiest.",
+    "ru": "Самый простой способ получить экономическую валюту которая очень важна в моих командах, использование этой команды самый простой.",
+    "da": "Den nemmeste måde at få en økonomisk valuta, der er meget vigtig i mine teams, brugen af ​​dette team er den nemmeste."
+  },
+  "работать": {
+    "en": "work",
+    "ru": "работать",
+    "da": "arbejde"
+  },
+  "С помощью этой команды вы можете выбрать язык, на котором я буду вам отвечать!": {
+    "en": "Using this command, you can choose the language in which I will answer you!",
+    "ru": "С помощью этой команды вы можете выбрать язык, на котором я буду вам отвечать!",
+    "da": "Ved hjælp af denne kommando kan du vælge det sprog, hvor jeg vil svare dig!"
+  },
+  "язык": {
+    "en": "language",
+    "ru": "язык",
+    "da": "sprog"
+  },
+  "Позволяет перекидывать деньги с банка в руки и обратно.": {
+    "en": "Allows you to throw money from the bank into your hands and back.",
+    "ru": "Позволяет перекидывать деньги с банка в руки и обратно.",
+    "da": "Giver dig mulighed for at kaste penge fra banken i dine hænder og tilbage."
+  },
+  "транзакция": {
+    "en": "transaction",
+    "ru": "сделка",
+    "da": "transaktion"
+  },
+  "Показывает список лидеров в любом вам удобном формате.": {
+    "en": "Shows a list of leaders in any convenient format to you.",
+    "ru": "Показывает список лидеров в любом вам удобном формате.",
+    "da": "Viser en liste over ledere i ethvert praktisk format til dig."
+  },
+  "лидеры": {
+    "en": "Leaders",
+    "ru": "лидеры",
+    "da": "Ledere"
+  },
+  "С помощью этой команды можно писать куда-угодно от моего имени!": {
+    "en": "With the help of this command, you can write somewhere on my behalf!",
+    "ru": "С помощью этой команды можно писать куда-угодно от моего имени!",
+    "da": "Ved hjælp af denne kommando kan du skrive et sted på mine vegne!"
+  },
+  "текст": {
+    "en": "text",
+    "ru": "текст",
+    "da": "tekst"
+  },
+  "Второй Этап Загрузки Данных.": {
+    "en": "The second stage of data load.",
+    "ru": "Второй Этап Загрузки Данных.",
+    "th": "ขั้นตอนที่สองของการโหลดข้อมูล",
+    "lt": "Antrasis duomenų apkrovos etapas.",
+    "da": "Den anden fase af datalast."
+  },
+  "Помощь": {
+    "en": "Help",
+    "ru": "Помощь",
+    "da": "Hjælp"
+  },
+  "Вся Информация Обо Мне Здесь!": {
+    "en": "All information about me here!",
+    "ru": "Вся Информация Обо Мне Здесь!",
+    "da": "Alle oplysninger om mig her!"
+  },
+  "Вы Перевели В Банк:": {
+    "en": "You transferred to the bank:"
+  },
+  "Теперь В Руках Осталось:": {
+    "en": "Now in the hands there is left:"
+  },
+  "И В Банке:": {
+    "en": "And in the bank:"
+  },
+  "AutoMod На Этом Сервере Заблокировал Моё Сообщение.": {
+    "en": "Automod on this server blocked my message."
+  },
+  "Эта Команда Доступна Только На Серверах!": {
+    "ru": "Эта Команда Доступна Только На Серверах!"
+  },
+  "Перевод текста на": {
+    "ru": "Перевод текста на",
+    "en": "Translation of the text to"
+  },
+  "Перевод": {
+    "ru": "Перевод",
+    "en": "Translation"
+  },
+  "Command not found.": {
+    "ru": "Команда не найдена.",
+    "en": "Command not found."
+  },
+  "Ошибка: отсутствует аргумент": {
+    "ru": "Ошибка: отсутствует аргумент"
+  },
+  "Произошла Ошибка, Логи Ошибки Сохранены, В Ближайшее Время Их Будут Рассматривать.": {
+    "en": "An error has occurred, error logs are preserved, in the near future they will be considered.",
+    "ru": "Произошла Ошибка, Логи Ошибки Сохранены, В Ближайшее Время Их Будут Рассматривать."
+  },
+  "Предупреждение": {
+    "en": "Warning",
+    "ru": "Предупреждение",
+    "th": "คำเตือน",
+    "lt": "Įspėjimas"
+  },
+  "Тайм-Аут": {
+    "en": "Time-out",
+    "ru": "Тайм-Аут",
+    "th": "การหมดเวลา",
+    "lt": "Laikas"
+  },
+  "Изгнание": {
+    "en": "Exile",
+    "ru": "Изгнание",
+    "th": "เนรเทศ",
+    "lt": "Tremtis"
+  },
+  "Бан": {
+    "en": "Ban",
+    "ru": "Бан",
+    "th": "ห้าม",
+    "lt": "Draudimas"
+  },
+  "Снятие Предупреждения": {
+    "en": "Removing a warning",
+    "ru": "Снятие Предупреждения",
+    "th": "ลบคำเตือน",
+    "lt": "Pašalinti įspėjimą"
+  },
+  "Снятие Тайм-Аута": {
+    "en": "Removing a timeout",
+    "ru": "Снятие Тайм-Аута",
+    "th": "การลบหมดเวลา",
+    "lt": "Pašalinant laiką"
+  },
+  "Снятие Бана": {
+    "en": "Removing a ban",
+    "ru": "Снятие Бана",
+    "th": "ลบการห้าม",
+    "lt": "Pašalinant draudimą"
+  },
+  "Причина": {
+    "en": "Cause",
+    "ru": "Причина",
+    "th": "สาเหตุ",
+    "lt": "Priežastis"
+  },
+  "Модератор": {
+    "en": "Moderator",
+    "ru": "Модератор",
+    "th": "พิธีกร",
+    "lt": "Moderatorius"
+  },
+  "Дата": {
+    "en": "Date",
+    "ru": "Дата",
+    "th": "วันที่",
+    "lt": "Data",
+    "da": "Dato"
+  },
+  "Длительность": {
+    "en": "Duration",
+    "ru": "Длительность",
+    "th": "ระยะเวลา",
+    "lt": "Trukmė"
+  },
+  "Loading": {
+    "en": "Loading",
+    "ru": "Загрузка"
+  },
+  "Вы Заработали": {
+    "en": "You have earned",
+    "ru": "Вы Заработали"
+  },
+  "Остальные Данные:": {
+    "en": "The rest of the data:",
+    "ru": "Остальные Данные:"
+  },
+  "Работа,": {
+    "en": "Work,",
+    "ru": "Работа,"
+  },
+  "Теперь: Всего:": {
+    "en": "Now: total:",
+    "ru": "Теперь: Всего:"
+  },
+  "Теперь: В банке:": {
+    "en": "Now: in the bank:",
+    "ru": "Теперь: В банке:"
+  },
+  "Теперь: В Руках:": {
+    "en": "Now: in the hands:",
+    "ru": "Теперь: В Руках:"
+  },
+  "Апгрейд:": {
+    "en": "Upgrade:",
+    "ru": "Апгрейд:"
+  },
+  "Сообщения Удалены": {
+    "en": "Messages are deleted",
+    "ru": "Сообщения Удалены"
+  },
+  "Удалено Сообщений": {
+    "en": "Messages deleted",
+    "ru": "Удалено Сообщений"
+  },
+  "Канал": {
+    "en": "Channel",
+    "ru": "Канал"
+  },
+  "Удалено": {
+    "en": "Deleted",
+    "ru": "Удалено"
+  },
+  "Cообщений": {
+    "en": "Coaskchen",
+    "ru": "Coaskchen"
+  },
+  "Было Успешно Удалено": {
+    "ru": "Было Успешно Удалено",
+    "en": "It was successfully deleted"
+  },
+  "Сообщений": {
+    "ru": "Сообщений"
+  },
+  "Участник": {
+    "ru": "Участник"
+  },
+  "Настройки": {
+    "ru": "Настройки",
+    "en": "Settings"
+  },
+  "**Выберите, Что Хотите Изменить Во мне!**": {
+    "ru": "**Выберите, Что Хотите Изменить Во мне!**",
+    "en": "** Choose what you want to change in me! **"
+  },
+  "**Вы Выбрали**": {
+    "ru": "**Вы Выбрали**",
+    "en": "** You chose **"
+  },
+  "ID Нового Канала Логов": {
+    "ru": "ID Нового Канала Логов",
+    "en": "ID of the new channel logs"
+  },
+  "Эта Команда Позволяет Удалять Сообщения Пользователей.": {
+    "ru": "Эта Команда Позволяет Удалять Сообщения Пользователей.",
+    "en": "This command allows you to delete user messages.",
+    "da": "Denne kommando giver dig mulighed for at slette brugerbeskeder."
+  },
+  "удалить": {
+    "ru": "удалить",
+    "en": "delete",
+    "da": "Slet"
+  },
+  "С Помощью Этой Команды Вы Можете На Своем Сервере Полностью Изменить Меня!": {
+    "ru": "С Помощью Этой Команды Вы Можете На Своем Сервере Полностью Изменить Меня!",
+    "en": "With this command, you can completely change me on your server!",
+    "da": "Med denne kommando kan du ændre mig fuldstændigt på din server!"
+  },
+  "конфигурация": {
+    "ru": "конфигурация",
+    "en": "configuration",
+    "da": "Konfiguration"
+  },
+  "сделка": {
+    "ru": "иметь дело"
+  },
+  "text": {
+    "en": "text"
+  },
+  "With the help of this command, you can write somewhere on my behalf!": {
+    "en": "With the help of this command, you can write somewhere on my behalf!"
+  },
+  "language": {
+    "en": "language"
+  },
+  "Using this command, you can choose the language in which I will answer you!": {
+    "en": "Using this command, you can choose the language in which I will answer you!"
+  },
+  "help": {
+    "en": "help"
+  },
+  "This team will show you all the information about me, as well as a list of all my teams.": {
+    "en": "This team will show you all the information about me, as well as a list of all my teams."
+  },
+  "link": {
+    "en": "link"
+  },
+  "You can insert any link here, and I will show you some of its parameters!": {
+    "en": "You can insert any link here, and I will show you some of its parameters!"
+  },
+  "Transfer": {
+    "en": "Transfer"
+  },
+  "Allows you to translate **Absolutely** Any message to **your language** from any language!": {
+    "en": "Allows you to translate **Absolutely** Any message to **your language** from any language!"
+  },
+  "work": {
+    "en": "work",
+    "ru": "работа"
+  },
+  "The easiest way to get an economic currency that is very important in my teams, the use of this team is the easiest.": {
+    "en": "The easiest way to get an economic currency that is very important in my teams, the use of this team is the easiest."
+  },
+  "Leaders": {
+    "en": "Leaders"
+  },
+  "Shows a list of leaders in any convenient format to you.": {
+    "en": "Shows a list of leaders in any convenient format to you."
+  },
+  "transaction": {
+    "en": "transaction"
+  },
+  "Allows you to throw money from the bank into your hands and back.": {
+    "en": "Allows you to throw money from the bank into your hands and back."
+  },
+  "delete": {
+    "en": "delete"
+  },
+  "This command allows you to delete user messages.": {
+    "en": "This command allows you to delete user messages."
+  },
+  "configuration": {
+    "en": "configuration"
+  },
+  "With this command, you can completely change me on your server!": {
+    "en": "With this command, you can completely change me on your server!"
+  },
+  "profile": {
+    "en": "profile"
+  },
+  "Shows **absolutely** all the information about the user that he*does not hide*.": {
+    "en": "Shows **absolutely** all the information about the user that he*does not hide*."
+  },
+  "Команды": {
+    "en": "Teams",
+    "ru": "Команды",
+    "da": "Hold"
+  },
+  "Выберите Снизу Тип Команды.": {
+    "en": "Choose the type of team from below.",
+    "ru": "Выберите Снизу Тип Команды.",
+    "da": "Vælg den type team nedenunder."
+  },
+  "Дата Регистрации В Боте:": {
+    "en": "The date of registration in the bot:"
+  },
+  "Есть На Этом Сервере? ": {
+    "en": "Is there on this server?"
+  },
+  " `Да`": {
+    "en": "`Yes'"
+  },
+  "Есть В Дискорде?": {
+    "en": "Is there a discord?"
+  },
+  "Есть В Телеграм?": {
+    "en": "Is there in telegram?"
+  },
+  " `Нет`": {
+    "en": "`No`"
+  },
+  "**Нарушения На Этом Сервере**:": {
+    "en": "** Violations on this server **:",
+    "ru": "**Нарушения На Этом Сервере**:"
+  },
+  "Вы Указали:": {
+    "en": "You indicated:"
+  },
+  "Но У Вас В Руках Только:": {
+    "en": "But in your hands only:"
+  },
+  "Вы Можете Использовать Эту Команду Снова Через:": {
+    "en": "You can use this command again through:",
+    "ru": "Вы Можете Использовать Эту Команду Снова Через:"
+  },
+  "### Неверная Ссылка:\n`www.com`.": {
+    "en": "### The wrong link:\n`www.com`."
+  },
+  "Вам Нужно `€50`, Но У Вас Нигде Столько Нет!": {
+    "en": "You need `€ 50`, but you do not have so much anywhere!"
+  },
+  "Пользователь Не Найден.": {
+    "en": "The user was not found."
+  },
+  "У меня нет прав на управление сообщениями.": {
+    "en": "I have no rights to management rights."
+  },
+  "Подождите.": {
+    "en": "Wait.",
+    "ru": "Подождите."
+  },
+  "Топы Сервера": {
+    "en": "Tops of the server",
+    "ru": "Топы Сервера"
+  },
+  "Сортировка По:": {
+    "en": "Sorting by:",
+    "ru": "Сортировка По:"
+  },
+  "Всего": {
+    "en": "All",
+    "ru": "Всего"
+  },
+  "Страница": {
+    "en": "Page",
+    "ru": "Страница"
+  },
+  "Пользователь": {
+    "ru": "Пользователь",
+    "en": "User"
+  },
+  "Изменение Пользователя": {
+    "ru": "Изменение Пользователя",
+    "en": "User change"
+  },
+  "Значение До": {
+    "ru": "Значение До"
+  },
+  "Значение После": {
+    "ru": "Значение После"
+  },
+  "Изменение Конфига Бота": {
+    "ru": "Изменение Конфига Бота",
+    "en": "Changing the config bot"
+  },
+  "Изменение Авто-модерации": {
+    "ru": "Изменение Авто-модерации"
+  },
+  "normal": {
+    "ru": "нормальный"
+  },
+  "Заменен На": {
+    "ru": "Заменил"
+  },
+  "AI": {
+    "ru": "ИИ",
+    "en": "AI"
+  },
+  "Изменение ИИ": {
+    "ru": "Изменение ИИ"
+  },
+  "False": {
+    "ru": "ЛОЖЬ"
+  },
+  "True": {
+    "ru": "Истинный"
+  },
+  "Тип": {
+    "ru": "Тип",
+    "en": "Type"
+  },
+  "mute": {
+    "ru": "Мут",
+    "en": "mute"
+  },
+  "Вы Были замучены По Причине: `Потому что я могу`, навсегда, <@740543157623848960>-ом": {
+    "en": "You were tortured because of: `because I can, forever, <@740543157623848960>"
+  },
+  "Удаление сообщений": {
+    "ru": "Удаление сообщений"
+  },
+  "Выдал": {
+    "ru": "Выдал",
+    "en": "Issued"
+  },
+  "По Причине": {
+    "ru": "По Причине",
+    "en": "For reason"
+  },
+  "На": {
+    "ru": "На"
+  },
+  "Вы Были замучены По Причине: `Потому что я могу`, на 14 days, 0:00:00, <@740543157623848960>-ом": {
+    "en": "You were tortured because of: `because I can, at 14 days, 0:00:00, <@740543157623848960>"
+  },
+  "Такого Пользователя Не Существует.": {
+    "en": "Such a user does not exist.",
+    "ru": "Такого Пользователя Не Существует."
+  },
+  "Выдача Нарушения": {
+    "ru": "Выдача Нарушения",
+    "en": "Issuing violations"
+  },
+  "Ты Не Администратор.": {
+    "en": "You are not an administrator.",
+    "ru": "Ты Не Администратор."
+  },
+  "Сообщение Пользователя": {
+    "ru": "Сообщение Пользователя",
+    "en": "User message"
+  },
+  "Причина Нарушения": {
+    "ru": "Причина Нарушения",
+    "en": "The cause of the violation"
+  },
+  "Сообщение": {
+    "ru": "Сообщение",
+    "en": "Message"
+  },
+  "Было Заподозрено Подозрительным.": {
+    "ru": "Было Заподозрено Подозрительным.",
+    "en": "It was suspicious."
+  },
+  "Текст:": {
+    "ru": "Текст:",
+    "en": "Text:"
+  },
+  "Что Считает Авто-мод:": {
+    "ru": "Что Считает Авто-мод:",
+    "en": "What does auto-model think:"
+  },
+  "Не Удалось Сгенерировать Сообщение.": {
+    "ru": "Не Удалось Сгенерировать Сообщение.",
+    "en": "It was not possible to generate a message."
+  },
+  "Изменение Канала Логов": {
+    "ru": "Изменение Канала Логов"
+  },
+  "Изменение Правил Для Автомодерации\nТак Как Правила Могут Превышать Лимит Максимального Размера Файла В Дискорде, То Показать Изменения Я Не Согу.": {
+    "ru": "Изменение Правил Для Автомодерации\nТак Как Правила Могут Превышать Лимит Максимального Размера Файла В Дискорде, То Показать Изменения Я Не Согу.",
+    "en": "Changing the rules for auto modification\nSince the rules can exceed the limit of the maximum size of the file in the discord, I do not show changes to the SOSU."
+  },
+  "Изменение Правил Для Автомодерации": {
+    "ru": "Изменение Правил Для Автомодерации",
+    "en": "Changing the rules for auto modification"
+  },
+  "Правила": {
+    "ru": "Правила"
+  },
+  "Зачем ": {
+    "en": "For what"
+  },
+  " самого себя?": {
+    "en": "yourself?"
+  },
+  "Не Удалось Сгенерировать Сообщение.\nНейросеть Не Отвечает.": {
+    "en": "It was not possible to generate a message.\nThe neural network does not answer."
+  },
+  "Загрузка Данных": {
+    "en": "Data load",
+    "ru": "Загрузка Данных",
+    "th": "โหลดข้อมูล",
+    "lt": "Duomenų apkrova"
+  },
+  "Привязать Телеграм Аккаунт": {
+    "en": "Bind the telegram account",
+    "ru": "Привязать Телеграм Аккаунт",
+    "th": "ผูกบัญชีโทรเลข",
+    "lt": "Surišti telegramos paskyrą"
+  },
+  "Сервер": {
+    "en": "Server",
+    "ru": "Сервер",
+    "th": "เซิร์ฟเวอร์",
+    "lt": "Serveris"
+  },
+  "Показывает Твою Информацию На Сервере.": {
+    "en": "Shows your information on the server.",
+    "ru": "Показывает Твою Информацию На Сервере.",
+    "th": "แสดงข้อมูลของคุณบนเซิร์ฟเวอร์",
+    "lt": "Parodo jūsų informaciją serveryje."
+  },
+  "Экономика": {
+    "en": "Economy",
+    "ru": "Экономика",
+    "th": "เศรษฐกิจ",
+    "lt": "Ekonomika"
+  },
+  "Показывает Твою Экономическую Информацию.": {
+    "en": "Shows your economic information.",
+    "ru": "Показывает Твою Экономическую Информацию.",
+    "th": "แสดงข้อมูลทางเศรษฐกิจของคุณ",
+    "lt": "Parodo jūsų ekonominę informaciją."
+  },
+  "Модерация": {
+    "en": "Moderation",
+    "ru": "Умеренность",
+    "th": "การกลั่นกรอง",
+    "lt": "Nuosaikumas"
+  },
+  "Показывает Твои Логи Модерации.": {
+    "en": "Shows your logistics log.",
+    "ru": "Показывает Твои Логи Модерации.",
+    "th": "แสดงบันทึกโลจิสติกส์ของคุณ",
+    "lt": "Parodo jūsų logistikos žurnalą."
+  },
+  "📘Сервер": {
+    "en": "📘server",
+    "ru": "📘 Сервер",
+    "th": "📘เซิร์ฟเวอร์",
+    "lt": "📘Server"
+  },
+  "Ban": {
+    "ru": "Бан",
+    "en": "Ban"
+  },
+  "Выгнать": {
+    "ru": "Выгнать",
+    "en": "Drive out"
+  },
+  "Mute": {
+    "ru": "Мут",
+    "en": "Mute"
+  },
+  "Warn": {
+    "ru": "Предупреждать",
+    "en": "Warn"
+  },
+  "Канал Логов": {
+    "ru": "Канал Логов",
+    "en": "Channel Logov"
+  },
+  "Можете Изменить Текущий Канал Логов.": {
+    "ru": "Можете Изменить Текущий Канал Логов.",
+    "en": "You can change the current Logov channel."
+  },
+  "Автомодерация": {
+    "ru": "Автомодерация",
+    "en": "Auto modification"
+  },
+  "Можешь Выключить/Изменить Тип Автомодерации.": {
+    "ru": "Можешь Выключить/Изменить Тип Автомодерации.",
+    "en": "You can turn off/change the type of auto modification."
+  },
+  "Если Включить, То Я Смогу Общаться С Вами!": {
+    "ru": "Если Включить, То Я Смогу Общаться С Вами!",
+    "en": "If you turn on, I can communicate with you!"
+  },
+  "Disable": {
+    "ru": "Запрещать",
+    "en": "Disable"
+  },
+  "Rules": {
+    "ru": "Правила",
+    "en": "Rules"
+  },
+  "Enable": {
+    "ru": "Давать возможность",
+    "en": "Enable"
+  },
+  "ID Вашего Телеграм Аккаунта": {
+    "en": "ID of your telegram account"
+  },
+  "Телеграм ID:": {
+    "en": "Telegram ID:"
+  },
+  "Введите Здесь Ваш Телеграм ID.": {
+    "en": "Enter your telegram ID here."
+  },
+  "Вся Важная Информация": {
+    "en": "All important information",
+    "ru": "Вся Важная Информация",
+    "th": "ข้อมูลสำคัญทั้งหมด",
+    "lt": "Visa svarbi informacija"
+  },
+  "Сообщения:": {
+    "en": "Messages:",
+    "ru": "Сообщения:",
+    "th": "ข้อความ:",
+    "lt": "Pranešimai:"
+  },
+  "Время В Голосовом Канале:": {
+    "en": "Time in the voice channel:",
+    "ru": "Время В Голосовом Канале:",
+    "th": "เวลาในช่องเสียง:",
+    "lt": "Laikas balso kanale:"
+  },
+  "Дата Регистрации:": {
+    "en": "Registration date:",
+    "ru": "Дата Регистрации:",
+    "th": "วันที่ลงทะเบียน:",
+    "lt": "Registracijos data:"
+  },
+  "Всего: В банке/Руках:": {
+    "en": "Total: in a bank/hands:",
+    "ru": "Всего: В банке/Руках:"
+  },
+  "Перезарядки Работ:": {
+    "en": "Reloading work:",
+    "ru": "Перезарядки Работ:"
+  },
+  "`можно сейчас`": {
+    "en": "`You can now"
+  },
+  "В Последний Раз Работали:": {
+    "en": "The last time they worked:",
+    "ru": "В Последний Раз Работали:"
+  },
+  "В Последний Раз Воровали:": {
+    "message": "The last time they stole:"
+  },
+  "Топ Серверов": {
+    "en": "TOP servers",
+    "ru": "Топ Серверов"
+  },
+  "Не Удалось Сгенерировать Сообщение.\nКредиты На Использование Нейросети Закончились!\nЖдите Начало Следующего Месяца!": {
+    "en": "It was not possible to generate a message.\nLoans for the use of the neural network are over!\nWait for the beginning of the next month!",
+    "ru": "Не Удалось Сгенерировать Сообщение.\nКредиты На Использование Нейросети Закончились!\nЖдите Начало Следующего Месяца!"
+  },
+  "Голосовал": {
+    "en": "Voted",
+    "ru": "Голосовал"
+  },
+  "От": {
+    "en": "From",
+    "ru": "От"
+  },
+  "Upgrade": {
+    "en": "Upgrade",
+    "ru": "Обновление"
+  },
+  "Если Голосовал За Бота, Иначе": {
+    "en": "If you voted for a bot, otherwise",
+    "ru": "Если Голосовал За Бота, Иначе"
+  },
+  "Пример": {
+    "en": "Example",
+    "ru": "Пример"
+  },
+  "\n            # **Часто Задаваемые Вопросы**:\n            ## **1**. ***ИИ Не Отвечает Или Пишет None.***\n            ### **Сервера Нейросети Выключены/Закончились Токены/Другая Ошибка, Если После 3-5 Раз Нейросеть Не Ответила/Написала None То Скорее Всего Закончились Токены, Нужно Будет Будет Ждать Начала Следующего Месяца.**\n            ## **2**. ***Где Узнать ID Канала?***\n            ### > 1. **Перейдите В Настройки Дискорда.**\n            ### > 2. **Во Вкладке `Настройки приложения` Нажмите `Расширенные`.**\n            ### > 3. **Включите `Режит разработчика`.**\n            ### > 4. **ПКМ По Каналу > `Скопировать ID канала`.**\n            ": {
+    "en": "# ** Frequently asked questions**:\n            ## ** 1 **. *** AI does not answer or writes None. ***\n            ### ** the neural network servers turned off/tokens/another error ended, if after 3-5 times the neural network did not answer/wrote none, then most likely the tokens have ended, it will be necessary to wait for the next month. **\n            ## ** 2 **. *** Where to find out the channel ID? ***\n            ### > 1. ** Go to the discord settings. **\n            ### > 2. ** In the tab `Application Settings` Click` Expanded`. **\n            ### > 3. ** Turn on `DECTION OF THE Developer`. **\n            ### > 4. ** RMB on the channel > `Copy channel ID`. **",
+    "ru": "# **Часто Задаваемые Вопросы**:\n            ## **1**. ***ИИ Не Отвечает Или Пишет None.***\n            ### **Сервера Нейросети Выключены/Закончились Токены/Другая Ошибка, Если После 3-5 Раз Нейросеть Не Ответила/Написала None То Скорее Всего Закончились Токены, Нужно Будет Будет Ждать Начала Следующего Месяца.**\n            ## **2**. ***Где Узнать ID Канала?***\n            ### > 1. **Перейдите В Настройки Дискорда.**\n            ### > 2. **Во Вкладке `Настройки приложения` Нажмите `Расширенные`.**\n            ### > 3. **Включите `Режит разработчика`.**\n            ### > 4. **ПКМ По Каналу > `Скопировать ID канала`.**"
+  },
+  "Переведено С Помощью": {
+    "en": "Translated with",
+    "ru": "Переведено С Помощью"
+  },
+  "Введите ID Канала Логов": {
+    "en": "Enter the ID channel logs"
+  },
+  "ID Канала:": {
+    "en": "Channel ID:"
+  },
+  "ID Канала Логов, Либо None Если Хотите Убрать Его.": {
+    "en": "ID channel logs, or None if you want to remove it."
+  },
+  "увеличение Не Активирован": {
+    "en": "The increase is not activated",
+    "ru": "увеличение Не Активирован"
+  },
+  "Осталось Увеличений На Двойной Заработок:": {
+    "en": "There is an increase in double earnings:",
+    "ru": "Осталось Увеличений На Двойной Заработок:"
+  },
+  "В Следующий Раз Можно Использовать Через:": {
+    "en": "Next time can be used through:",
+    "ru": "В Следующий Раз Можно Использовать Через:"
+  },
+  "Минут.": {
+    "en": "Minutes.",
+    "ru": "Минут."
+  },
+  "Голосовать Для +50% Зарплаты": {
+    "en": "Vote for 50% salary",
+    "lt": "Balsuokite už 50% atlyginimą",
+    "ru": "Голосовать Для  50% Зарплаты"
+  },
+  "Пока Эта Функция Недоступна.": {
+    "ru": "Пока Эта Функция Недоступна."
+  },
+  "Введите Правила": {
+    "ru": "Введите Правила",
+    "en": "Enter the rules"
+  },
+  "Правила:": {
+    "ru": "Правила:",
+    "en": "Rules:"
+  },
+  "Правила Которые Нейросеть Будет Использовать При Сканировании Сообщений Пользователей.": {
+    "ru": "Правила Которые Нейросеть Будет Использовать При Сканировании Сообщений Пользователей.",
+    "en": "The rules that the neural network will use when scanning user messages."
+  },
+  "Репорт": {
+    "ru": "Репорт"
+  },
+  "Если Вы Уверены Что Хотите Репортнуть": {
+    "ru": "Если Вы Уверены Что Хотите Репортнуть"
+  },
+  "За Сообщение": {
+    "ru": "За Сообщение"
+  },
+  "То Жмите Кнопку Ниже.": {
+    "ru": "То Жмите Кнопку Ниже."
+  },
+  "Жалоба На Сообщение": {
+    "ru": "Жалоба На Сообщение"
+  },
+  "Причина:": {
+    "ru": "Причина:"
+  },
+  "Причина Жалобы.": {
+    "ru": "Причина Жалобы."
+  },
+  "Вы Успешно Пожаловались На Сообщение Пользователя! Ваша Жалоба Была Отправлена.": {
+    "ru": "Вы Успешно Пожаловались На Сообщение Пользователя! Ваша Жалоба Была Отправлена."
+  },
+  "Репортящий Пользователь": {
+    "ru": "Репортящий Пользователь"
+  },
+  "Пользователь Которого Репортят": {
+    "ru": "Пользователь Которого Репортят"
+  },
+  "Репортнул Сообщение": {
+    "ru": "Репортнул Сообщение"
+  },
+  "С Содержанием:": {
+    "ru": "С Содержанием:"
+  },
+  "По Причине:": {
+    "ru": "По Причине:"
+  },
+  "you can report.": {
+    "ru": "Вы можете сообщить."
+  },
+  "Не Удалось Забанить Пользователя.": {
+    "ru": "Не Удалось Забанить Пользователя."
+  },
+  "Приговор": {
+    "ru": "Приговор",
+    "en": "Sentence"
+  },
+  "Был Успешно Предупрежден По Причине": {
+    "ru": "Был Успешно Предупрежден По Причине",
+    "en": "Was successfully warned due to"
+  },
+  "Не Удалось Предупредить Пользователя.": {
+    "ru": "Не Удалось Предупредить Пользователя.",
+    "en": "It was not possible to warn the user."
+  },
+  "С Помощью Этой Команды Вы Можете Репортнуть Сообщение Пользователя!": {
+    "ru": "С Помощью Этой Команды Вы Можете Репортнуть Сообщение Пользователя!",
+    "da": "Ved hjælp af denne kommando kan du rapportere brugerens meddelelse!",
+    "en": "Using this command, you can report the user's message!"
+  },
+  "репорт_сообщения": {
+    "ru": "репорт_сообщения",
+    "da": "Rapport_meddelelser",
+    "en": "Report_ messages"
+  },
+  "С Помощью Этой Команды Вы Можете Репортнуть Пользователя(за его аватарку/имя/ник/поведение)!": {
+    "ru": "С Помощью Этой Команды Вы Можете Репортнуть Пользователя(за его аватарку/имя/ник/поведение)!",
+    "da": "Ved hjælp af denne kommando kan du rapportere brugeren (til hans avatar/navn/kaldenavn/opførsel)!",
+    "en": "Using this command, you can report the user (for his avatar/name/nickname/behavior)!"
+  },
+  "репорт_пользователя": {
+    "ru": "репорт_пользователя",
+    "da": "Reporter reporter",
+    "en": "reporter reporter"
+  },
+  "About": {
+    "ru": "О",
+    "da": "Om",
+    "en": "About"
+  },
+  "Информация Обо Мне": {
+    "ru": "Информация Обо Мне",
+    "da": "Information om mig",
+    "en": "Information about me"
+  },
+  "ToS and Privacy Policy": {
+    "ru": "Политика TOS и конфиденциальность",
+    "da": "TOS og privatlivspolitik",
+    "en": "ToS and Privacy Policy"
+  },
+  "Мои Правила И Политики Которые Нужно Обязательно прочитать!": {
+    "ru": "Мои Правила И Политики Которые Нужно Обязательно прочитать!",
+    "da": "Mine regler og politikere, der skal læses!",
+    "en": "My rules and politicians that must be read!"
+  },
+  "FAQ": {
+    "ru": "Часто задаваемые вопросы",
+    "da": "FAQ",
+    "en": "FAQ"
+  },
+  "Ответы На Возможно Частые Вопросы.": {
+    "ru": "Ответы На Возможно Частые Вопросы.",
+    "da": "Svarene på de muligvis hyppige spørgsmål.",
+    "en": "The answers to the possibly frequent questions."
+  },
+  "Формулы": {
+    "ru": "Формулы",
+    "da": "Formler",
+    "en": "Formulas"
+  },
+  "Как Идут Подсчеты В Экономике": {
+    "ru": "Как Идут Подсчеты В Экономике",
+    "da": "Hvordan er beregningerne i økonomien",
+    "en": "How are the calculations in the economy"
+  },
+  "Выберите Категорию": {
+    "ru": "Выберите Категорию",
+    "da": "Vælg kategorien",
+    "en": "Select the category"
+  },
+  "\n            # **Особенности**:\n            ### **1**. *🤖Встроенный ИИ, С Доступом К Интернету.*\n            ### **2**. *💥Множество Абсолютно Разных Команд.*\n            ### **3**. *💹Развитая+Глобальная Экономика, Которая Может Быть Интегрирована К Каждому Дискорд Серверу.*\n            ### **5**. *🎈Вдохновлен Многими Популярными Ботами В Дискорде.*\n            ### **6**. *👀Всегда Развивается И Максимально Прислушивается К Комьюнити.*\n            ### **7**. *💬Встроенная Поддержка Абсолютно Всех Языков Дискорда Практически Во Всех Командах.*\n            ### **8**. *✅Возможность Узнать В Любом Стиле Свою Активность.*\n            ### **9**. *📰Есть Разнообразные Квесты.*\n            ### **10**. *🎇Интегрированность На Разных Платформах **В будущем**.*\n            ### **11**. *📊Поддержка Различных Статистик И Графиков.*\n            ### **12**. *🎵Музыкальные Команды С Поддержкой YouTube И Локальных Файлов.*\n            ### **13**. *🛠️Инструменты Для Разработчиков И Администраторов.*\n            ### **14**. *🔒Безопасность И Конфиденциальность.*\n            ### **15**. *🌐Поддержка Многоязычности И Локализации.*\n            ### **16**. *📅Автоматическое Обновление И Добавление Новых Функций.*\n            ### **17**. *🧩Интеграция С Различными API И Сервисами.*\n            ### **18**. *📚Документация И Руководства Для Пользователей.*\n            ### **19**. *🎮Игровые Команды И Мини-Игры.*\n            ### **20**. *📈Мониторинг И Аналитика Использования Бота.*\n            # **Другое**:": {
+    "ru": "# **Особенности**:\n            ### **1**. *🤖Встроенный ИИ, С Доступом К Интернету.*\n            ### **2**. *💥Множество Абсолютно Разных Команд.*\n            ### **3**. *💹Развитая+Глобальная Экономика, Которая Может Быть Интегрирована К Каждому Дискорд Серверу.*\n            ### **5**. *🎈Вдохновлен Многими Популярными Ботами В Дискорде.*\n            ### **6**. *👀Всегда Развивается И Максимально Прислушивается К Комьюнити.*\n            ### **7**. *💬Встроенная Поддержка Абсолютно Всех Языков Дискорда Практически Во Всех Командах.*\n            ### **8**. *✅Возможность Узнать В Любом Стиле Свою Активность.*\n            ### **9**. *📰Есть Разнообразные Квесты.*\n            ### **10**. *🎇Интегрированность На Разных Платформах **В будущем**.*\n            ### **11**. *📊Поддержка Различных Статистик И Графиков.*\n            ### **12**. *🎵Музыкальные Команды С Поддержкой YouTube И Локальных Файлов.*\n            ### **13**. *🛠️Инструменты Для Разработчиков И Администраторов.*\n            ### **14**. *🔒Безопасность И Конфиденциальность.*\n            ### **15**. *🌐Поддержка Многоязычности И Локализации.*\n            ### **16**. *📅Автоматическое Обновление И Добавление Новых Функций.*\n            ### **17**. *🧩Интеграция С Различными API И Сервисами.*\n            ### **18**. *📚Документация И Руководства Для Пользователей.*\n            ### **19**. *🎮Игровые Команды И Мини-Игры.*\n            ### **20**. *📈Мониторинг И Аналитика Использования Бота.*\n            # **Другое**:"
+  },
+  "Сервер Поддержки Бота": {
+    "ru": "Сервер Поддержки Бота"
+  },
+  "Сервер Разработчика": {
+    "ru": "Сервер Разработчика"
+  },
+  "Сайт Бота": {
+    "ru": "Сайт Бота"
+  },
+  "Поддержать": {
+    "ru": "Поддержать"
+  },
+  "Terms of Service": {
+    "ru": "Условия обслуживания"
+  },
+  "Privacy Policy": {
+    "ru": "политика конфиденциальности"
+  },
+  "and for bot users": {
+    "ru": "и для пользователей бота"
+  },
+  "До": {
+    "ru": "К"
+  },
+  "Если увеличение Включен, иначе": {
+    "ru": "Если увеличение Включен, иначе"
+  },
+  "УСТАРЕЛО НЕДАВНО": {
+    "ru": "УСТАРЕЛО НЕДАВНО"
+  },
+  "Топы Мира": {
+    "ru": "Топы Мира",
+    "en": "Tops of the world"
+  },
+  "Увеличение:": {
+    "ru": "Увеличение:"
+  },
+  "Осталось Увеличений **`х2 денег за работу`**:": {
+    "ru": "Осталось Увеличений **`х2 денег за работу`**:"
+  },
+  "Осталось Увеличений **`х2 скидка на покупку`**:": {
+    "ru": "Осталось Увеличений **`х2 скидка на покупку`**:"
+  },
+  "можно сейчас": {
+    "ru": "можно сейчас"
+  },
+  "Сообщения": {
+    "ru": "Сообщения",
+    "da": "Meddelelser",
+    "en": "Messages"
+  },
+  "day": {
+    "ru": "день"
+  },
+  "Количество сообщений": {
+    "ru": "Количество сообщений",
+    "da": "Antallet af meddelelser",
+    "en": "The number of messages"
+  },
+  "all": {
+    "da": "alle",
+    "ru": "все",
+    "en": "all"
+  },
+  "Ты Можешь Узнать Свою Активность За Любой Промежуток Времени С Момента Установки Меня.": {
+    "da": "Du kan finde ud af din aktivitet i et hvilket som helst tidsrum fra det øjeblik, jeg satte mig.",
+    "ru": "Ты Можешь Узнать Свою Активность За Любой Промежуток Времени С Момента Установки Меня.",
+    "en": "You can find out your activity in any period of time from the moment I set me."
+  },
+  "график": {
+    "da": "skema",
+    "ru": "график",
+    "en": "schedule"
+  },
+  "sprog": {
+    "da": "sprog"
+  },
+  "Ved hjælp af denne kommando kan du vælge det sprog, hvor jeg vil svare dig!": {
+    "da": "Ved hjælp af denne kommando kan du vælge det sprog, hvor jeg vil svare dig!"
+  },
+  "Overførsel": {
+    "da": "Overførsel"
+  },
+  "Giver dig mulighed for at oversætte ** absolut ** enhver besked til*din tunge ** fra ethvert sprog!": {
+    "da": "Giver dig mulighed for at oversætte ** absolut ** enhver besked til*din tunge ** fra ethvert sprog!"
+  },
+  "hjælp": {
+    "da": "hjælp"
+  },
+  "Dette team viser dig alle oplysninger om mig såvel som en liste over alle mine teams.": {
+    "da": "Dette team viser dig alle oplysninger om mig såvel som en liste over alle mine teams."
+  },
+  "forbindelse": {
+    "da": "forbindelse"
+  },
+  "Du kan indsætte ethvert link her, og jeg vil vise dig nogle af dets parametre!": {
+    "da": "Du kan indsætte ethvert link her, og jeg vil vise dig nogle af dets parametre!"
+  },
+  "skema": {
+    "da": "ordning"
+  },
+  "Du kan finde ud af din aktivitet i et hvilket som helst tidsrum fra det øjeblik, jeg satte mig.": {
+    "da": "Du kan finde ud af din aktivitet i et hvilket som helst tidsrum fra det øjeblik, jeg satte mig."
+  },
+  "Сессии": {
+    "ru": "Сессии"
+  },
+  "Количество сессий": {
+    "ru": "Количество сессий"
+  },
+  "Часы": {
+    "ru": "Время"
+  },
+  "Часы в войсе": {
+    "ru": "Часы в войсе"
+  },
+  "Войс-активность": {
+    "ru": "Войс-активность"
+  },
+  "Нейросеть Вернула Неверный Ответ, Скорее Всего У нее Произошла Ошибка, Попробуйте Заново Через Несколько Минут Или Дней.": {
+    "ru": "Нейросеть Вернула Неверный Ответ, Скорее Всего У нее Произошла Ошибка, Попробуйте Заново Через Несколько Минут Или Дней.",
+    "en": "The neural network returned the wrong answer, most likely she had an error, try it again in a few minutes or days."
+  },
+  "year": {
+    "ru": "год"
+  },
+  "week": {
+    "ru": "неделя"
+  },
+  "Общее": {
+    "ru": "Общее",
+    "en": "General"
+  },
+  "Сообщений:": {
+    "ru": "Сообщений:",
+    "en": "Posts:"
+  },
+  "Нет данных за указанный период.": {
+    "ru": "Нет данных за указанный период.",
+    "en": "There is no data for the specified period."
+  },
+  "Сезон Года Этого Праздника:": {
+    "ru": "Сезон Года Этого Праздника:"
+  },
+  "весна": {
+    "ru": "весна"
+  },
+  "Название Праздника:": {
+    "ru": "Название Праздника:"
+  },
+  "Пасха (католическая)": {
+    "ru": "Пасха (католическая)"
+  },
+  "Время Праздника": {
+    "ru": "Время Праздника"
+  },
+  "Начало Праздника В:": {
+    "ru": "Начало Праздника В:"
+  },
+  "Конец Праздника В:": {
+    "ru": "Конец Праздника В:"
+  },
+  "Длительность Праздника:": {
+    "ru": "Длительность Праздника:"
+  },
+  "Все Праздники Которые Бот Использует": {
+    "ru": "Все Праздники Которые Бот Использует"
+  },
+  "Если здесь нету праздников которые вы отмечаете, вы можете предложить их добавить разработчику бота.": {
+    "ru": "Если здесь нету праздников которые вы отмечаете, вы можете предложить их добавить разработчику бота."
+  },
+  "Название Праздника: Старый Новый Год и день защитников свободы Литвы": {
+    "ru": "Название Праздника: Старый Новый Год и день защитников свободы Литвы"
+  },
+  "До праздника:": {
+    "ru": "До праздника:"
+  },
+  "Сезон праздника:": {
+    "ru": "Сезон праздника:"
+  },
+  "зима": {
+    "ru": "Зима"
+  },
+  "Начало праздника:": {
+    "ru": "Начало праздника:"
+  },
+  "Конец праздника:": {
+    "ru": "Конец праздника:"
+  },
+  "Длительность праздника:": {
+    "ru": "Длительность праздника:"
+  },
+  "дней": {
+    "ru": "дней"
+  },
+  "Название Праздника: Лунный Новый Год": {
+    "ru": "Название Праздника: Лунный Новый Год"
+  },
+  "Название Праздника: День святого Валентина": {
+    "ru": "Название Праздника: День святого Валентина"
+  },
+  "Название Праздника: День восстановления Литовского государства": {
+    "ru": "Название Праздника: День восстановления Литовского государства"
+  },
+  "Название Праздника: День защитника Отечества": {
+    "ru": "Название Праздника: День защитника Отечества"
+  },
+  "Название Праздника: Международный женский день": {
+    "ru": "Название Праздника: Международный женский день"
+  },
+  "Название Праздника: День восстановления независимости Литвы": {
+    "ru": "Название Праздника: День восстановления независимости Литвы"
+  },
+  "Название Праздника: День святого Патрика": {
+    "ru": "Название Праздника: День святого Патрика"
+  },
+  "Название Праздника: Международный день счастья": {
+    "ru": "Название Праздника: Международный день счастья"
+  },
+  "Название Праздника: Пасха (православная)": {
+    "ru": "Название Праздника: Пасха (православная)"
+  },
+  "Название Праздника: День Дурака": {
+    "ru": "Название Праздника: День Дурака"
+  },
+  "Название Праздника: Пасха (католическая)": {
+    "ru": "Название Праздника: Пасха (католическая)"
+  },
+  "Название Праздника: День Земли": {
+    "ru": "Название Праздника: День Земли"
+  },
+  "Название Праздника: День Труда": {
+    "ru": "Название Праздника: День Труда"
+  },
+  "Название Праздника: День победы над нацизмом": {
+    "ru": "Название Праздника: День победы над нацизмом"
+  },
+  "Название Праздника: День Победы": {
+    "ru": "Название Праздника: День Победы"
+  },
+  "Название Праздника: День семьи": {
+    "ru": "Название Праздника: День семьи"
+  },
+  "Название Праздника: День королевы и Международный день защиты детей": {
+    "ru": "Название Праздника: День королевы и Международный день защиты детей"
+  },
+  "лето": {
+    "ru": "Лето"
+  },
+  "Название Праздника: Всемирный день борьбы со СПИДом": {
+    "ru": "Название Праздника: Всемирный день борьбы со СПИДом"
+  },
+  "Название Праздника: День Рождения Wolium'а": {
+    "ru": "Название Праздника: День Рождения Wolium'а"
+  },
+  "Название Праздника: Международный день инвалидов": {
+    "ru": "Название Праздника: Международный день инвалидов"
+  },
+  "Название Праздника: Зимнее солнцестояние": {
+    "ru": "Название Праздника: Зимнее солнцестояние"
+  },
+  "Название Праздника: Рождество": {
+    "ru": "Название Праздника: Рождество"
+  },
+  "Название Праздника: День Рождения создателя бота(arturwol'a)": {
+    "ru": "Название Праздника: День Рождения создателя бота(arturwol'a)"
+  },
+  "Название Праздника: Новый Год": {
+    "ru": "Название Праздника: Новый Год"
+  },
+  "Дискорд": {
+    "ru": "Дискорд",
+    "en": "Discord"
+  },
+  "Показывает Твою Информацию В Дискорде.": {
+    "ru": "Показывает Твою Информацию В Дискорде.",
+    "en": "Shows your information in Discord."
+  },
+  "Другое": {
+    "ru": "Другое",
+    "en": "Other"
+  },
+  "Другое.": {
+    "ru": "Другое.",
+    "en": "Other."
+  },
+  "В Банке Денег:": {
+    "ru": "В Банке Денег:",
+    "en": "In the bank of money:"
+  },
+  "В Руках Денег:": {
+    "ru": "В Руках Денег:",
+    "en": "In the hands of money:"
+  },
+  "Улучшение:": {
+    "ru": "Улучшение:",
+    "en": "Improvement:"
+  },
+  "x2 Заработок Количество:": {
+    "ru": "x2 Заработок Количество:",
+    "en": "x2 earnings quantity:"
+  },
+  "х2 Покупок Количество:": {
+    "ru": "х2 Покупок Количество:",
+    "en": "X2 purchases quantity:"
+  },
+  "Выберите:": {
+    "ru": "Выберите:",
+    "en": "Choose:"
+  },
+  "Тайм-Ауты": {
+    "ru": "Тайм-Ауты"
+  },
+  "Нет Данных": {
+    "ru": "Нет Данных"
+  },
+  "Информация О Сервере Доступна Только На Сервере.": {
+    "ru": "Информация О Сервере Доступна Только На Сервере."
+  },
+  ".zip Файл Распакован! Начало Сбора Данных.": {
+    "ru": ".zip Файл Распакован! Начало Сбора Данных.",
+    "en": ".zip file is unpacked! The start of data collection."
+  },
+  "Данные Собраны! Идет Сохранение Данных.\nВы Написали Всего": {
+    "ru": "Данные Собраны! Идет Сохранение Данных.\nВы Написали Всего",
+    "en": "Data is collected! Data is saved.\nYou wrote everything"
+  },
+  "Сообщений!": {
+    "ru": "Сообщений!"
+  },
+  "Примерное Время Ожидания Сохранения Ваших Данных:": {
+    "ru": "Примерное Время Ожидания Сохранения Ваших Данных:"
+  },
+  "Все Ваши Данные Сохранены!": {
+    "ru": "Все Ваши Данные Сохранены!",
+    "en": "All your data is saved!"
+  },
+  "Возможность Перенести Свои Данные С Дискорда.\n**Краткий Гайд Как Получить Свои Данные С Дискорда**:\n  1) Переходим В \"Настройки\";\n  2) Переходим В \"Данные и конфиденциальность\";\n  3) Жмем \"Запросить все мои данные\";\n  4) Выбираем Нужные Галочки Которые Вы Хотите.\nВ Течении Месяца Или Больше Вам На Почту Придет .zip Файл С Вашими Данными. Скачайте Этот Файл И Целиком Не Трогая Его Вставьте В Эту Команду, В Течении Некоторого Времени Бот Будет Обрабатывать Ваши Данные И Напишет Вам Когда Все Будет Готово.\nНа Данный Момент Бот Сохраняет Только Ваши Сообщения!\n\n!!!БОЛЬШИНСТВО ВАШИХ ДАННЫХ ИЗ БОТА БУДЕТ УДАЛЕНО НА МОМЕНТ ПЕРЕНОСА ДАННЫХ С ДИСКОРДА!!!": {
+    "ru": "Возможность Перенести Свои Данные С Дискорда.\n**Краткий Гайд Как Получить Свои Данные С Дискорда**:\n  1) Переходим В \"Настройки\";\n  2) Переходим В \"Данные и конфиденциальность\";\n  3) Жмем \"Запросить все мои данные\";\n  4) Выбираем Нужные Галочки Которые Вы Хотите.\nВ Течении Месяца Или Больше Вам На Почту Придет .zip Файл С Вашими Данными. Скачайте Этот Файл И Целиком Не Трогая Его Вставьте В Эту Команду, В Течении Некоторого Времени Бот Будет Обрабатывать Ваши Данные И Напишет Вам Когда Все Будет Готово.\nНа Данный Момент Бот Сохраняет Только Ваши Сообщения!\n\n!!!БОЛЬШИНСТВО ВАШИХ ДАННЫХ ИЗ БОТА БУДЕТ УДАЛЕНО НА МОМЕНТ ПЕРЕНОСА ДАННЫХ С ДИСКОРДА!!!"
+  },
+  "вставить_дату": {
+    "ru": "вставить_дату",
+    "en": "Insert_data"
+  },
+  "Нет Описания У Команды.": {
+    "ru": "Нет Описания У Команды.",
+    "en": "The team has no description."
+  },
+  "форматирование_чисел": {
+    "ru": "форматирование_чисел",
+    "en": "formatting_"
+  },
+  "бан": {
+    "ru": "бан",
+    "en": "ban"
+  },
+  "праздник": {
+    "ru": "праздник",
+    "en": "holiday"
+  },
+  "**Перенос данных из Discord**\n\nВы можете перенести свои данные из Discord. Следуйте короткой инструкции:\n\n1. Перейдите в **Настройки Discord**;  \n2. Откройте раздел **Данные и конфиденциальность**;  \n3. Нажмите **Запросить все мои данные**;  \n4. Отметьте нужные пункты и подтвердите.\n\nЧерез несколько недель (до месяца) вы получите на почту архив `.zip` с вашими данными. Скачайте архив и **загрузите его целиком без изменений** в эту команду. Бот обработает данные и сообщит, когда всё будет готово.\n\n> ⚠️ В настоящее время сохраняются **только ваши сообщения**.  \n> ⚠️ **Большинство текущих данных в боте будет удалено после переноса!**": {
+    "ru": "**Перенос данных из Discord**\n\nВы можете перенести свои данные из Discord. Следуйте короткой инструкции:\n\n1. Перейдите в **Настройки Discord**;  \n2. Откройте раздел **Данные и конфиденциальность**;  \n3. Нажмите **Запросить все мои данные**;  \n4. Отметьте нужные пункты и подтвердите.\n\nЧерез несколько недель (до месяца) вы получите на почту архив `.zip` с вашими данными. Скачайте архив и **загрузите его целиком без изменений** в эту команду. Бот обработает данные и сообщит, когда всё будет готово.\n\n> ⚠️ В настоящее время сохраняются **только ваши сообщения**.  \n> ⚠️ **Большинство текущих данных в боте будет удалено после переноса!**",
+    "en": "** Data transfer from Discord **\n\nYou can transfer your data from Discord. Follow the short instructions:\n\n1. Go to ** Discord ** settings;  \n2. Open the section ** data and confidentiality **;  \n3. Press ** Request all my data **;  \n4. Mark the necessary points and confirm.\n\nAfter a few weeks (up to a month) you will receive an archive `.zip` with your data. Download the archive and ** load it entirely without changes ** into this team. The bot will process the data and report when everything is ready.\n\n> ⚠️ Currently preserved ** only your messages **.  \n> ⚠️ ** Most of the current data in the bot will be deleted after transfer! **"
+  },
+  "Enter The Duration Of The Time-Out": {
+    "ru": "Введите продолжительность тайм-аута",
+    "en": "Enter The Duration Of The Time-Out"
+  },
+  "Длительность:": {
+    "ru": "Длительность:",
+    "en": "Duration:"
+  },
+  "Используйте Формат: 1d 1w 1h 1m 1s. 2 Недели - Макс. Длительность Тайм-Аута.": {
+    "ru": "Используйте Формат: 1d 1w 1h 1m 1s. 2 Недели - Макс. Длительность Тайм-Аута.",
+    "en": "Use the format: 1D 1W 1H 1m 1s. "
+  },
+  "Не Удалось Тайм-Аутнуть Пользователя.": {
+    "ru": "Не Удалось Тайм-Аутнуть Пользователя.",
+    "en": "It was not possible to time the user."
+  },
+  "Авто-мод": {
+    "ru": "Авториз"
+  },
+  "Автомод": {
+    "ru": "Автомод",
+    "en": "Automobile"
+  },
+  "Что Считает Автомод:": {
+    "ru": "Что Считает Автомод:",
+    "en": "What the car carrier thinks:"
+  },
+  "Был Успешно Тайм-Аутнут До": {
+    "ru": "Был Успешно Тайм-Аутнут До"
+  },
+  "Algorithm": {
+    "en": "Algorithm",
+    "ru": "Алгоритм"
+  },
+  "У Тебя Недостаточно Прав.": {
+    "ru": "У Тебя Недостаточно Прав."
+  },
+  "настройки": {
+    "ru": "настройки",
+    "en": "settings"
+  },
+  "warn": {
+    "en": "warn",
+    "ru": "предупреждать"
+  },
+  "Предупреждения": {
+    "ru": "Предупреждения"
+  },
+  "Ошибка:": {
+    "ru": "Ошибка:"
+  },
+  "Количество": {
+    "ru": "Количество"
+  },
+  "Удалил": {
+    "ru": "Удалил"
+  },
+  "сообщений": {
+    "ru": "сообщений"
+  },
+  "Модератор удалил сообщения пользователя": {
+    "ru": "Модератор удалил сообщения пользователя"
+  },
+  "Нарушения": {
+    "ru": "Нарушения",
+    "en": "Violations"
+  },
+  "Показывает Твои Нарушения.": {
+    "ru": "Показывает Твои Нарушения.",
+    "en": "Shows your violations."
+  },
+  "Перезарядки": {
+    "ru": "Перезарядки",
+    "en": "Reloading"
+  },
+  "Показывает Когда Ты Сможешь Использовать Снова Команду У Которой Длинная Перезарядка.": {
+    "ru": "Показывает Когда Ты Сможешь Использовать Снова Команду У Которой Длинная Перезарядка.",
+    "en": "Shows when you can use the command again with a long reloading."
+  },
+  "Через": {
+    "ru": "Через"
+  },
+  "Использовал В": {
+    "ru": "Использовал В"
+  },
+  "Сейчас!": {
+    "ru": "Сейчас!"
+  },
+  "Никогда!": {
+    "ru": "Никогда!"
+  },
+  "rob": {
+    "ru": "ограбление"
+  },
+  "insert_data": {
+    "ru": "insert_data"
+  },
+  "Work": {
+    "ru": "Работа"
+  },
+  "Rob": {
+    "ru": "Ограбление"
+  },
+  "Вставить Дату": {
+    "ru": "Вставить Дату"
+  },
+  "Использовал": {
+    "ru": "Использовал"
+  },
+  "Не Голосовал": {
+    "ru": "Не Голосовал"
+  },
+  "Настройки Игр": {
+    "ru": "Настройки Игр",
+    "en": "Games settings"
+  },
+  "Вы Сможете Настроить Здесь Игры.": {
+    "ru": "Вы Сможете Настроить Здесь Игры.",
+    "en": "You can configure games here."
+  },
+  "Канал Для Игры В Слова": {
+    "ru": "Канал Для Игры В Слова"
+  },
+  "Сбросить словарь": {
+    "ru": "Сбросить словарь"
+  },
+  "Канал Для Игры В Счет": {
+    "ru": "Канал Для Игры В Счет"
+  },
+  "Выберите Канал Для Логов": {
+    "ru": "Выберите Канал Для Логов"
+  },
+  "ID Нового Канала": {
+    "ru": "ID Нового Канала"
+  },
+  "Это Слово Уже Было!": {
+    "ru": "Это Слово Уже Было!"
+  },
+  "Ваше Слово Должно Начинаться На": {
+    "en": "Your word should begin on",
+    "ru": "Ваше Слово Должно Начинаться На"
+  },
+  "Ваше Слово Начинается На": {
+    "en": "Your word begins on",
+    "ru": "Ваше Слово Начинается На"
+  },
+  "Подождите Пока Я Удалю Сообщения Лишние И Потом Уже Пишите!": {
+    "en": "Wait until I delete the messages and then write!",
+    "ru": "Подождите Пока Я Удалю Сообщения Лишние И Потом Уже Пишите!"
+  },
+  "Не Ваша Очередь!": {
+    "ru": "Не Ваша Очередь!",
+    "en": "Not your turn!"
+  },
+  "Вы Ввели Не Число!": {
+    "ru": "Вы Ввели Не Число!"
+  },
+  "Сброс Словаря": {
+    "ru": "Сброс Словаря"
+  },
+  "[\"человек\", \"корова\", \"поп\", \"а\", \"лодка\"]": {
+    "ru": "[\"человек\", \"корова\", \"поп\", \"а\", \"лодка\"]"
+  },
+  "Ваше Число Не Подходит!": {
+    "ru": "Ваше Число Не Подходит!"
+  },
+  "У Тебя Меньше Прав Чем У": {
+    "ru": "У Тебя Меньше Прав Чем У"
+  },
+  "Нормально": {
+    "ru": "Нормально"
+  },
+  "Легкий Фильтр Который Проверяет Только Базовые Моменты.": {
+    "ru": "Легкий Фильтр Который Проверяет Только Базовые Моменты."
+  },
+  "Экстрим": {
+    "ru": "Экстрим"
+  },
+  "Очень Строгий Фильтр, Большинство Языков Могут Не Поддерживаться.": {
+    "ru": "Очень Строгий Фильтр, Большинство Языков Могут Не Поддерживаться."
+  },
+  "extreme": {
+    "ru": "крайний"
+  },
+  "Выберите Категорию!": {
+    "ru": "Выберите Категорию!",
+    "en": "Select the category!"
+  },
+  "Выберите Фильтр!": {
+    "ru": "Выберите Фильтр!"
+  },
+  "Изменение Фильтра Для Игры В Слова": {
+    "ru": "Изменение Фильтра Для Игры В Слова"
+  },
+  "Словарь для этого языка не установлен. Пожалуйста, выберите другой язык.": {
+    "ru": "Словарь для этого языка не установлен. Пожалуйста, выберите другой язык."
+  },
+  "Изменение Канала Для Игры В Слова": {
+    "ru": "Изменение Канала Для Игры В Слова"
+  },
+  "Язык Вашего Сообщения Не Добавлен В Базу!\nВыключите Сильный Фильтр Слов в `/настройки`.\n-# когда вы все настроите, удалите это сообщение.\n-#Поддерживаемые языки:": {
+    "ru": "Язык Вашего Сообщения Не Добавлен В Базу!\nВыключите Сильный Фильтр Слов в `/настройки`.\n-# когда вы все настроите, удалите это сообщение.\n-#Поддерживаемые языки:"
+  },
+  "Ваше Слово Содержит Ошибку!\nВозможно Вы Имели Ввиду:": {
+    "ru": "Ваше Слово Содержит Ошибку!\nВозможно Вы Имели Ввиду:"
+  },
+  "Недействительное Слово!": {
+    "ru": "Недействительное Слово!"
+  },
+  "Язык Вашего Сообщения Не Добавлен В Базу": {
+    "ru": "Язык Вашего Сообщения Не Добавлен В Базу"
+  },
+  "Выключите Сильный Фильтр Слов в `/настройки`.\n-# когда вы все настроите, удалите это сообщение.\n-# Поддерживаемые языки:": {
+    "ru": "Выключите Сильный Фильтр Слов в `/настройки`.\n-# когда вы все настроите, удалите это сообщение.\n-# Поддерживаемые языки:"
+  },
+  "Вы попросили нейросеть выполнить наказание пользователю, она щас этим занимается и потом изменит это сообщение...": {
+    "en": "You asked the neural network to fulfill the punishment to the user, she does this right now and then change this message ...",
+    "ru": "Вы попросили нейросеть выполнить наказание пользователю, она щас этим занимается и потом изменит это сообщение..."
+  },
+  "Параметры": {
+    "en": "Parameters",
+    "ru": "Параметры"
+  },
+  "ban": {
+    "ru": "запрет",
+    "en": "ban"
+  },
+  "unban": {
+    "ru": "некачественный"
+  },
+  "Сообщений, Но Засчитано Будет Только": {
+    "en": "Messages, but only it will be counted"
+  },
+  "Из-За Того, Что Я Не Сохраняю Спам.": {
+    "en": "Due to the fact that I do not save spam."
+  },
+  "Ваши Данные Будут Готовы Примерно": {
+    "en": "Your data will be ready approximately"
+  },
+  "Попалась Партия С Слишком Большими Данными, Потеряно Всеголишь 500 Ваших Сообщений.\nЕсли Вас Это Сильно Волнует Отправьте Скриншот Этого Сообщения В Поддержку! Этот Момент Не Логируется.": {
+    "en": "A party with too big data came across, you are lost only 500 of your messages.\nIf you are very worried, send a screenshot of this message in support! This moment is not logged in."
+  },
+  "Попалась Партия С Слишком Большими Данными, Потеряно Всеголишь 250 Ваших Сообщений.\nЕсли Вас Это Сильно Волнует Отправьте Скриншот Этого Сообщения В Поддержку! Этот Момент Не Логируется.": {
+    "en": "A party with too big data came across, you are lost only 250 of your messages.\nIf you are very worried, send a screenshot of this message in support! This moment is not logged in."
+  },
+  ".zip Файл Распакован! Начало Сбора Данных. Примерно": {
+    "en": ".zip file is unpacked! The start of data collection. Approximately"
+  },
+  "Попалась Партия С Слишком Большими Данными, Потеряно Всеголишь": {
+    "en": "I got a party with too big data, you are lost only"
+  },
+  "Ваших Сообщений.": {
+    "en": "Your messages."
+  },
+  "Если Вас Это Сильно Волнует Отправьте Скриншот Этого Сообщения В Поддержку! Этот Момент Не Логируется.": {
+    "en": "If you are very worried, send a screenshot of this message in support! This moment is not logged in."
+  },
+  "Потеряно": {
+    "en": "Lost",
+    "ru": "Потеряно"
+  },
+  "сообщений из-за слишком большого размера партии либо другой ошибки.": {
+    "en": "Messages due to too large the size of the batch or other error.",
+    "ru": "сообщений из-за слишком большого размера партии либо другой ошибки."
+  },
+  "разбан": {
+    "en": "burrow",
+    "ru": "нора"
+  },
+  "кик": {
+    "en": "kick",
+    "ru": "пинать"
+  },
+  "Ваш Срок Бана Истёк.": {
+    "ru": "Ваш Brok Bana IseThk."
+  },
+  "На Сервере:": {
+    "ru": "На серверах:"
+  },
+  "Разбанил:": {
+    "ru": "Разбанил:"
+  },
+  "Время Разбана:": {
+    "ru": "Время Разбана:"
+  },
+  "Срок Бана Истёк": {
+    "ru": "Grand Bana Istëk"
+  },
+  "Не Удалось Выгнать Пользователя.": {
+    "ru": "Не Удалось Выгнать Пользователя."
+  },
+  "Вы Перевели В Руки:": {
+    "en": "You put it into your hands:"
+  },
+  "Теперь В Банке Осталось:": {
+    "en": "Now the bank remains:"
+  },
+  "И В Руках:": {
+    "en": "And in the hands:"
+  },
+  "мут": {
+    "ru": "мтм"
+  },
+  "мтм": {
+    "ru": "Mtm"
+  },
+  "Я не буду работать в течении 1-4 месяца из за технических проблем. Если вы не удалите меня с сервера, то я напишу снова когда я вернусь к работе! Я гарантирую, что я буду работать намного эффективнее и без сбоев.": {
+    "ru": "Я не буду работать в течении 1-4 месяца из за технических проблем. Если вы не удалите меня с сервера, то я напишу снова когда я вернусь к работе! Я гарантирую, что я буду работать намного эффективнее и без сбоев.",
+    "en": "I will not work within 1-4 months due to technical problems. If you do not remove me from the server, then I will write again when I return to work! I guarantee that I will work much more efficiently and without failures.",
+    "es": "No trabajaré dentro de 1-4 meses debido a problemas técnicos. Si no me quitas del servidor, ¡volveré a escribir cuando vuelva al trabajo! Le garantizo que trabajaré de manera mucho más eficiente y sin fallas."
+  },
+  "Я снова на связи! 👋": {
+    "ru": "Я снова на связи! 👋",
+    "en": "I'm back in touch! 👋",
+    "es": "¡Estoy de nuevo en contacto! 👋"
+  },
+  "Коротко": {
+    "ru": "Коротко",
+    "en": "Short",
+    "es": "Corto"
+  },
+  "Если что — я тихоня, просто скажите где писать 😊": {
+    "ru": "Если что — я тихоня, просто скажите где писать 😊",
+    "en": "If anything happens, I’m quiet, just tell me where to write 😊",
+    "es": "Si pasa algo, estoy tranquila, solo dime donde escribir 😊"
+  },
+  "Привет! Не хочу спамить личными сообщениями, поэтому пишу сюда — в главный чат, чтобы все, кому интересно, увидели.\n\nЕсли в прошлый раз я кому-то докучал личными сообщениями — сорри 🙃.\nЯ немного отдыхал, починил пару багов и теперь снова работаю 24/7 ⚡.\n\nБуду рад помогать и показывать новые фичи — но если это не тот канал, куда нужно писать, просто ткните меня в лс или переместите сообщение. Спасибо! 👍": {
+    "ru": "Привет! Не хочу спамить личными сообщениями, поэтому пишу сюда — в главный чат, чтобы все, кому интересно, увидели.\n\nЕсли в прошлый раз я кому-то докучал личными сообщениями — сорри 🙃.\nЯ немного отдыхал, починил пару багов и теперь снова работаю 24/7 ⚡.\n\nБуду рад помогать и показывать новые фичи — но если это не тот канал, куда нужно писать, просто ткните меня в лс или переместите сообщение. Спасибо! 👍",
+    "en": "Hello! I don’t want to spam with personal messages, so I’m writing here - in the main chat, so that everyone who is interested can see.\n\nIf last time I bothered someone with personal messages, I’m sorry 🙃.\nI rested a little, fixed a couple of bugs and now I’m working 24/7 again ⚡.\n\nI will be glad to help and show new features - but if this is not the channel where you need to write, just send me a dm or move the message. Thank you! 👍",
+    "es": "¡Hola! 👋 No quiero spamear con mensajes privados, así que escribo aquí, en el chat principal, para que todos los interesados puedan verlo. 😎\n\nSi la última vez molesté a alguien con mensajes privados, ¡lo siento mucho! 🙃\nTomé un pequeño descanso, arreglé un par de errores y ahora estoy de vuelta, trabajando 24/7 ⚡.\n\nEstaré encantado de ayudar y mostrar nuevas funciones 🎉\nPero si este no es el canal adecuado, mándame un DM o mueve este mensaje. ¡Gracias! 👍\n\nPD: Prometo no llenar otros canales de spam... a menos que sea un meme muy épico 😂"
+  },
+  "• ⚡ Работаю снова 24/7, готов к действию!\n• 🐌 Иногда отвечаю медленно, но стараюсь быть полезным 😊\n• 👀 Иногда могу случайно быть слишком настойчивым — но это от заботы 😎\n• 💡 Идеи и предложения приветствуются — могу быстро внедрить фичу!\n• 🛠 Если что-то ломается — я сразу починю, обещаю!\n": {
+    "ru": "• ⚡ Работаю снова 24/7, готов к действию!\n• 🐌 Иногда отвечаю медленно, но стараюсь быть полезным 😊\n• 👀 Иногда могу случайно быть слишком настойчивым — но это от заботы 😎\n• 💡 Идеи и предложения приветствуются — могу быстро внедрить фичу!\n• 🛠 Если что-то ломается — я сразу починю, обещаю!",
+    "en": "• ⚡ Working again 24/7, ready for action!\n• 🐌 Sometimes I answer slowly, but I try to be helpful 😊\n• 👀 Sometimes I can accidentally be too persistent - but that’s because I care 😎\n• 💡 Ideas and suggestions are welcome - I can quickly implement a feature!\n• 🛠 If something breaks, I’ll fix it right away, I promise!",
+    "es": "• ⚡ ¡Trabajando nuevamente 24 horas al día, 7 días a la semana, listo para la acción!\n• 🐌 A veces respondo lentamente, pero trato de ser útil 😊\n• 👀 A veces puedo ser demasiado persistente sin querer, pero eso es porque me importa 😎\n• 💡 Se aceptan ideas y sugerencias: ¡puedo implementar una función rápidamente!\n• 🛠 Si algo se rompe, lo arreglaré de inmediato, ¡lo prometo!"
+  },
+  "М-м, не знаю, что сказать 🤔": {
+    "ru": "М-м, не знаю, что сказать 🤔"
+  },
+  "Не Удалось Сгенерировать Сообщение.\nВы Отвечаете На Сообщение Которое Дискорд Либо Не Успел Сохранить, Либо Оно Слишком Старое.": {
+    "ru": "Не Удалось Сгенерировать Сообщение.\nВы Отвечаете На Сообщение Которое Дискорд Либо Не Успел Сохранить, Либо Оно Слишком Старое."
+  },
+  "пинать": {
+    "ru": "пинать"
+  },
+  "Произошла Ошибка При Распаковке .zip Файла:": {
+    "en": "An error occurred while unpacking the .zip file:"
+  },
+  "Простите, Вы Попали В Очередь!\nЯ Вас Уведомлю О Следующих Информациях.": {
+    "ru": "Простите, Вы Попали В Очередь!\nЯ Вас Уведомлю О Следующих Информациях."
+  },
+  "Начало Извлечения Ваших Данных!": {
+    "ru": "Начало Извлечения Ваших Данных!"
+  },
+  "Данные загружены!": {
+    "ru": "Данные загружены!"
+  },
+  "Извлечение Метаданных Каналов...": {
+    "ru": "Извлечение Метаданных Каналов..."
+  },
+  "Импорт Сообщений...": {
+    "ru": "Импорт Сообщений..."
+  },
+  "Импорт Сообщений... Всего Обработано:": {
+    "ru": "Импорт Сообщений... Всего Обработано:"
+  },
+  "Завершение Импорта Сообщений... Всего Обработано:": {
+    "ru": "Завершение Импорта Сообщений... Всего Обработано:"
+  }
+}
