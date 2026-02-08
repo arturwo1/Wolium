@@ -6,7 +6,7 @@ import Utils.translate_to_all_languages
 from time import time
 from cogs.utils.get_invite import GetInvite
 from cogs.utils.translate_message import TranslateMessage
-from Utils.config import servers_with_no_acces_for_bot, users_with_no_acces_for_bot, slash_command_cooldown
+from Utils.config import slash_command_cooldown
 from traceback import format_exception
 from cogs.utils.send_embed import SendEmbed
 from cogs.utils.get_data import GetData
@@ -145,9 +145,6 @@ class Help(commands.Cog):
     ],)
   async def помощь(self,interaction: Interaction):
     try:
-      if ((interaction.guild.id if interaction.guild else 0) in servers_with_no_acces_for_bot or interaction.user.id in users_with_no_acces_for_bot):
-        await interaction.response.send_message(await (TranslateMessage(self.bot)).translate_message(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://sites.google.com/view/arturwolium/main-page/rules) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv' ), ephemeral=True)
-        return
       user_id = interaction.user.id
       current_time = time()
 
@@ -160,48 +157,13 @@ class Help(commands.Cog):
           slash_command_cooldown[user_id]['time'] = current_time
       else:
         slash_command_cooldown[user_id] = {'time': current_time}
-      if interaction.guild:
-        guild_settings = await (GetData(self.bot)).get_data(interaction.guild.id,['banned'],'guilds','guild_id',interaction.guild)
-      user_settings = await (GetData(self.bot)).get_data(user_id,['language','variation','banned'],'users','user_id',interaction.guild)
-      language = user_settings['language']
 
-      if user_settings['banned'] or (guild_settings['banned'] if interaction.guild else False):
-        await interaction.response.send_message(await (TranslateMessage(self.bot)).translate_message(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://sites.google.com/view/arturwolium/main-page/rules) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).",language), ephemeral=True)
-        servers_with_no_acces_for_bot.append(interaction.guild.id)
-        users_with_no_acces_for_bot.append(user_id)
-        return
+      user_settings = await (GetData(self.bot)).get_data(user_id,['language','variation'],'users','user_id',interaction.guild)
+      language = user_settings['language']
       
       await interaction.response.defer(ephemeral=True)
 
       invite = await (GetInvite(self.bot)).invite(interaction.guild)
-
-      fields = [
-        {
-          'name':'Пользователь',
-          'value':f"{interaction.user.id} | {interaction.user.mention} | {interaction.user.name}",
-          'inline':True
-        },
-        {
-          'name':'Сервер',
-          'value':f"{interaction.guild.id} | {invite} | {interaction.guild.name}" if interaction.guild else "ЛС",
-          'inline':True
-        },
-        {
-          'name':'Канал',
-          'value':f"<#{interaction.channel.id}>(`{interaction.channel.id}` | `{interaction.channel.name if interaction.guild else f'[<@{interaction.user.id}>({interaction.user.id} | {interaction.user.name}({interaction.user.display_name})]'}`)",
-          'inline':True
-        }
-      ]
-      await (SendEmbed(self.bot)).send_embed(
-        title="Ввод команды",
-        description=f"Пользователь ввёл: ||**/{interaction.application_command.name}** {' '.join(f'`{option['name']}` **{option['value']}** ' for option in interaction.data.get('options',[]))}||",
-        color=Color.yellow(),
-        fields=fields,
-        footer_text=interaction.application_command.name,
-        author_text=interaction.user.name,
-        author_icon=interaction.user.display_avatar.url,
-        channel_id=1348577723097808977
-      )
 
       async def send_help_message(selected_value:str, page:int, max_page:int, commands:dict[str,dict[str,str]]):
         help_embed = Embed(
@@ -273,10 +235,10 @@ class Help(commands.Cog):
             ### **19**. *🎮Игровые Команды И Мини-Игры.*
             ### **20**. *📈Мониторинг И Аналитика Использования Бота.*
             # **Другое**:""", language)+f"""
-            ### **🔗[`{await (TranslateMessage(self.bot)).translate_message('Сервер Поддержки Бота', language)}`](https://discord.gg/DhtQr4PGYM)**  |  **🔗[`{await (TranslateMessage(self.bot)).translate_message('Сервер Разработчика', language)}`](https://discord.gg/MXupeAApza)**  |  **🔗[`{await (TranslateMessage(self.bot)).translate_message('Сайт Бота', language)}`](https://sites.google.com/view/arturwolium/)**  |  **🔗[`{await (TranslateMessage(self.bot)).translate_message('Поддержать', language)}`](https://www.patreon.com/arturwol)**
+            ### **🔗[`{await (TranslateMessage(self.bot)).translate_message('Сервер Поддержки Бота', language)}`](https://discord.gg/DhtQr4PGYM)**  |  **🔗[`{await (TranslateMessage(self.bot)).translate_message('Сервер Разработчика', language)}`](https://discord.gg/MXupeAApza)**  |  **🔗[`{await (TranslateMessage(self.bot)).translate_message('Сайт Бота', language)}`](https://wolium.netlify.app/)**  |  **🔗[`{await (TranslateMessage(self.bot)).translate_message('Поддержать', language)}`](https://www.patreon.com/arturwol)**
             """
         elif selected_value=='tospp':
-          help_embed.description = f"### **[`{await (TranslateMessage(self.bot)).translate_message('Terms of Service',language)}`](https://sites.google.com/view/arturwolium/main-page/TERMS-OF-SERVICE), [`{await (TranslateMessage(self.bot)).translate_message('Privacy Policy',language)}`](https://sites.google.com/view/arturwolium/main-page/privacy-policy) {await (TranslateMessage(self.bot)).translate_message('and for bot users',language)} [`{await (TranslateMessage(self.bot)).translate_message('Rules',language)}`](https://sites.google.com/view/arturwolium/main-page/rules)**"
+          help_embed.description = f"### **[`{await (TranslateMessage(self.bot)).translate_message('Terms of Service',language)}`](https://wolium.netlify.app/terms-of-service/), [`{await (TranslateMessage(self.bot)).translate_message('Privacy Policy',language)}`](https://wolium.netlify.app/privacy-policy/) {await (TranslateMessage(self.bot)).translate_message('and for bot users',language)} [`{await (TranslateMessage(self.bot)).translate_message('Rules',language)}`](https://wolium.netlify.app/rules/)**"
         elif selected_value=='faq':
           help_embed.description = await (TranslateMessage(self.bot)).translate_message("""
             # **Часто Задаваемые Вопросы**:

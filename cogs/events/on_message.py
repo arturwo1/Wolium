@@ -415,30 +415,30 @@ class OnMessage(commands.Cog):
         automod = self.bot.get_cog("GPT").automod
         await automod(message,mod_lang,invite,guild_config)
 
-    if message.author==self.bot.user:
-      pass
-    else:
-      guild_id = message.guild.id
-      channel_id = message.channel.id
-      user_id = message.author.id
-      date_time = message.created_at.replace(tzinfo=None)
-      content = message.content
-      message_url = message.jump_url
+    if message.author!=self.bot.user:
+      user_privacy = await (GetData(self.bot)).get_data(user_id,['save_messages', 'save_message_data'], 'user_privacy', 'user_id', message.guild)
+      if user_privacy['save_messages']:
+        guild_id = message.guild.id
+        channel_id = message.channel.id
+        date_time = message.created_at.replace(tzinfo=None)
+        content = message.content if user_privacy['save_message_data'] else None
+        message_url = message.jump_url
+        attachments = str(message.attachments) if user_privacy['save_message_data'] else None
 
-      if hasattr(self.bot, 'db_pool') and self.bot.db_pool:
-        async with self.bot.db_pool.acquire() as connection:
-          query = """
-          INSERT INTO messages (guild_id, channel_id, user_id, date_time, content, message_url)
-          VALUES ($1, $2, $3, $4, $5, $6)
-          """
-          await connection.execute(query, guild_id, channel_id, user_id, date_time, content, message_url)
+        if hasattr(self.bot, 'db_pool') and self.bot.db_pool:
+          async with self.bot.db_pool.acquire() as connection:
+            query = """
+            INSERT INTO messages (guild_id, channel_id, user_id, date_time, content, message_url, attachments)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            """
+            await connection.execute(query, guild_id, channel_id, user_id, date_time, content, message_url, attachments)
 
-          if user_id not in users:
-            await (EnsureUserExists(self.bot)).ensure_user_exists(user_id,message.author.name,language,message.guild) 
-            await (EnsureGuildExists(self.bot)).ensure_guild_exists(message.guild.id)
-            await (EnsureGuildUserExists(self.bot)).ensure_guild_user_exists(message.guild.id, user_id)
-            await (EnsureUserDataExists(self.bot)).ensure_user_data_exists(user_id, message.guild)
-            users.add(user_id)
+            if user_id not in users:
+              await (EnsureUserExists(self.bot)).ensure_user_exists(user_id,message.author.name,language,message.guild) 
+              await (EnsureGuildExists(self.bot)).ensure_guild_exists(message.guild.id)
+              await (EnsureGuildUserExists(self.bot)).ensure_guild_user_exists(message.guild.id, user_id)
+              await (EnsureUserDataExists(self.bot)).ensure_user_data_exists(user_id, message.guild)
+              users.add(user_id)
       
       user_data = await (GetData(self.bot)).get_data(user_id,['xp','bank_balance','balance','upgrade'],'user_data','user_id',message.guild)
       xp = user_data['xp']

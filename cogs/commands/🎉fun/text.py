@@ -10,7 +10,7 @@ from datetime import datetime,timezone
 from time import time
 import traceback
 import Utils.translate_to_all_languages
-from Utils.config import servers_with_no_acces_for_bot, users_with_no_acces_for_bot, slash_command_cooldown
+from Utils.config import slash_command_cooldown
 
 translate_to_all_languages = Utils.translate_to_all_languages.translate_to_all_languages
 
@@ -30,9 +30,6 @@ class Text(commands.Cog):
     id_сообщения_участника: str=SlashOption(name="идентификатор_сообщения", description="ID Сообщения Участника Сообщения На Которое Бот Должен Ответить.",required=False, name_localizations=translate_to_all_languages('идентификатор_сообщения', 'name'), description_localizations=translate_to_all_languages('Member Message ID of the Message to which the Bot should Reply.', 'description')),
   ):
     try:
-      if ((interaction.guild.id if interaction.guild else 0) in servers_with_no_acces_for_bot or interaction.user.id in users_with_no_acces_for_bot):
-        await interaction.response.send_message(await (TranslateMessage(self.bot)).translate_message(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://sites.google.com/view/arturwolium/main-page/rules) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv' ), ephemeral=True)
-        return
       user_id = interaction.user.id
       current_time = time()
 
@@ -46,16 +43,8 @@ class Text(commands.Cog):
       else:
         slash_command_cooldown[user_id] = {'time': current_time}
       
-      if interaction.guild:
-        guild_settings = await (GetData(self.bot)).get_data(interaction.guild.id,['banned'],'guilds','guild_id',interaction.guild)
-      user_settings = await (GetData(self.bot)).get_data(user_id,['language','variation','banned'],'users','user_id',interaction.guild)
+      user_settings = await (GetData(self.bot)).get_data(user_id,['language','variation'],'users','user_id',interaction.guild)
       language = user_settings['language']
-
-      if user_settings['banned'] or (guild_settings['banned'] if interaction.guild else False):
-        await interaction.response.send_message(await (TranslateMessage(self.bot)).translate_message(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://sites.google.com/view/arturwolium/main-page/rules) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).",language), ephemeral=True)
-        servers_with_no_acces_for_bot.append(interaction.guild.id)
-        users_with_no_acces_for_bot.append(user_id)
-        return
       
       await interaction.response.defer(ephemeral=True)
 
@@ -175,44 +164,6 @@ class Text(commands.Cog):
             'balance': balance-50
           }
           await (UpdateData(self.bot)).update_data(user_id, data, 'user_data', 'user_id', interaction.guild)
-      mod_guild = self.bot.get_guild(807304463449849938)
-      mod_chan = mod_guild.get_channel(1348577723097808977)
-      embe = nextcord.Embed(
-        title=f"ник: {interaction.user.name}#{interaction.user.discriminator}, ID: {interaction.user.id}",
-        description=f"Пользователь ввёл: ||**/{interaction.application_command.name}** {' '.join(f'`{option['name']}` **{option['value']}** ' for option in interaction.data.get('options',[]))}||",
-        color=nextcord.Colour.yellow(),
-        timestamp=datetime.now(timezone.utc)
-      )
-      embe.set_author(
-        name=f"Сервер ID: {interaction.guild_id if interaction.guild else self.bot.user.name}",
-        icon_url=f"{interaction.user.display_avatar.url}"
-      )
-      embe.add_field(
-        name="Текст",
-        value=f"{текст}",
-        inline=False
-      )
-      if interaction.guild:
-        embe.add_field(
-          name="Сервер",
-          value=f"{interaction.guild.id} | {invite} | {interaction.guild.name}" if interaction.guild else "ЛС" if interaction.guild else "ЛС",
-          inline=False
-        )
-      embe.add_field(
-        name="Канал",
-        value=f"<#{interaction.channel.id}>(`{interaction.channel.id}` | `{interaction.channel.name if interaction.guild else 'None'}`)",
-        inline=False
-      )
-      embe.add_field(
-        name="Ответ На ID Сообщения Пользователя",
-        value=f"{id_сообщения_участника}",
-        inline=False
-      )
-      embe.set_footer(
-        text=f"{str(datetime.now())}",
-        icon_url="https://cdn.discordapp.com/attachments/886241481118068906/1145385898637271060/2088617.png"
-      )
-      await mod_chan.send(embed=embe)
     except Exception as e:
       if "AutoMod" in str(e):
         try:

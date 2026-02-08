@@ -2,7 +2,7 @@ from time import time
 from nextcord.ext.commands import Cog, Bot
 from nextcord import slash_command, SlashOption, Interaction, Member, Embed, Colour
 from Utils.parse_time import parse_time
-from Utils.config import servers_with_no_acces_for_bot, users_with_no_acces_for_bot, slash_command_cooldown
+from Utils.config import slash_command_cooldown
 import Utils.translate_to_all_languages
 from cogs.utils.add_violation import AddViolation
 from cogs.utils.get_data import GetData
@@ -29,9 +29,6 @@ class Mute(Cog):
     причина: str=SlashOption(name="причина", description="Причина Мута.",required=True, name_localizations=translate_to_all_languages('причина', 'name'), description_localizations=translate_to_all_languages('Mute Reason.', 'description')),
   ):
     try:
-      if ((interaction.guild.id if interaction.guild else 0) in servers_with_no_acces_for_bot or interaction.user.id in users_with_no_acces_for_bot):
-        await interaction.response.send_message(await (TranslateMessage(self.bot)).translate_message(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://sites.google.com/view/arturwolium/main-page/rules) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv' ), ephemeral=True)
-        return
       user_id = interaction.user.id
       member_id = участник.id
       current_time = time()
@@ -45,16 +42,9 @@ class Mute(Cog):
           slash_command_cooldown[user_id]['time'] = current_time
       else:
         slash_command_cooldown[user_id] = {'time': current_time}
-      if interaction.guild:
-        guild_settings = await (GetData(self.bot)).get_data(interaction.guild.id,['banned'],'guilds','guild_id',interaction.guild)
-      user_settings = await (GetData(self.bot)).get_data(user_id,['language','variation','banned'],'users','user_id',interaction.guild)
-      language = user_settings['language']
 
-      if user_settings['banned'] or (guild_settings['banned'] if interaction.guild else False):
-        await interaction.response.send_message(await (TranslateMessage(self.bot)).translate_message(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://sites.google.com/view/arturwolium/main-page/rules) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).",language), ephemeral=True)
-        servers_with_no_acces_for_bot.append(interaction.guild.id)
-        users_with_no_acces_for_bot.append(user_id)
-        return
+      user_settings = await (GetData(self.bot)).get_data(user_id,['language','variation'],'users','user_id',interaction.guild)
+      language = user_settings['language']
 
       send_mute_message = await interaction.response.send_message(await (TranslateMessage(self.bot)).translate_message(f"Loading...", language),ephemeral=True)
       длительность = parse_time(длительность)
@@ -73,51 +63,6 @@ class Mute(Cog):
       if длительность>2419200:
         await send_mute_message.edit(await (TranslateMessage(self.bot)).translate_message(f"Максимальное Время Мута: `28 дней`, Вы Вписали:", language)+f" `{timedelta(seconds=длительность)}`.")
         return
-
-      invite = await (GetInvite(self.bot)).invite(interaction.guild)
-
-      fields = [
-        {
-          'name':'Модератор',
-          'value':f"{interaction.user.id} | {interaction.user.mention} | {interaction.user.name}",
-          'inline':True
-        },
-        {
-          'name':'Сервер',
-          'value':f"{interaction.guild.id} | {invite} | {interaction.guild.name}" if interaction.guild else "ЛС",
-          'inline':True
-        },
-        {
-          'name':'Канал',
-          'value':f"<#{interaction.channel.id}>(`{interaction.channel.id}` | `{interaction.channel.name if interaction.guild else f'[<@{interaction.user.id}>({interaction.user.id} | {interaction.user.name}({interaction.user.display_name})]'}`)",
-          'inline':True
-        },
-        {
-          'name':'Пользователь',
-          'value':f"{участник.id} | {участник.mention} | {участник.name}",
-          'inline':True
-        },
-        {
-          'name':'Причина',
-          'value':f"{причина}",
-          'inline':True
-        },
-        {
-          'name':"Длительность",
-          'value':f"{timedelta(seconds=длительность)}",
-          'inline':True
-        }
-      ]
-      await (SendEmbed(self.bot)).send_embed(
-        title="Ввод команды",
-        description=f"Пользователь ввёл: ||**/{interaction.application_command.name}** {' '.join(f'`{option['name']}` **{option['value']}** ' for option in interaction.data.get('options',[]))}||",
-        color=Colour.yellow(),
-        fields=fields,
-        footer_text=interaction.application_command.name,
-        author_text=interaction.user.name,
-        author_icon=interaction.user.display_avatar.url,
-        channel_id=1348577723097808977
-      )
 
       try:
         member = interaction.guild.get_member(member_id)

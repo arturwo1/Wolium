@@ -9,7 +9,7 @@ from Utils.suffics import suffics
 from datetime import datetime,timezone
 from time import time
 import Utils.translate_to_all_languages
-from Utils.config import servers_with_no_acces_for_bot, users_with_no_acces_for_bot, slash_command_cooldown
+from Utils.config import slash_command_cooldown
 
 translate_to_all_languages = Utils.translate_to_all_languages.translate_to_all_languages
 
@@ -35,9 +35,6 @@ class Transaction(commands.Cog):
     количество: float=SlashOption(name="количество", description="количество Денег Которое Вы Хотите Вывести С Банка.",min_value=100,max_value=1000000,required=True, name_localizations=translate_to_all_languages('quantity', 'name'), description_localizations=translate_to_all_languages('The amount of money you want to withdraw from the Bank.', 'description')),
     куда: str=SlashOption(name="куда", description="Передача Денег В Банк Или В Руки.",required=True, name_localizations=translate_to_all_languages('where', 'name'), description_localizations=translate_to_all_languages('Transferring Money to Bank or Hands.', 'description'), choice_localizations=translate_to_all_languages({"In the Bank": "bank_balance", "In the hands": "balance"}, 'choice'), choices={"In the Bank": "bank_balance", "In the hands": "balance"}),
   ):
-    if ((interaction.guild.id if interaction.guild else 0) in servers_with_no_acces_for_bot or interaction.user.id in users_with_no_acces_for_bot):
-      await interaction.response.send_message(await (TranslateMessage(self.bot)).translate_message(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://sites.google.com/view/arturwolium/main-page/rules) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv' ), ephemeral=True)
-      return
     user_id = interaction.user.id
     current_time = time()
 
@@ -50,16 +47,9 @@ class Transaction(commands.Cog):
         slash_command_cooldown[user_id]['time'] = current_time
     else:
       slash_command_cooldown[user_id] = {'time': current_time}
-    if interaction.guild:
-      guild_settings = await (GetData(self.bot)).get_data(interaction.guild.id,['banned'],'guilds','guild_id',interaction.guild)
-    user_settings = await (GetData(self.bot)).get_data(user_id,['language','variation','banned'],'users','user_id',interaction.guild)
-    language = user_settings['language']
 
-    if user_settings['banned'] or (guild_settings['banned'] if interaction.guild else False):
-      await interaction.response.send_message(await (TranslateMessage(self.bot)).translate_message(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://sites.google.com/view/arturwolium/main-page/rules) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).",language), ephemeral=True)
-      servers_with_no_acces_for_bot.append(interaction.guild.id)
-      users_with_no_acces_for_bot.append(user_id)
-      return
+    user_settings = await (GetData(self.bot)).get_data(user_id,['language','variation'],'users','user_id',interaction.guild)
+    language = user_settings['language']
     user_data = await (GetData(self.bot)).get_data(user_id,['bank_balance','balance'],'user_data','user_id',interaction.guild)
     
     bank_balance = user_data['bank_balance']
@@ -102,54 +92,6 @@ class Transaction(commands.Cog):
       sbank_balance = await suffics(number=bank_balance, variation=variation)
       sbalance = await suffics(number=balance, variation=variation)
       await interaction.followup.send(await (TranslateMessage(self.bot)).translate_message(f"Вы Перевели В Руки:",language)+f" `€{sколичество}`, "+await (TranslateMessage(self.bot)).translate_message(f"Теперь В Банке Осталось:",language)+f" `€{sbalance}`, "+await (TranslateMessage(self.bot)).translate_message(f"И В Руках:", language)+f" `€{sbank_balance}`.",ephemeral=True)
-    mod_guild = self.bot.get_guild(807304463449849938)
-    mod_chan = mod_guild.get_channel(1348577723097808977)
-    embe = nextcord.Embed(
-      title=f"ник: {interaction.user.name}#{interaction.user.discriminator}, ID: {interaction.user.id}",
-      description=f"Пользователь ввёл: ||**/{interaction.application_command.name}** {' '.join(f'`{option['name']}` **{option['value']}** ' for option in interaction.data.get('options',[]))}||",
-      color=nextcord.Colour.blurple(),
-      timestamp=datetime.now(timezone.utc)
-    )
-    embe.set_author(
-      name=f"Сервер ID: {interaction.guild_id if interaction.guild else self.bot.user.name}",
-      icon_url=f"{interaction.user.display_avatar.url}"
-    )
-    if interaction.guild:
-      embe.add_field(
-        name="Сервер",
-        value=f"{interaction.guild.id} | {invite} | {interaction.guild.name}" if interaction.guild else "ЛС" if interaction.guild else "ЛС",
-        inline=False
-      )
-    embe.add_field(
-      name="Канал",
-      value=f"<#{interaction.channel.id}>(`{interaction.channel.id}` | `{interaction.channel.name if interaction.guild else 'None'}`)",
-      inline=True
-    )
-    embe.add_field(
-      name="Всего:",
-      value=f"€{bank_balance+balance}",
-      inline=False
-    )
-    embe.add_field(
-      name="В Банке:",
-      value=f"€{bank_balance}",
-      inline=True
-    )
-    embe.add_field(
-      name="В Руках",
-      value=f"€{balance}",
-      inline=True
-    )
-    embe.add_field(
-      name="Пользователь Ввел/Вывел:",
-      value=f"Куда: `{куда}`\nСколько`€{количество}`",
-      inline=True
-    )
-    embe.set_footer(
-      text=f"Транзакция",
-      icon_url="https://cdn.discordapp.com/attachments/886241481118068906/1145385898637271060/2088617.png"
-    )
-    await mod_chan.send(embed=embe)
 
   setattr(транзакция,"extras",{"description": "Позволяет перекидывать деньги с банка в руки и обратно."})
 

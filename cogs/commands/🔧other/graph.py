@@ -63,9 +63,6 @@ class Graph(commands.Cog):
       default=False
     )
   ):
-    if ((interaction.guild.id if interaction.guild else 0) in servers_with_no_acces_for_bot or interaction.user.id in users_with_no_acces_for_bot):
-      await interaction.response.send_message(await (TranslateMessage(self.bot)).translate_message(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://sites.google.com/view/arturwolium/main-page/rules) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv' ), ephemeral=True)
-      return
     user_id = interaction.user.id
     current_time = time()
 
@@ -78,16 +75,9 @@ class Graph(commands.Cog):
         graph_command_cooldown[user_id]['time'] = current_time
     else:
       graph_command_cooldown[user_id] = {'time': current_time}
-    if interaction.guild:
-      guild_settings = await (GetData(self.bot)).get_data(interaction.guild.id,['banned'],'guilds','guild_id',interaction.guild)
-    user_settings = await (GetData(self.bot)).get_data(user_id,['language','variation','banned'],'users','user_id',interaction.guild)
-    language = user_settings['language']
 
-    if user_settings['banned'] or (guild_settings['banned'] if interaction.guild else False):
-      await interaction.response.send_message(await (TranslateMessage(self.bot)).translate_message(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://sites.google.com/view/arturwolium/main-page/rules) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).",language), ephemeral=True)
-      servers_with_no_acces_for_bot.append(interaction.guild.id)
-      users_with_no_acces_for_bot.append(user_id)
-      return
+    user_settings = await (GetData(self.bot)).get_data(user_id,['language','variation'],'users','user_id',interaction.guild)
+    language = user_settings['language']
     
     await interaction.response.defer()
 

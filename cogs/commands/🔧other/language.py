@@ -9,7 +9,7 @@ from datetime import datetime,timezone
 from time import time
 import traceback
 import Utils.translate_to_all_languages
-from Utils.config import DISCORD_LANGUAGES, servers_with_no_acces_for_bot, users_with_no_acces_for_bot, slash_command_cooldown
+from Utils.config import DISCORD_LANGUAGES, slash_command_cooldown
 
 translate_to_all_languages = Utils.translate_to_all_languages.translate_to_all_languages
 
@@ -36,9 +36,6 @@ class Language(commands.Cog):
     лично: bool=SlashOption(name="лично", description="Только Ты Увидешь Сообщение, Или Все.",required=False,default=False, name_localizations=translate_to_all_languages('лично', 'name'), description_localizations=translate_to_all_languages('Только Ты Увидешь Сообщение, Или Все.', 'description')),
   ):
     try:
-      if ((interaction.guild.id if interaction.guild else 0) in servers_with_no_acces_for_bot or interaction.user.id in users_with_no_acces_for_bot):
-        await interaction.response.send_message(await (TranslateMessage(self.bot)).translate_message(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://sites.google.com/view/arturwolium/main-page/rules) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv' ), ephemeral=True)
-        return
       user_id = interaction.user.id
       current_time = time()
 
@@ -51,17 +48,6 @@ class Language(commands.Cog):
           slash_command_cooldown[user_id]['time'] = current_time
       else:
         slash_command_cooldown[user_id] = {'time': current_time}
-      
-      if interaction.guild:
-        guild_settings = await (GetData(self.bot)).get_data(interaction.guild.id,['banned'],'guilds','guild_id',interaction.guild)
-      user_settings = await (GetData(self.bot)).get_data(user_id,['language','banned'],'users','user_id',interaction.guild)
-      language = user_settings['language']
-
-      if user_settings['banned'] or (guild_settings['banned'] if interaction.guild else False):
-        await interaction.response.send_message(await (TranslateMessage(self.bot)).translate_message(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://sites.google.com/view/arturwolium/main-page/rules) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).",language), ephemeral=True)
-        servers_with_no_acces_for_bot.append(interaction.guild.id)
-        users_with_no_acces_for_bot.append(user_id)
-        return
 
       await interaction.response.defer(ephemeral=лично)
 
@@ -75,36 +61,6 @@ class Language(commands.Cog):
         await (UpdateData(self.bot)).update_data(user_id, data, 'users', 'user_id', interaction.guild)
       else:
         await interaction.followup.send("✖",ephemeral=лично)
-
-      mod_guild = self.bot.get_guild(807304463449849938)
-      mod_chan = mod_guild.get_channel(1348577723097808977)
-      embe = nextcord.Embed(
-        title=f"ник: {interaction.user.name}#{interaction.user.discriminator}, ID: {interaction.user.id}",
-        description=f"Пользователь ввёл: ||**/{interaction.application_command.name}** {' '.join(f'`{option['name']}` **{option['value']}** ' for option in interaction.data.get('options',[]))}||",
-        color=nextcord.Colour.og_blurple(),
-        timestamp=datetime.now(timezone.utc)
-      )
-      embe.set_author(
-        name=f"Сервер ID: {interaction.guild_id if interaction.guild else self.bot.user.name}",
-        icon_url=f"{interaction.user.display_avatar.url}"
-      )
-      if interaction.guild:
-        embe.add_field(
-          name="Сервер",
-          value=f"{interaction.guild.id} | {invite} | {interaction.guild.name}" if interaction.guild else "ЛС" if interaction.guild else "ЛС",
-          inline=False
-        )
-      embe.add_field(
-        name="Канал",
-        value=f"<#{interaction.channel.id}>(`{interaction.channel.id}` | `{interaction.channel.name if interaction.guild else 'None'}`)",
-        inline=False
-      )
-      embe.set_footer(
-        text=f"{str(datetime.now())}",
-        icon_url="https://cdn.discordapp.com/attachments/886241481118068906/1145385898637271060/2088617.png"
-      )
-
-      await mod_chan.send(embed=embe)
     except Exception as e:
       traceback_msg = ((''.join(traceback.format_exception(type(e), e, e.__traceback__)))[:5000])
       log = nextcord.Embed(

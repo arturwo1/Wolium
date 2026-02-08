@@ -5,6 +5,8 @@
 !hide_to_tray.py
 !translations.json
 !command_translations.json
+!README.md
+!LICENSE
 
 !Utils/
 !Utils/**

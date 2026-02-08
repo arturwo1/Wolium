@@ -33,6 +33,7 @@ import Utils.config
 from nextcord.ext import commands
 from aiohttp import web
 from traceback import format_exception
+from Utils.lazylightshow import lazylightshow
 
 from cogs.utils.send_embed import SendEmbed
 
@@ -459,7 +460,7 @@ if __name__=='__main__i':
   #   ):
   #     try:
   #       if ((interaction.guild.id if interaction.guild else 0) in servers_with_no_acces_for_bot or interaction.user.id in users_with_no_acces_for_bot):
-  #         await interaction.response.send_message(await translate_message(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://sites.google.com/view/arturwolium/main-page/rules) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv' ), ephemeral=True)
+  #         await interaction.response.send_message(await translate_message(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://wolium.netlify.app/rules/) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv' ), ephemeral=True)
   #         return
   #       global slash_command_cooldown
   #       user_id = interaction.user.id
@@ -480,7 +481,7 @@ if __name__=='__main__i':
   #       language = user_settings['language']
 
   #       if user_settings['banned'] or guild_settings['banned']:
-  #         await interaction.response.send_message(await translate_message(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://sites.google.com/view/arturwolium/main-page/rules) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).",language), ephemeral=True)
+  #         await interaction.response.send_message(await translate_message(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://wolium.netlify.app/rules/) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).",language), ephemeral=True)
   #         servers_with_no_acces_for_bot.append(interaction.guild.id)
   #         users_with_no_acces_for_bot.append(user_id)
   #         return
@@ -1066,7 +1067,7 @@ if __name__=='__main__i':
             json.dump(economy_data, f, ensure_ascii=False, indent=4)
 
       else:
-        await interaction.response.send_message(translate_to_all_languages(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://sites.google.com/view/arturwolium/main-page/rules) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).", 'message', interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv' ), ephemeral=True)
+        await interaction.response.send_message(translate_to_all_languages(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://wolium.netlify.app/rules/) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).", 'message', interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv' ), ephemeral=True)
     except Exception as e:
       traceback_msg = ((''.join(traceback.format_exception(type(e), e, e.__traceback__)))[:5000])
       log = nextcord.Embed(
@@ -1217,7 +1218,7 @@ if __name__=='__main__i':
         )
         await send_warn_message.edit('',embed=success_unban)
       else:
-        await interaction.response.send_message(translate_to_all_languages(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://sites.google.com/view/arturwolium/main-page/rules) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).", 'message', interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv' ), ephemeral=True)
+        await interaction.response.send_message(translate_to_all_languages(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://wolium.netlify.app/rules/) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).", 'message', interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv' ), ephemeral=True)
     except Exception as e:
       traceback_msg = ((''.join(traceback.format_exception(type(e), e, e.__traceback__)))[:5000])
       log = nextcord.Embed(
@@ -1379,7 +1380,7 @@ if __name__=='__main__i':
           )
         await send_unwarn_message.edit('',embed=success_unban)
       else:
-        await interaction.response.send_message(translate_to_all_languages(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://sites.google.com/view/arturwolium/main-page/rules) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).", 'message', interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv' ), ephemeral=True)
+        await interaction.response.send_message(translate_to_all_languages(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://wolium.netlify.app/rules/) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).", 'message', interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv' ), ephemeral=True)
     except Exception as e:
       traceback_msg = ((''.join(traceback.format_exception(type(e), e, e.__traceback__)))[:5000])
       log = nextcord.Embed(
@@ -1665,7 +1666,7 @@ if __name__=='__main__i':
             json.dump(economy_data, f, ensure_ascii=False, indent=4)
 
       else:
-        await interaction.response.send_message(translate_to_all_languages(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://sites.google.com/view/arturwolium/main-page/rules) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).", 'message', interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv' ), ephemeral=True)
+        await interaction.response.send_message(translate_to_all_languages(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://wolium.netlify.app/rules/) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).", 'message', interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv' ), ephemeral=True)
     except Exception as e:
       traceback_msg = ((''.join(traceback.format_exception(type(e), e, e.__traceback__)))[:5000])
       log = nextcord.Embed(
@@ -1879,7 +1880,7 @@ if __name__=='__main__i':
 
 
       else:
-        await interaction.response.send_message(translate_to_all_languages(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://sites.google.com/view/arturwolium/main-page/rules) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).", 'message', interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv' ), ephemeral=True)
+        await interaction.response.send_message(translate_to_all_languages(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://wolium.netlify.app/rules/) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).", 'message', interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv' ), ephemeral=True)
     except Exception as e:
       traceback_msg = ((''.join(traceback.format_exception(type(e), e, e.__traceback__)))[:5000])
       log = nextcord.Embed(
@@ -2118,7 +2119,7 @@ if __name__=='__main__i':
 
         await mod_chan.send(embed=embe)
     else:
-        await interaction.response.send_message(translate_to_all_languages(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://sites.google.com/view/arturwolium/main-page/rules) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).", 'message', interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv' ), ephemeral=True)
+        await interaction.response.send_message(translate_to_all_languages(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://wolium.netlify.app/rules/) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).", 'message', interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv' ), ephemeral=True)
 
   math_expression_pattern = re.compile(r'^[0-9+\-*/^()xXabcπ÷÷√%!.=⁻ ]+$', re.IGNORECASE)
   power_replacements = {
@@ -2257,7 +2258,7 @@ if __name__=='__main__i':
 
         await mod_chan.send(embed=embe)
       else:
-        await interaction.response.send_message(translate_to_all_languages(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://sites.google.com/view/arturwolium/main-page/rules) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).", 'message', interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv' ), ephemeral=True)
+        await interaction.response.send_message(translate_to_all_languages(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://wolium.netlify.app/rules/) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).", 'message', interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv' ), ephemeral=True)
     except Exception as e:
         traceback_msg = ((''.join(traceback.format_exception(type(e), e, e.__traceback__)))[:5000])
         log = nextcord.Embed(
@@ -2542,7 +2543,7 @@ if __name__=='__main__i':
             json.dump(economy_data, f, ensure_ascii=False, indent=4)
 
       else:
-        await interaction.response.send_message(translate_to_all_languages(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://sites.google.com/view/arturwolium/main-page/rules) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).", 'message', interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv' ), ephemeral=True)
+        await interaction.response.send_message(translate_to_all_languages(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://wolium.netlify.app/rules/) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).", 'message', interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv' ), ephemeral=True)
     except Exception as e:
       traceback_msg = ((''.join(traceback.format_exception(type(e), e, e.__traceback__)))[:5000])
       log = nextcord.Embed(

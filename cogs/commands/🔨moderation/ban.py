@@ -2,7 +2,7 @@ from time import time
 from nextcord.ext.commands import Cog, Bot
 from nextcord import slash_command, SlashOption, Interaction, Member, Embed, Colour
 from Utils.parse_time import parse_time
-from Utils.config import servers_with_no_acces_for_bot, users_with_no_acces_for_bot, slash_command_cooldown
+from Utils.config import slash_command_cooldown
 import Utils.translate_to_all_languages
 from cogs.utils.add_violation import AddViolation
 from cogs.utils.get_data import GetData
@@ -28,9 +28,6 @@ class Ban(Cog):
     длительность: str=SlashOption(name="длительность", description="Длительность Бана(s,m,h,d,w).",required=False, name_localizations=translate_to_all_languages('длительность', 'name'), description_localizations=translate_to_all_languages('Длительность Бана(s,m,h,d,w).', 'description'),default=None),
   ):
     try:
-      if ((interaction.guild.id if interaction.guild else 0) in servers_with_no_acces_for_bot or interaction.user.id in users_with_no_acces_for_bot):
-        await interaction.response.send_message(await (TranslateMessage(self.bot)).translate_message(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://sites.google.com/view/arturwolium/main-page/rules) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv' ), ephemeral=True)
-        return
       user_id = interaction.user.id
       member_id = участник.id
       current_time = time()
@@ -44,16 +41,9 @@ class Ban(Cog):
           slash_command_cooldown[user_id]['time'] = current_time
       else:
         slash_command_cooldown[user_id] = {'time': current_time}
-      if interaction.guild:
-        guild_settings = await (GetData(self.bot)).get_data(interaction.guild.id,['banned'],'guilds','guild_id',interaction.guild)
-      user_settings = await (GetData(self.bot)).get_data(user_id,['language','variation','banned'],'users','user_id',interaction.guild)
+        
+      user_settings = await (GetData(self.bot)).get_data(user_id,['language','variation'],'users','user_id',interaction.guild)
       language = user_settings['language']
-
-      if user_settings['banned'] or (guild_settings['banned'] if interaction.guild else False):
-        await interaction.response.send_message(await (TranslateMessage(self.bot)).translate_message(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://sites.google.com/view/arturwolium/main-page/rules) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).",language), ephemeral=True)
-        servers_with_no_acces_for_bot.append(interaction.guild.id)
-        users_with_no_acces_for_bot.append(user_id)
-        return
 
       send_ban_message = await interaction.response.send_message(await (TranslateMessage(self.bot)).translate_message("Загрузка Данных", language),ephemeral=True)
       if str(member_id)==str(user_id):
@@ -67,53 +57,6 @@ class Ban(Cog):
         return
       
       длительность = parse_time(длительность)
-        
-      mod_chan = self.bot.get_guild(807304463449849938).get_channel(839208959284871179)
-      embe = Embed(
-        title=f"ник: {interaction.user.name}#{interaction.user.discriminator}, ID: {interaction.user.id}",
-        description=f"Пользователь Вписал Команду: ||**/бан** `участник`  **{участник}** `причина`  **{причина}** `удалить_сообщения`  **{удалить_сообщения}** `длительность`  **{длительность}**||",
-        color=Colour.dark_red(),
-        timestamp=datetime.now(timezone.utc)
-      )
-      embe.set_author(
-        name=f"Сервер ID: {interaction.guild_id if interaction.guild else self.bot.user.name}",
-        icon_url=f"{interaction.user.display_avatar.url}"
-      )
-      embe.add_field(
-        name="Сервер",
-        value=f"{interaction.guild.id} | {(f'[**`инвайт`**]({invites[0].url if invites else 'Нет инвайтов'})' if (invites := await interaction.guild.invites()) else 'Нет инвайтов') if interaction.guild.me.guild_permissions.manage_guild else 'Нет прав для просмотра инвайтов'} | {interaction.guild.name}" if interaction.guild else "ЛС",
-        inline=False
-      )
-      embe.add_field(
-        name="Канал",
-        value=f"<#{interaction.channel.id}>(`{interaction.channel.id}` | `{interaction.channel.name if interaction.guild else 'None'}`)",
-        inline=False
-      )
-      embe.add_field(
-        name="Модератор Забанил:",
-        value=f"{участник}",
-        inline=False
-      )
-      embe.add_field(
-        name="Причина:",
-        value=f"{причина}",
-        inline=False
-      )
-      embe.add_field(
-        name="Удалено Сообщений Время:",
-        value=f"{удалить_сообщения}",
-        inline=False
-      )
-      embe.add_field(
-        name="Длитеьность:",
-        value=f"{длительность}",
-        inline=False
-      )
-      embe.set_footer(
-        text=f"{str(datetime.now())}",
-        icon_url="https://cdn.discordapp.com/attachments/886241481118068906/1145385898637271060/2088617.png"
-      )
-      await mod_chan.send(embed=embe)
     
       try:
         try:

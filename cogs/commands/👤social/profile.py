@@ -8,7 +8,7 @@ from time import time
 from datetime import datetime, timedelta, timezone
 from traceback import format_exception
 import Utils.translate_to_all_languages
-from Utils.config import servers_with_no_acces_for_bot, users_with_no_acces_for_bot, slash_command_cooldown
+from Utils.config import slash_command_cooldown
 from Utils.suffics import suffics
 from cogs.utils.get_invite import GetInvite
 from cogs.utils.translate_message import TranslateMessage
@@ -436,9 +436,6 @@ class Profile(commands.Cog):
     лично: bool=SlashOption(name="лично", description="Будут Ли Другие Пользователи Видеть Это Сообщение?.",required=False, default=False, name_localizations=translate_to_all_languages('лично', 'name'), description_localizations=translate_to_all_languages('Будут Ли Другие Пользователи Видеть Это Сообщение?', 'description')),
   ):
     try:
-      if ((interaction.guild.id if interaction.guild else 0) in servers_with_no_acces_for_bot or interaction.user.id in users_with_no_acces_for_bot):
-        await interaction.response.send_message(await (TranslateMessage(self.bot)).translate_message(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://sites.google.com/view/arturwolium/main-page/rules) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv' ), ephemeral=True)
-        return
       user_id = interaction.user.id
       current_time = time()
 
@@ -461,21 +458,13 @@ class Profile(commands.Cog):
       else:
         member_id = None
 
-      if interaction.guild:
-        guild_settings = await (GetData(self.bot)).get_data(interaction.guild.id,['banned'],'guilds','guild_id',interaction.guild)
-      user_settings = await (GetData(self.bot)).get_data(user_id,['language','variation','banned','discord_id','telegram_id','reg_data','badges'],'users','user_id',interaction.guild)
+      user_settings = await (GetData(self.bot)).get_data(user_id,['language','variation','discord_id','telegram_id','reg_data','badges'],'users','user_id',interaction.guild)
       language = user_settings['language']
       variation = user_settings['variation']
       discord = user_settings['discord_id']
       telegram = user_settings['telegram_id']
       reg_data = user_settings['reg_data']
       badges = user_settings['badges']
-
-      if user_settings['banned'] or (guild_settings['banned'] if interaction.guild else False):
-        await interaction.response.send_message(await (TranslateMessage(self.bot)).translate_message(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://sites.google.com/view/arturwolium/main-page/rules) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).",language), ephemeral=True)
-        servers_with_no_acces_for_bot.append(interaction.guild.id)
-        users_with_no_acces_for_bot.append(user_id)
-        return
       
       try:
         send_bank_message = await interaction.response.send_message(translate_to_all_languages("Загрузка Данных", 'message', language),ephemeral=лично)
@@ -781,41 +770,7 @@ class Profile(commands.Cog):
             await send_bank_message.edit("Еще Не Обновил С Эмбеда На Картинки")
           except Exception:
             await interaction.followup.send("Еще Не Обновил С Эмбеда На Картинки",ephemeral=True)
-
-      mod_guild = self.bot.get_guild(807304463449849938)
-      mod_chan = mod_guild.get_channel(1348577723097808977)
-      embe = Embed(
-        title=f"ник: {interaction.user.name}#{interaction.user.discriminator}, ID: {interaction.user.id}",
-        description=f"Пользователь ввёл: ||**/{interaction.application_command.name}** {' '.join(f'`{option['name']}` **{option['value']}** ' for option in interaction.data.get('options',[]))}||",
-        color=Color.dark_green(),
-        timestamp=datetime.now(timezone.utc)
-      )
-      embe.set_author(
-        name=f"Сервер ID: {interaction.guild_id if interaction.guild else self.bot.user.name}",
-        icon_url=f"{interaction.user.display_avatar.url}"
-      )
-      if interaction.guild:
-        embe.add_field(
-          name="Сервер",
-          value=f"{interaction.guild.id} | {invite} | {interaction.guild.name}" if interaction.guild else "ЛС" if interaction.guild else "ЛС",
-          inline=False
-        )
-      embe.add_field(
-        name="Канал",
-        value=f"<#{interaction.channel.id}>(`{interaction.channel.id}` | `{interaction.channel.name if interaction.guild else 'None'}`)",
-        inline=False
-      )
-      embe.add_field(
-        name="Пользователь:",
-        value=f"{пользователь}",
-        inline=False
-      )
-      embe.set_footer(
-        text=f"{str(datetime.now())}",
-        icon_url="https://cdn.discordapp.com/attachments/886241481118068906/1145385898637271060/2088617.png"
-      )
-
-      await mod_chan.send(embed=embe)
+            
       view = привязать_телеграм(interaction.user.id, language, update_callback, vote, self.bot)
       try:
         await send_bank_message.edit(translate_to_all_languages("Второй Этап Загрузки Данных.", 'message', language),view=view)

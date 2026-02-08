@@ -1,28 +1,45 @@
 import nextcord
 from nextcord.ext import commands
 import asyncio
-import json
 from datetime import datetime, timedelta
-from cogs.utils.get_data import GetData
-from cogs.utils.update_data import UpdateData
-from main import servers_with_no_acces_for_bot, users_with_no_acces_for_bot
-
+from Utils.config import servers_with_no_acces_for_bot, users_with_no_acces_for_bot
 
 time_of_join = {}
 
 class OnVoiceStateUpdate(commands.Cog):
   def __init__(self, bot):
     self.bot:commands.Bot = bot
+
+  async def get_data(self):
+    return self.bot.get_cog("GetData")
+  
+  async def update_data(self):
+    return self.bot.get_cog("Update")
   
   @commands.Cog.listener()
   async def on_voice_state_update(self, member: nextcord.Member, before: nextcord.VoiceState, after: nextcord.VoiceState):
+    if not member:
+      return
     global time_of_join
-    if self.bot.user in member.guild.voice_channels and len(member.guild.voice_channels) == 1:
-      await asyncio.sleep(20)
-      if len(member.guild.voice_channels) == 1 and self.bot.user in member.guild.voice_channels:
-        await member.guild.voice_client.disconnect()
+    user_id = member.id
+    guild_id = member.guild.id if member.guild else None
+
+    if guild_id in servers_with_no_acces_for_bot or user_id in users_with_no_acces_for_bot:
+      return
+    if not self.bot.get_user(user_id):
+      return
+    if guild_id:
+      guild_settings = await self.get_data.get_data(guild_id,['banned'],'guilds','guild_id',member.guild)
+    user_settings = await self.get_data.get_data(user_id,['banned'],'users','user_id',member.guild)
+
+    if user_settings['banned'] or (guild_settings['banned'] if member.guild else False):
+      servers_with_no_acces_for_bot.append(guild_id)
+      users_with_no_acces_for_bot.append(user_id)
+      return
     
-    if (member.guild.id if member.guild else 0) in servers_with_no_acces_for_bot or member.id in users_with_no_acces_for_bot or member.guild is None:
+    user_privacy = await self.get_data.get_data(user_id,['save_voice'], 'user_privacy', 'user_id', member.guild)
+    
+    if not user_privacy['save_voice']:
       return
 
     sdeaf = member.voice.self_deaf if member.voice else None
@@ -30,16 +47,15 @@ class OnVoiceStateUpdate(commands.Cog):
     deaf = member.voice.deaf if member.voice else None
     mute = member.voice.mute if member.voice else None
 
-    guild_id = member.guild.id#------------------------------------------> не может быть None, bigint
-    before_channel_id = before.channel.id if before.channel else None#----> может быть None, bigint
-    after_channel_id = after.channel.id if after.channel else None#-------> может быть None, bigint
-    user_id = member.id#--------------------------------------------------> не может быть None, bigint
-    enter_time = None#----------------------------------------------------> не может быть None, timestamp
-    leave_time = None#----------------------------------------------------> не может быть None, timestamp
+    before_channel_id = before.channel.id if before.channel else None
+    after_channel_id = after.channel.id if after.channel else None
+    user_id = member.id
+    enter_time = None
+    leave_time = None
     
-    time_spent = None#----------------------------------------------------> не может быть None, interval
+    time_spent = None
 
-    user_data = await (GetData(self.bot)).get_data(user_id,['xp','bank_balance','balance','upgrade'],'user_data','user_id',member.guild)
+    user_data = await self.get_data.get_data(user_id,['xp','bank_balance','balance','upgrade'],'user_data','user_id',member.guild)
     xp = user_data['xp']
     bank_balance = user_data['bank_balance']
     balance = user_data['balance']
@@ -49,7 +65,7 @@ class OnVoiceStateUpdate(commands.Cog):
     if before.channel is None and after.channel and sdeaf!=True and smute!=True and deaf!=True and mute!=True:
       joined_at_voice = datetime.now()
       await asyncio.sleep(20)
-      if member in member.guild.voice_channels and len(member.guild.voice_channels) == 1:
+      if after.channel and len(after.channel.members) == 1:
         await asyncio.sleep(20)
         if len(member.guild.voice_channels) == 1 and member in member.guild.voice_channels:
           return
@@ -69,7 +85,7 @@ class OnVoiceStateUpdate(commands.Cog):
           'bank_balance': bank_balance+voice_reward,
           'balance': balance+voice_reward,
         }
-        await (UpdateData(self.bot)).update_data(user_id, data, 'user_data', 'user_id', member.guild)
+        await self.update_data.update_data(user_id, data, 'user_data', 'user_id', member.guild)
 
         if hasattr(self.bot, 'db_pool') and self.bot.db_pool:
           async with self.bot.db_pool.acquire() as connection:
@@ -94,7 +110,7 @@ class OnVoiceStateUpdate(commands.Cog):
           'bank_balance': bank_balance+voice_reward,
           'balance': balance+voice_reward,
         }
-        await (UpdateData(self.bot)).update_data(user_id, data, 'user_data', 'user_id', member.guild)
+        await self.update_data.update_data(user_id, data, 'user_data', 'user_id', member.guild)
 
         if hasattr(self.bot, 'db_pool') and self.bot.db_pool:
           async with self.bot.db_pool.acquire() as connection:

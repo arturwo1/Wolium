@@ -342,7 +342,7 @@ class MessageReport(commands.Cog):
   async def репорт_сообщения(self,interaction: Interaction, message: Message):
     try:
       if ((interaction.guild.id if interaction.guild else 0) in servers_with_no_acces_for_bot or interaction.user.id in users_with_no_acces_for_bot):
-        await interaction.response.send_message(await (TranslateMessage(self.bot)).translate_message(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://sites.google.com/view/arturwolium/main-page/rules) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv' ), ephemeral=True)
+        await interaction.response.send_message(await (TranslateMessage(self.bot)).translate_message(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://wolium.netlify.app/rules/) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv' ), ephemeral=True)
         return
       user_id = interaction.user.id
       current_time = time()
@@ -360,15 +360,8 @@ class MessageReport(commands.Cog):
       else:
         report_cooldown[user_id] = {'time': current_time}
       
-      guild_settings = await (GetData(self.bot)).get_data(interaction.guild.id,['banned'],'guilds','guild_id',interaction.guild)
-      user_settings = await (GetData(self.bot)).get_data(user_id,['language','variation','banned'],'users','user_id',interaction.guild)
+      user_settings = await (GetData(self.bot)).get_data(user_id,['language','variation'],'users','user_id',interaction.guild)
       language = user_settings['language']
-
-      if user_settings['banned'] or (guild_settings['banned'] if interaction.guild else False):
-        await interaction.response.send_message(await (TranslateMessage(self.bot)).translate_message(f"Вы Или Этот Сервер Были Заблокированы За Нарушение [**`Правил`**](https://sites.google.com/view/arturwolium/main-page/rules) Бота!\nОбсудите Это На Основном Сервере Бота(***`https://discord.gg/MXupeAApza`***).",language), ephemeral=True)
-        servers_with_no_acces_for_bot.append(interaction.guild.id)
-        users_with_no_acces_for_bot.append(user_id)
-        return
       
       await interaction.response.defer(ephemeral=True)
       
@@ -386,34 +379,6 @@ class MessageReport(commands.Cog):
 
       view=reportview(interaction,message,language,mod_channel_id,self.bot)
       await interaction.followup.send('### '+await (TranslateMessage(self.bot)).translate_message(f"Если Вы Уверены Что Хотите Репортнуть",language)+f' **{message.author.mention}** '+await (TranslateMessage(self.bot)).translate_message(f"За Сообщение",language)+f'\n-# {message.content}\n### '+await (TranslateMessage(self.bot)).translate_message(f"То Жмите Кнопку Ниже.",language),view=view,ephemeral=True)
-
-      fields = [
-        {
-          'name':'Пользователь',
-          'value':f"{interaction.user.id} | {interaction.user.mention} | {interaction.user.name}",
-          'inline':True
-        },
-        {
-          'name':'Сервер',
-          'value':f"{interaction.guild.id} | {invite} | {interaction.guild.name}" if interaction.guild else "ЛС",
-          'inline':True
-        },
-        {
-          'name':'Канал',
-          'value':f"<#{interaction.channel.id}>(`{interaction.channel.id}` | `{interaction.channel.name if interaction.guild else f'[<@{interaction.user.id}>({interaction.user.id} | {interaction.user.name}({interaction.user.display_name})]'}`)",
-          'inline':True
-        }
-      ]
-      await (SendEmbed(self.bot)).send_embed(
-        title="Ввод команды",
-        description=f"Пользователь ввёл: ||**/{interaction.application_command.name}** {' '.join(f'`{option['name']}` **{option['value']}** ' for option in interaction.data.get('options',[]))}||",
-        color=Colour.yellow(),
-        fields=fields,
-        footer_text=interaction.application_command.name,
-        author_text=interaction.user.name,
-        author_icon=interaction.user.display_avatar.url,
-        channel_id=1348577723097808977
-      )
 
     except Exception as e:
       traceback_msg = ((''.join(format_exception(type(e), e, e.__traceback__)))[:5000])
