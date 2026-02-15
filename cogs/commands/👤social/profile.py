@@ -21,6 +21,7 @@ from io import BytesIO
 from aiohttp import ClientSession
 from copy import deepcopy
 from babel.dates import format_datetime
+from Utils.calculate_LvL import calculate_LvL
 
 translate_to_all_languages = Utils.translate_to_all_languages.translate_to_all_languages
 executor = ThreadPoolExecutor()
@@ -212,12 +213,7 @@ class Profile(commands.Cog):
   ):
     upscale = 2.0
     xp = kwargs.get("xp", 0)
-    XP_now = xp
-    LvL = 0
-    while XP_now > 25 * LvL:
-      XP_now -= 25 * LvL
-      LvL += 1
-    XP_need = 25 * LvL
+    LvL, XP_need, XP_now = calculate_LvL(xp)
 
     if type_ in ['discord', 'server']:
       width, height = int(380 * upscale), int(290 * upscale)

@@ -13,7 +13,6 @@ if __name__=='__main__':
   print(f"Скрипт запустился в \033[38;5;226m{time_when_bot_run_firts}\033[0m")
 
 import os
-import ssl
 import random
 import nextcord
 from nextcord.ext import commands
@@ -34,6 +33,7 @@ from nextcord.ext import commands
 from aiohttp import web
 from traceback import format_exception
 from Utils.lazylightshow import lazylightshow
+from Utils.config import DATABASE_CONFIG
 
 from cogs.utils.send_embed import SendEmbed
 
@@ -69,19 +69,6 @@ bot = commands.AutoShardedBot(
 )
 
 # POSTGRESQL
-ssl_context = ssl.create_default_context()
-ssl_context.check_hostname = False
-ssl_context.verify_mode = ssl.CERT_NONE
-DATABASE_CONFIG = {
-  "user": os.getenv("POSTGRESQL_ADMIN_USER"),
-  "password": os.getenv("POSTGRESQL_ADMIN_PASSWORD"),
-  "database": "postgres",
-  "host": os.getenv("POSTGRESQL_ADMIN_HOST"),
-  "port": os.getenv("POSTGRESQL_ADMIN_PORT"),
-  "ssl": ssl_context,
-  "statement_cache_size": 0
-}
-
 async def init_database():
   return await asyncpg.create_pool(**DATABASE_CONFIG)
 
@@ -369,11 +356,8 @@ async def on_ready():
     bot.db_pool = await init_database()
     app = web.Application()
 
-    app.router.add_post('/topgg', bot.get_cog("OnDBLVote").topgg_vote)
     app.router.add_post('/discord', bot.get_cog("DiscordWebhook").discord_info)
     app.router.add_get('/.well-known/discord', bot.get_cog("VerifyWebsiteForDiscord").discord_verification)
-    app.router.add_get('/updates', bot.get_cog("UpdatesLink").updates_link)
-    app.router.add_get('/', bot.get_cog("WebMain").index)
 
     # bot.add_view(violationsview1())
     # bot.add_view(violationsview2())
@@ -382,7 +366,7 @@ async def on_ready():
     try:
       runner = web.AppRunner(app)
       await runner.setup()
-      site = web.TCPSite(runner, "0.0.0.0", 8080)
+      site = web.TCPSite(runner, "0.0.0.0", 8082)
       await site.start()
     except Exception as e:
       print('Произошла ошибка в on_ready при старте сайта\n',''.join(format_exception(type(e), e, e.__traceback__)))

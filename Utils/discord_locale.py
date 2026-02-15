@@ -4,7 +4,7 @@ locales = {
   'sv': ['sv-SE'],
 }
 
-def locale(locale:str|any) -> str:
+def locale(locale:str) -> str:
   if not locale:
     return 'en'
   
