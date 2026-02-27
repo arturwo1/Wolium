@@ -1,11 +1,6 @@
 import nextcord
 from nextcord.ext import commands
 from datetime import datetime,timezone
-from cogs.utils.ensure_guild_exists import EnsureGuildExists
-from cogs.utils.ensure_user_exists import EnsureUserExists
-from cogs.utils.ensure_user_data_exists import EnsureUserDataExists
-from cogs.utils.ensure_user_privacy_exists import EnsureUserPrivacyExists
-from cogs.utils.ensure_guild_user_exists import EnsureGuildUserExists
 from Utils.config import users
 import traceback
 from asyncio import sleep
@@ -17,6 +12,13 @@ class GetData(commands.Cog):
     self.bot:commands.Bot = bot
     
   async def get_data(self,user_id:str,data:list,table:str,checker:str,guild:nextcord.Guild=None):
+    ensure_guild = self.bot.get_cog("EnsureGuildExists")
+    ensure_user = self.bot.get_cog("EnsureUserExists")
+    if not (ensure_guild or ensure_user):
+      from cogs.utils.ensure_guild_exists import EnsureGuildExists
+      from cogs.utils.ensure_user_exists import EnsureUserExists
+      ensure_guild = EnsureGuildExists(self.bot)
+      ensure_user = EnsureUserExists(self.bot)
     try:
       data_str = ', '.join(data)
       get_user_data = 'None'
@@ -26,27 +28,22 @@ class GetData(commands.Cog):
         user = None
       while True:
         if hasattr(self.bot, 'db_pool') and self.bot.db_pool:
-          async with self.bot.db_pool.acquire() as conn:
-            if guild and not user:
+          if guild and not user:
+            language = guild.preferred_locale if guild.preferred_locale!='en-US' and guild.preferred_locale!='en-GB' and guild.preferred_locale!='es-ES' and guild.preferred_locale!='sv-SE' else 'en' if guild.preferred_locale=='en-US' or guild.preferred_locale=='en-GB' and guild.preferred_locale!='es-ES' and guild.preferred_locale!='sv-SE' else 'es' if guild.preferred_locale!='en-US' and guild.preferred_locale!='en-GB' and guild.preferred_locale=='es-ES' and guild.preferred_locale!='sv-SE' else 'sv'
+            await ensure_guild.ensure_guild_exists(guild.id)
+          elif not guild and user:
+            await ensure_user.ensure_user_exists(user_id, user.name)
+          elif guild and user:
+            if user_id not in users:
               language = guild.preferred_locale if guild.preferred_locale!='en-US' and guild.preferred_locale!='en-GB' and guild.preferred_locale!='es-ES' and guild.preferred_locale!='sv-SE' else 'en' if guild.preferred_locale=='en-US' or guild.preferred_locale=='en-GB' and guild.preferred_locale!='es-ES' and guild.preferred_locale!='sv-SE' else 'es' if guild.preferred_locale!='en-US' and guild.preferred_locale!='en-GB' and guild.preferred_locale=='es-ES' and guild.preferred_locale!='sv-SE' else 'sv'
-              await (EnsureGuildExists(self.bot)).ensure_guild_exists(guild.id)
-            elif not guild and user:
-              await (EnsureUserExists(self.bot)).ensure_user_exists(user_id, user.name)
-              await (EnsureUserDataExists(self.bot)).ensure_user_data_exists(user_id)
-              await (EnsureUserPrivacyExists(self.bot)).ensure_user_privacy_exists(user_id)
-            elif guild and user:
-              if user_id not in users:
-                language = guild.preferred_locale if guild.preferred_locale!='en-US' and guild.preferred_locale!='en-GB' and guild.preferred_locale!='es-ES' and guild.preferred_locale!='sv-SE' else 'en' if guild.preferred_locale=='en-US' or guild.preferred_locale=='en-GB' and guild.preferred_locale!='es-ES' and guild.preferred_locale!='sv-SE' else 'es' if guild.preferred_locale!='en-US' and guild.preferred_locale!='en-GB' and guild.preferred_locale=='es-ES' and guild.preferred_locale!='sv-SE' else 'sv'
-                await (EnsureGuildExists(self.bot)).ensure_guild_exists(guild.id)
-                await (EnsureUserExists(self.bot)).ensure_user_exists(user_id,user.name,language,guild) 
-                await (EnsureGuildUserExists(self.bot)).ensure_guild_user_exists(guild.id, user_id)
-                await (EnsureUserDataExists(self.bot)).ensure_user_data_exists(user_id, guild)
-                await (EnsureUserPrivacyExists(self.bot)).ensure_user_privacy_exists(user_id, guild)
-                users.add(user_id)
-
-            query = f"SELECT {data_str} FROM {table} WHERE {checker} = $1"
-            get_user_data = await conn.fetchrow(query,user_id)
-            return {got_data:get_user_data[got_data] for got_data in data}
+              await ensure_guild.ensure_guild_exists(guild.id)
+              await ensure_user.ensure_user_exists(user_id,user.name,language,guild)
+              users.add(user_id)
+          async with self.bot.db_pool.acquire() as conn:
+            async with conn.transaction():
+              query = f"SELECT {data_str} FROM {table} WHERE {checker} = $1"
+              get_user_data = await conn.fetchrow(query,user_id)
+              return {got_data:get_user_data[got_data] for got_data in data}
           break
         else:
           await sleep(10)

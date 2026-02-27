@@ -1,24 +1,24 @@
 import nextcord
 from nextcord.ext import commands
 from datetime import datetime,timezone
-from cogs.utils.ensure_guild_exists import EnsureGuildExists
-from cogs.utils.ensure_user_exists import EnsureUserExists
-from cogs.utils.ensure_user_data_exists import EnsureUserDataExists
-from cogs.utils.ensure_user_privacy_exists import EnsureUserPrivacyExists
-from cogs.utils.ensure_guild_user_exists import EnsureGuildUserExists
 from Utils.config import users
 import traceback
 from asyncio import sleep
-
 from cogs.utils.get_invite import GetInvite
-
-
+from json import dumps
 
 class UpdateData(commands.Cog):
 	def __init__(self, bot):
 		self.bot:commands.Bot = bot
 
+	def _adapt_value(self, v):
+		if isinstance(v, (dict, list)):
+			return dumps(v, ensure_ascii=False, separators=(",", ":"))
+		return v
+	
 	async def update_data(self,user_id:str,data:dict,table:str,checker:str,guild:nextcord.Guild=None):
+		ensure_guild = self.bot.get_cog("EnsureGuildExists")
+		ensure_user = self.bot.get_cog("EnsureUserExists")
 		try:
 			data_str = ', '.join([f"{key} = ${i+2}" for i,key in enumerate(data.keys())])
 			edit_data = 'None'
@@ -29,37 +29,35 @@ class UpdateData(commands.Cog):
 				user = None
 			while True:
 				if hasattr(self.bot, 'db_pool') and self.bot.db_pool:
-					async with self.bot.db_pool.acquire() as conn:
-						if guild:
-							await EnsureGuildExists(self.bot).ensure_guild_exists(guild.id)
-							if user:
-								if user_id not in users:
-									language = guild.preferred_locale if guild.preferred_locale!='en-US' and guild.preferred_locale!='en-GB' and guild.preferred_locale!='es-ES' and guild.preferred_locale!='sv-SE' else 'en' if guild.preferred_locale=='en-US' or guild.preferred_locale=='en-GB' and guild.preferred_locale!='es-ES' and guild.preferred_locale!='sv-SE' else 'es' if guild.preferred_locale!='en-US' and guild.preferred_locale!='en-GB' and guild.preferred_locale=='es-ES' and guild.preferred_locale!='sv-SE' else 'sv'
-									await (EnsureUserExists(self.bot)).ensure_user_exists(user_id,user.name,language,guild) 
-									await (EnsureGuildUserExists(self.bot)).ensure_guild_user_exists(guild.id, user_id)
-									await (EnsureUserDataExists(self.bot)).ensure_user_data_exists(user_id, guild)
-									await (EnsureUserPrivacyExists(self.bot)).ensure_user_privacy_exists(user_id, guild)
-									users.add(user_id)
-						elif not guild and user:
-							await (EnsureUserExists(self.bot)).ensure_user_exists(user_id, user.name)
-							await (EnsureUserDataExists(self.bot)).ensure_user_data_exists(user_id)
-							await (EnsureUserPrivacyExists(self.bot)).ensure_user_privacy_exists(user_id)
+					if guild:
+						await ensure_guild.ensure_guild_exists(guild.id)
+						if user:
+							if user_id not in users:
+								language = guild.preferred_locale if guild.preferred_locale!='en-US' and guild.preferred_locale!='en-GB' and guild.preferred_locale!='es-ES' and guild.preferred_locale!='sv-SE' else 'en' if guild.preferred_locale=='en-US' or guild.preferred_locale=='en-GB' and guild.preferred_locale!='es-ES' and guild.preferred_locale!='sv-SE' else 'es' if guild.preferred_locale!='en-US' and guild.preferred_locale!='en-GB' and guild.preferred_locale=='es-ES' and guild.preferred_locale!='sv-SE' else 'sv'
+								await ensure_user.ensure_user_exists(user_id,user.name,language,guild) 
+								users.add(user_id)
+					elif not guild and user:
+						await ensure_user.ensure_user_exists(user_id, user.name)
 
-						if len(data_str)>2000:
-							await conn.execute(
-								f"UPDATE {table} SET {data_str} = '' WHERE {checker} = $1",
-								checker
-							)
-							for i in range(0, len(data_str), 2000):
-								chunk = data_str[i:i+2000]
+					async with self.bot.db_pool.acquire() as conn:
+						async with conn.transaction():
+							if len(data_str)>2000:
 								await conn.execute(
-									f"UPDATE {table} SET {data_str} = {data_str} || $1 WHERE {checker} = $2",
-									chunk, checker
+									f"UPDATE {table} SET {data_str} = '' WHERE {checker} = $1",
+									checker
 								)
-						else:
-							query = f"UPDATE {table} SET {data_str} WHERE {checker} = $1"
-							values = [user_id]+list(data.values())
-							await conn.execute(query,*values)
+								for i in range(0, len(data_str), 2000):
+									chunk = data_str[i:i+2000]
+									await conn.execute(
+										f"UPDATE {table} SET {data_str} = {data_str} || $1 WHERE {checker} = $2",
+										chunk, checker
+									)
+							else:
+								query = f"UPDATE {table} SET {data_str} WHERE {checker} = $1"
+								adapted = [self._adapt_value(v) for v in data.values()]
+								values = [user_id] + adapted
+								edit_data = adapted
+								await conn.execute(query,*values)
 					break
 				else:
 					await sleep(10)

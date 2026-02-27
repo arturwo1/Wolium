@@ -146,14 +146,15 @@ class LHM:
         "value": float(s.Value),
         "min": mn,
         "max": mx,
-        "parameters": {
-          slug_seg(p.Name): {
-            "name": str(p.Name),
-            "value": p.Value,
-            "default": p.DefaultValue,
-            "description": str(p.Description)
-          } for p in s.Parameters
-        }
+        "parameters": {}
+        # "parameters": {
+        #   slug_seg(p.Name): {
+        #     "name": str(p.Name),
+        #     "value": p.Value,
+        #     "default": p.DefaultValue,
+        #     "description": str(p.Description)
+        #   } for p in s.Parameters
+        # }
       })
 
     for shw in hw.SubHardware:

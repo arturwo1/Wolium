@@ -27,6 +27,8 @@ class TranslateMessage(commands.Cog):
     return await asyncio.to_thread(GoogleTranslator(source='auto',target=lang).translate,text)
 
   async def translate_message(self,text:str,message_language:str|None=None,message_language_for_now:str|None=None,save:bool=True):
+    if not text: return "<None>"
+    
     async with json_lock:
       with open('command_translations.json','r',encoding='utf-8') as f:
         try:

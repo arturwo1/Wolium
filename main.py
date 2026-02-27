@@ -34,6 +34,7 @@ from aiohttp import web
 from traceback import format_exception
 from Utils.lazylightshow import lazylightshow
 from Utils.config import DATABASE_CONFIG
+from helper import restore_feedback_views, JsonFeedbackStore
 
 from cogs.utils.send_embed import SendEmbed
 
@@ -335,6 +336,8 @@ async def PostgreSQL_backup_data():
     
     await asyncio.sleep(5*60*60)
 
+store = JsonFeedbackStore("channel_feedback.json")
+
 bot_started = False
 bot.db_pool = None
 @bot.event
@@ -362,6 +365,8 @@ async def on_ready():
     # bot.add_view(violationsview1())
     # bot.add_view(violationsview2())
     # bot.add_view(violationsview3())
+
+    restored = await restore_feedback_views(bot, store)
 
     try:
       runner = web.AppRunner(app)

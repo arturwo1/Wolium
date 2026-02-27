@@ -4,8 +4,6 @@ from datetime import datetime, timedelta, timezone
 import traceback
 from cogs.utils.ensure_user_exists import EnsureUserExists
 from cogs.utils.ensure_guild_exists import EnsureGuildExists
-from cogs.utils.ensure_guild_user_exists import EnsureGuildUserExists
-from cogs.utils.ensure_user_data_exists import EnsureUserDataExists
 from cogs.utils.get_data import GetData
 from cogs.utils.get_invite import GetInvite
 from cogs.utils.send_embed import SendEmbed
@@ -34,10 +32,8 @@ class AddViolation(commands.Cog):
         while True:
           async with self.bot.db_pool.acquire() as conn:
             if user_id not in users:
-              await (EnsureUserExists(self.bot)).ensure_user_exists(user_id,user.name,language,guild) 
               await (EnsureGuildExists(self.bot)).ensure_guild_exists(guild.id)
-              await (EnsureGuildUserExists(self.bot)).ensure_guild_user_exists(guild.id, user_id)
-              await (EnsureUserDataExists(self.bot)).ensure_user_data_exists(user_id, guild)
+              await (EnsureUserExists(self.bot)).ensure_user_exists(user_id,user.name,language,guild) 
               users.add(user_id)
 
             await conn.execute(

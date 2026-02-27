@@ -1845,5 +1845,547 @@
   },
   "Все Ваши Сообщения И Вся Ваша Войс Активность Была Удалена С Моей Базы Данных Успешно.": {
     "ru": "Все Ваши Сообщения И Вся Ваша Войс Активность Была Удалена С Моей Базы Данных Успешно."
+  },
+  "Title": {
+    "es": "Título",
+    "ru": "Заголовок"
+  },
+  "Новости": {
+    "es": "Noticias",
+    "ru": "Новости",
+    "en": "News"
+  },
+  "⚡ Обновление: добавил X и Y. Если что — пингуйте меня.": {
+    "es": "⚡ Actualización: se agregaron X e Y. Si sucede algo, envíame un ping.",
+    "ru": "⚡ Обновление: добавил X и Y. Если что — пингуйте меня."
+  },
+  "Description": {
+    "es": "Descripción",
+    "ru": "Описание"
+  },
+  "Я не нашёл канал по настройкам и выбрал этот как главный. Это верно?": {
+    "es": "No pude encontrar el canal en la configuración y elegí este como principal. ¿Es esto correcto?",
+    "ru": "Я не нашёл канал по настройкам и выбрал этот как главный. Это верно?",
+    "en": "I couldn't find the channel in the settings and chose this one as the main one. Is this correct?"
+  },
+  "Админу: настрой каналы через команду /настройки, чтобы я больше не писал в general.": {
+    "es": "Para el administrador: configure canales mediante el comando /settings para que ya no escriba en general.",
+    "ru": "Админу: настрой каналы через команду /настройки, чтобы я больше не писал в general.",
+    "en": "To the admin: set up channels via the /settings command so that I no longer write to general."
+  },
+  "Field": {
+    "es": "Campo",
+    "ru": "Поле"
+  },
+  "• 🧪 Сейчас тестирую новую систему уведомлений": {
+    "es": "• 🧪 Actualmente probando un nuevo sistema de notificación",
+    "ru": "• 🧪 Сейчас тестирую новую систему уведомлений"
+  },
+  "Footer • v2.3.1": {
+    "es": "Pie de página • v2.3.1",
+    "ru": "Нижний колонтитул • v2.3.1"
+  },
+  "Да, это правильный канал": {
+    "es": "Sí, este es el canal correcto.",
+    "ru": "Да, это правильный канал",
+    "en": "Yes, this is the right channel"
+  },
+  "Нет, это не тот канал": {
+    "es": "No, este es el canal equivocado.",
+    "ru": "Нет, это не тот канал",
+    "en": "No, this is the wrong channel"
+  },
+  "**Контент активности** — расширенные данные активности. Работает только если включена **Активность**.": {
+    "ru": "**Контент активности** — расширенные данные активности. Работает только если включена **Активность**."
+  },
+  "**Диагностика команд** — где и когда использовалась команда (помогает мне находить ошибки и улучшать команды).": {
+    "ru": "**Диагностика команд** — где и когда использовалась команда (помогает мне находить ошибки и улучшать команды)."
+  },
+  "Важно": {
+    "ru": "Важно",
+    "es": "Importante",
+    "en": "Important"
+  },
+  "⚡ Большое обновление Wolium!": {
+    "ru": "⚡ Большое обновление Wolium!"
+  },
+  "Я получил официальный сайт: https://wolium.netlify.app": {
+    "ru": "Я получил официальный сайт: https://wolium.netlify.app"
+  },
+  "Он уже умеет показывать профиль, статистику и графики активности (и да — можно быстро прыгать к активности в Discord).": {
+    "ru": "Он уже умеет показывать профиль, статистику и графики активности (и да — можно быстро прыгать к активности в Discord)."
+  },
+  "🔐 Главное: я почти полностью убрал слежку.": {
+    "ru": "🔐 Главное: я почти полностью убрал слежку."
+  },
+  "Теперь ты сам решаешь, что мне можно сохранять и отслеживать — через команду /конфиденциальность.": {
+    "ru": "Теперь ты сам решаешь, что мне можно сохранять и отслеживать — через команду /конфиденциальность."
+  },
+  "Там же всё расписано по пунктам, без мутных формулировок.": {
+    "ru": "Там же всё расписано по пунктам, без мутных формулировок."
+  },
+  "📂 Хочешь убедиться, что я ничего не ворую?": {
+    "ru": "📂 Хочешь убедиться, что я ничего не ворую?"
+  },
+  "Открывай исходники: https://github.com/arturwo1/Wolium": {
+    "ru": "Открывай исходники: https://github.com/arturwo1/Wolium"
+  },
+  "README + LICENSE уже на месте, можно проверить всё.": {
+    "ru": "README + LICENSE уже на месте, можно проверить всё."
+  },
+  "Да, я пропадал: после прошлого крупного апдейта прошло ~2 месяца, а до него я почти полгода толком не работал. Извиняюсь.": {
+    "ru": "Да, я пропадал: после прошлого крупного апдейта прошло ~2 месяца, а до него я почти полгода толком не работал. Извиняюсь."
+  },
+  "Сейчас я снова 24/7 и в деле.": {
+    "ru": "Сейчас я снова 24/7 и в деле."
+  },
+  "• 🌐 Сайт Wolium: профиль + статистика + интерактивные графики": {
+    "ru": "• 🌐 Сайт Wolium: профиль + статистика + интерактивные графики"
+  },
+  "• 🔐 /конфиденциальность — полный контроль над тем, что я сохраняю": {
+    "ru": "• 🔐 /конфиденциальность — полный контроль над тем, что я сохраняю"
+  },
+  "• ⚡ Код ускорен и укреплён: быстрее реакции, сложнее обход наказаний, проще поддержка": {
+    "ru": "• ⚡ Код ускорен и укреплён: быстрее реакции, сложнее обход наказаний, проще поддержка"
+  },
+  "• 🧭 Команды конфиденциальности обновлены: /конфиденциальность, /удаление_даты, а /вставить_дату переехала в 🛡️Конфиденциальность": {
+    "ru": "• 🧭 Команды конфиденциальности обновлены: /конфиденциальность, /удаление_даты, а /вставить_дату переехала в 🛡️Конфиденциальность"
+  },
+  " • v2.0.0": {
+    "ru": "• версия 2.0.0"
+  },
+  "**Wolium — важное обновление**\n": {
+    "ru": "**Wolium — важное обновление**",
+    "es": "**Wolium - actualización importante**",
+    "en": "**Wolium - important update**"
+  },
+  "# ⚡ Большое обновление Wolium!": {
+    "ru": "# ⚡ Большое обновление Wolium!",
+    "es": "# ⚡ ¡Gran actualización de Wolium!",
+    "en": "# ⚡ Big Wolium update!"
+  },
+  "-# Спасибо за терпение — я снова работаю **24/7** и активно развиваюсь ❤️": {
+    "ru": "-# Спасибо за терпение — я снова работаю **24/7** и активно развиваюсь ❤️",
+    "es": "-# Gracias por tu paciencia. Estoy trabajando nuevamente **24 horas al día, 7 días a la semana** y desarrollándome activamente ❤️",
+    "en": "-# Thank you for your patience - I’m working again **24/7** and actively developing ❤️"
+  },
+  "## 🌐 Официальный сайт": {
+    "ru": "## 🌐 Официальный сайт",
+    "es": "## 🌐 Sitio web oficial",
+    "en": "## 🌐 Official website"
+  },
+  "У меня появился сайт: **https://wolium.netlify.app**": {
+    "ru": "У меня появился сайт: **https://wolium.netlify.app**",
+    "es": "Ahora tengo un sitio web: **https://wolium.netlify.app**",
+    "en": "I now have a website: **https://wolium.netlify.app**"
+  },
+  "Там уже есть **Profile** со статистикой и **интерактивными графиками активности**.": {
+    "ru": "Там уже есть **Profile** со статистикой и **интерактивными графиками активности**.",
+    "es": "Ya existe un **Perfil** con estadísticas y **gráficos interactivos de actividad**.",
+    "en": "There is already a **Profile** with statistics and **interactive activity graphs**."
+  },
+  "-# График можно приближать, а по активности — быстро перейти в Discord.": {
+    "ru": "-# График можно приближать, а по активности — быстро перейти в Discord.",
+    "es": "-# El gráfico se puede ampliar y, según la actividad, puede ir rápidamente a Discord.",
+    "en": "-# The graph can be zoomed in, and based on activity, you can quickly go to Discord."
+  },
+  "## 🔐 Конфиденциальность": {
+    "ru": "## 🔐 Конфиденциальность",
+    "es": "## 🔐 Privacidad",
+    "en": "## 🔐 Privacy"
+  },
+  "Я почти полностью убрал слежку за действиями пользователей.": {
+    "ru": "Я почти полностью убрал слежку за действиями пользователей.",
+    "es": "He eliminado casi por completo el seguimiento de las acciones de los usuarios.",
+    "en": "I have almost completely removed tracking of user actions."
+  },
+  "Теперь ты **сам выбираешь**, что мне можно сохранять и отслеживать — через команду `/конфиденциальность`.": {
+    "ru": "Теперь ты **сам выбираешь**, что мне можно сохранять и отслеживать — через команду `/конфиденциальность`.",
+    "es": "Ahora **elige** qué puedo guardar y rastrear, mediante el comando `/privacy`.",
+    "en": "Now you **choose** what I can save and track - through the `/privacy` command."
+  },
+  "-# Внутри всё описано понятным языком: что хранится, зачем и как отключить.": {
+    "ru": "-# Внутри всё описано понятным языком: что хранится, зачем и как отключить.",
+    "es": "-# Todo se describe en el interior con un lenguaje claro: qué se almacena, por qué y cómo desactivarlo.",
+    "en": "-# Everything is described inside in clear language: what is stored, why and how to disable it."
+  },
+  "## 📂 Открытый исходный код": {
+    "ru": "## 📂 Открытый исходный код",
+    "es": "## 📂 Código abierto",
+    "en": "## 📂 Open source"
+  },
+  "Хочешь убедиться, что я ничего не “ворую”?": {
+    "ru": "Хочешь убедиться, что я ничего не “ворую”?",
+    "es": "¿Quieres asegurarte de que no estoy “robando” nada?",
+    "en": "Do you want to make sure I'm not “stealing” anything?"
+  },
+  "Исходники открыты: **https://github.com/arturwo1/Wolium**": {
+    "ru": "Исходники открыты: **https://github.com/arturwo1/Wolium**",
+    "es": "Las fuentes están abiertas: **https://github.com/arturwo1/Wolium**",
+    "en": "Sources are open: **https://github.com/arturwo1/Wolium**"
+  },
+  "README + LICENSE уже на месте — можно спокойно проверить, как я работаю.": {
+    "ru": "README + LICENSE уже на месте — можно спокойно проверить, как я работаю.",
+    "es": "README + LICENCIA ya está disponible: puede comprobar con seguridad cómo trabajo.",
+    "en": "README + LICENSE is already in place - you can safely check how I work."
+  },
+  "### 🕒 Небольшое пояснение": {
+    "ru": "### 🕒 Небольшое пояснение",
+    "es": "### 🕒 Una pequeña explicación",
+    "en": "### 🕒 A little explanation"
+  },
+  "Да, я пропадал: после прошлого крупного апдейта прошло ~2 месяца,": {
+    "ru": "Да, я пропадал: после прошлого крупного апдейта прошло ~2 месяца,",
+    "es": "Sí, me faltaba: han pasado ~2 meses desde la última actualización importante,",
+    "en": "Yes, I was missing: ~2 months have passed since the last major update,"
+  },
+  "а до него я почти полгода толком не работал. Извиняюсь.": {
+    "ru": "а до него я почти полгода толком не работал. Извиняюсь.",
+    "es": "y antes de eso no trabajé durante casi seis meses. Lo lamento.",
+    "en": "and before that I didn’t really work for almost six months. I'm sorry."
+  },
+  "## Почему это `Important`, а не `News`?": {
+    "ru": "## Почему это `Important`, а не `News`?",
+    "es": "## ¿Por qué es \"Importante\" y no \"Noticias\"?",
+    "en": "## Why is it `Important` and not `News`?"
+  },
+  "Потому что это обновление влияет на **доверие и настройки**: конфиденциальность,": {
+    "ru": "Потому что это обновление влияет на **доверие и настройки**: конфиденциальность,",
+    "es": "Debido a que esta actualización afecta **confianza y configuración**: privacidad,",
+    "en": "Because this update affects **trust and settings**: privacy,"
+  },
+  "что именно я сохраняю, и как ты этим управляешь.": {
+    "ru": "что именно я сохраняю, и как ты этим управляешь."
+  },
+  "## Когда какие типы использовать": {
+    "ru": "## Когда какие типы использовать"
+  },
+  "### `News`": {
+    "ru": "### `Новости`",
+    "es": "### `Noticias`",
+    "en": "### `News`"
+  },
+  "- Обычные новости/фичи без обязательных действий.": {
+    "ru": "- Обычные новости/фичи без обязательных действий.",
+    "es": "- Noticias/artículos regulares sin acciones obligatorias.",
+    "en": "- Regular news/features without mandatory actions."
+  },
+  "-# Приятно знать, но можно прочитать позже.": {
+    "ru": "-# Приятно знать, но можно прочитать позже.",
+    "es": "-# Es bueno saberlo, pero se puede leer más tarde.",
+    "en": "-# Good to know, but can be read later."
+  },
+  "### `Important`": {
+    "ru": "### `Важно`",
+    "es": "### `Importante`",
+    "en": "### `Important`"
+  },
+  "- Крупные изменения поведения, настроек или приватности.": {
+    "ru": "- Крупные изменения поведения, настроек или приватности.",
+    "es": "- Cambios importantes en el comportamiento, la configuración o la privacidad.",
+    "en": "- Major changes to behavior, settings or privacy."
+  },
+  "-# Лучше прочитать, чтобы понимать, что изменилось.": {
+    "ru": "-# Лучше прочитать, чтобы понимать, что изменилось.",
+    "es": "-# Es mejor leer para entender qué ha cambiado.",
+    "en": "-# It’s better to read to understand what has changed."
+  },
+  "### `Critical`": {
+    "ru": "### `Критический`",
+    "es": "### `Crítico`",
+    "en": "### `Critical`"
+  },
+  "- Срочно: поломка, уязвимость, потеря функционала, действия «прямо сейчас».": {
+    "ru": "- Срочно: поломка, уязвимость, потеря функционала, действия «прямо сейчас».",
+    "es": "- Urgente: avería, vulnerabilidad, pérdida de funcionalidad, acciones “ya mismo”.",
+    "en": "- Urgent: breakdown, vulnerability, loss of functionality, actions “right now”."
+  },
+  "-# Такое я должен отправлять максимально редко и только по делу.": {
+    "ru": "-# Такое я должен отправлять максимально редко и только по делу."
+  },
+  "• 🌐 **Сайт Wolium**: профиль + статистика + интерактивные графики": {
+    "ru": "• 🌐 **Сайт Wolium**: профиль + статистика + интерактивные графики",
+    "es": "• 🌐 **Sitio web de Wolium**: perfil + estadísticas + gráficos interactivos",
+    "en": "• 🌐 **Wolium website**: profile + statistics + interactive charts"
+  },
+  "• 🔐 **`/конфиденциальность`**: полный контроль над тем, что я сохраняю": {
+    "ru": "• 🔐 **`/конфиденциальность`**: полный контроль над тем, что я сохраняю",
+    "es": "• 🔐 **`/privacy`**: control total sobre lo que guardo",
+    "en": "• 🔐 **`/privacy`**: full control over what I save"
+  },
+  "• ⚡ **Код ускорен и укреплён**: быстрее реакции, стабильнее работа, проще поддержка": {
+    "ru": "• ⚡ **Код ускорен и укреплён**: быстрее реакции, стабильнее работа, проще поддержка",
+    "es": "• ⚡ **El código se ha acelerado y fortalecido**: respuesta más rápida, operación más estable, soporte más sencillo",
+    "en": "• ⚡ **Code has been accelerated and strengthened**: faster response, more stable operation, easier support"
+  },
+  "• 🧭 **Команды конфиденциальности**: `/конфиденциальность`, `/удаление_даты`, а `/вставить_дату` переехала в **🛡️Конфиденциальность**": {
+    "ru": "• 🧭 **Команды конфиденциальности**: `/конфиденциальность`, `/удаление_даты`, а `/вставить_дату` переехала в **🛡️Конфиденциальность**",
+    "es": "• 🧭 **Comandos de privacidad**: `/privacy`, `/delete_date` y `/insert_date` se movieron a **🛡️Privacidad**",
+    "en": "• 🧭 **Privacy commands**: `/privacy`, `/delete_date`, and `/insert_date` moved to **🛡️Privacy**"
+  },
+  "-# Если я написал не в тот канал — админ может настроить это в `/настройки`.": {
+    "ru": "-# Если я написал не в тот канал — админ может настроить это в `/настройки`.",
+    "es": "-# Si escribí en el canal equivocado, el administrador puede configurar esto en `/settings`.",
+    "en": "-# If I wrote to the wrong channel, the admin can configure this in `/settings`."
+  },
+  " • Wolium v2.0.0 • https://wolium.netlify.app • https://github.com/arturwo1/Wolium": {
+    "ru": "• Wolium v2.0.0 • https://wolium.netlify.app • https://github.com/arturwo1/Wolium"
+  },
+  "Enable Important": {
+    "ru": "Включить Важно"
+  },
+  "что именно я сохраняю.": {
+    "ru": "что именно я сохраняю.",
+    "es": "¿Qué estoy ahorrando exactamente?",
+    "en": "What exactly am I saving?"
+  },
+  "## Когда какие типы используются": {
+    "ru": "## Когда какие типы используются",
+    "es": "## Cuándo qué tipos se utilizan",
+    "en": "## When which types are used"
+  },
+  "-# Такое я отправляю максимально редко и только по делу.": {
+    "ru": "-# Такое я отправляю максимально редко и только по делу.",
+    "es": "-# Envío esto lo menos posible y solo por negocios.",
+    "en": "-# I send this as rarely as possible and only on business."
+  },
+  " • Wolium v2.0.0": {
+    "ru": "• Волиум v2.0.0",
+    "es": "• Wolio v2.0.0",
+    "en": "• Wolium v2.0.0"
+  },
+  "Принято: подтвердил(а), что канал выбран верно.": {
+    "en": "Accepted: Confirmed that the channel was selected correctly.",
+    "ru": "Принято: подтвердил(а), что канал выбран верно."
+  },
+  "Ты уже голосовал за этот канал.": {
+    "en": "You have already voted for this channel.",
+    "ru": "Ты уже голосовал за этот канал."
+  },
+  "Auto-Delete": {
+    "ru": "Автоудаление"
+  },
+  "Автоудаление сообщений по каналам.": {
+    "ru": "Автоудаление сообщений по каналам."
+  },
+  "Выберите канал": {
+    "ru": "Выберите канал"
+  },
+  "Время до удаления": {
+    "ru": "Время до удаления"
+  },
+  "Введите Время": {
+    "ru": "Введите Время"
+  },
+  "Время:": {
+    "ru": "Время:"
+  },
+  "Напишите": {
+    "ru": "Напишите"
+  },
+  "Чтобы Отменить.": {
+    "ru": "Чтобы Отменить."
+  },
+  "Для Канала": {
+    "ru": "Для Канала"
+  },
+  "Было Выбрано Время:": {
+    "ru": "Было Выбрано Время:"
+  },
+  "Channel saved": {
+    "ru": "Канал сохранен."
+  },
+  "Переведено На": {
+    "ru": "Переведено на",
+    "en": "Translated to"
+  },
+  "**Wolium — обновление v2.1.0**\n": {
+    "es": "**Wolium - actualización v2.1.0**",
+    "ru": "**Wolium — обновление v2.1.0**",
+    "en": "**Wolium - update v2.1.0**"
+  },
+  "# 🆕 Новая система авто-удаления сообщений": {
+    "es": "# 🆕 Nuevo sistema de eliminación automática de mensajes",
+    "ru": "# 🆕 Новая система авто-удаления сообщений",
+    "en": "# 🆕 New auto-delete message system"
+  },
+  "-# Добавлена гибкая настройка очистки сообщений по каналам.": {
+    "es": "-# Se agregaron configuraciones flexibles para borrar mensajes por canal.",
+    "ru": "-# Добавлена гибкая настройка очистки сообщений по каналам."
+  },
+  "## 🧹 Авто-удаление в выбранных каналах": {
+    "es": "## 🧹 Eliminación automática en canales seleccionados",
+    "ru": "## 🧹 Авто-удаление в выбранных каналах"
+  },
+  "Теперь можно задать таймер удаления сообщений отдельно для каждого канала.": {
+    "es": "Ahora puede configurar el temporizador de eliminación de mensajes por separado para cada canal.",
+    "ru": "Теперь можно задать таймер удаления сообщений отдельно для каждого канала."
+  },
+  "После отправки сообщение будет автоматически удалено через указанное время.": {
+    "es": "Una vez enviado, el mensaje se eliminará automáticamente después del tiempo especificado.",
+    "ru": "После отправки сообщение будет автоматически удалено через указанное время."
+  },
+  "-# Работает только для новых сообщений после включения.": {
+    "es": "-# Solo funciona para mensajes nuevos después de habilitarlo.",
+    "ru": "-# Работает только для новых сообщений после включения."
+  },
+  "## ⏱️ Гибкий формат времени": {
+    "es": "## ⏱️ Formato de hora flexible",
+    "ru": "## ⏱️ Гибкий формат времени"
+  },
+  "Время можно указывать в удобном виде: `10s`, `5m`, `2h`, `1d`, `1h 30m`.": {
+    "es": "El tiempo se puede especificar en una forma conveniente: `10s`, `5m`, `2h`, `1d`, `1h 30m`.",
+    "ru": "Время можно указывать в удобном виде: `10s`, `5m`, `2h`, `1d`, `1h 30m`."
+  },
+  "Поддерживаются дробные значения, например: `1.5h`.": {
+    "es": "Se admiten valores fraccionarios, por ejemplo: `1,5h`.",
+    "ru": "Поддерживаются дробные значения, например: `1.5h`."
+  },
+  "-# Можно комбинировать несколько единиц времени в одной строке.": {
+    "es": "-# Puedes combinar varias unidades de tiempo en una línea.",
+    "ru": "-# Можно комбинировать несколько единиц времени в одной строке."
+  },
+  "## 🛠️ Внутренние изменения": {
+    "es": "## 🛠️Cambios internos",
+    "ru": "## 🛠️ Внутренние изменения",
+    "en": "## 🛠️ Internal changes"
+  },
+  "Переработана система создания и обновления данных.": {
+    "es": "Se ha rediseñado el sistema de creación y actualización de datos.",
+    "ru": "Переработана система создания и обновления данных."
+  },
+  "Удалены устаревшие модули и упрощена архитектура.": {
+    "es": "Se han eliminado los módulos obsoletos y se ha simplificado la arquitectura.",
+    "ru": "Удалены устаревшие модули и упрощена архитектура."
+  },
+  "-# Код стал чище и логика — предсказуемее.": {
+    "es": "-# El código se ha vuelto más limpio y la lógica más predecible.",
+    "ru": "-# Код стал чище и логика — предсказуемее."
+  },
+  "## Где настраивается": {
+    "es": "## Dónde configurar",
+    "ru": "## Где настраивается"
+  },
+  "Настройка доступна через `/настройки`.": {
+    "es": "La configuración está disponible a través de `/settings`.",
+    "ru": "Настройка доступна через `/настройки`."
+  },
+  "## Для чего это нужно": {
+    "es": "## ¿Para qué es esto?",
+    "ru": "## Для чего это нужно"
+  },
+  "• временные каналы": {
+    "es": "• canales de tiempo",
+    "ru": "• временные каналы"
+  },
+  "• авто-очистка флуда": {
+    "es": "• limpieza automática por inundación",
+    "ru": "• авто-очистка флуда"
+  },
+  "• каналы без хранения истории": {
+    "es": "• canales sin almacenamiento de historial",
+    "ru": "• каналы без хранения истории"
+  },
+  "• 🧹 Таймер удаления по каналам": {
+    "es": "• 🧹 Eliminar temporizador por canal",
+    "ru": "• 🧹 Таймер удаления по каналам",
+    "en": "• 🧹 Delete timer by channel"
+  },
+  "• ⏱️ Поддержка `10s`, `2h`, `1h 30m`, `1.5h`": {
+    "es": "• ⏱️ Soporte `10s`, `2h`, `1h 30m`, `1.5h`",
+    "ru": "• ⏱️ Поддержка `10s`, `2h`, `1h 30m`, `1.5h`"
+  },
+  "• 🛠️ Переработана внутренняя архитектура": {
+    "es": "• 🛠️ Arquitectura interna rediseñada",
+    "ru": "• 🛠️ Переработана внутренняя архитектура"
+  },
+  "-# Обновление уже активно.": {
+    "es": "-# La actualización ya está activa.",
+    "ru": "-# Обновление уже активно."
+  },
+  " • Wolium v2.1.0": {
+    "es": "• Wolio v2.1.0",
+    "ru": "• Волиум v2.1.0",
+    "en": "• Wolium v2.1.0"
+  },
+  "-# Добавлена гибкая очистка сообщений по каналам.": {
+    "ru": "-# Добавлена гибкая очистка сообщений по каналам.",
+    "es": "-# Se agregó eliminación flexible de mensajes por canal.",
+    "en": "-# Added flexible clearing of messages by channel."
+  },
+  "## 🧹 Авто-удаление": {
+    "ru": "## 🧹 Авто-удаление",
+    "es": "## 🧹 Eliminación automática",
+    "en": "## 🧹 Auto-delete"
+  },
+  "Задайте таймер для любого канала в `/настройки` —": {
+    "ru": "Задайте таймер для любого канала в `/настройки` —",
+    "es": "Configure un temporizador para cualquier canal en `/settings` -",
+    "en": "Set a timer for any channel in `/settings` -"
+  },
+  "новые сообщения там будут удаляться автоматически.": {
+    "ru": "новые сообщения там будут удаляться автоматически.",
+    "es": "Los mensajes nuevos allí se eliminarán automáticamente.",
+    "en": "new messages there will be deleted automatically."
+  },
+  "-# Формат времени: `10s`, `5m`, `2h`, `1d`, `1h 30m`, `1.5h`.": {
+    "ru": "-# Формат времени: `10с`, `5м`, `2ч`, `1д`, `1ч 30м`, `1,5ч`.",
+    "es": "-# Formato de hora: `10s`, `5m`, `2h`, `1d`, `1h 30m`, `1.5h`.",
+    "en": "-# Time format: `10s`, `5m`, `2h`, `1d`, `1h 30m`, `1.5h`."
+  },
+  "• Упрощена логика хранения данных": {
+    "ru": "• Упрощена логика хранения данных",
+    "es": "• Lógica de almacenamiento de datos simplificada",
+    "en": "• Simplified data storage logic"
+  },
+  "• Удалён устаревший код": {
+    "ru": "• Удалён устаревший код",
+    "es": "• Se eliminó el código obsoleto.",
+    "en": "• Removed obsolete code"
+  },
+  "-# Меньше лишних файлов — чище архитектура.": {
+    "ru": "-# Меньше лишних файлов — чище архитектура.",
+    "es": "-# Menos archivos innecesarios - arquitectura más limpia.",
+    "en": "-# Fewer unnecessary files - cleaner architecture."
+  },
+  "## 📅 Как выходит «лента новостей»": {
+    "ru": "## 📅 Как выходит «лента новостей»",
+    "es": "## 📅 ​​​​Cómo sale el “servicio de noticias”",
+    "en": "## 📅 ​​How the “news feed” comes out"
+  },
+  "- Все новые фичи становятся **доступны сразу** после обновления кода, но без красивой витрины.": {
+    "ru": "- Все новые фичи становятся **доступны сразу** после обновления кода, но без красивой витрины.",
+    "es": "- Todas las funciones nuevas estarán **disponibles inmediatamente** después de actualizar el código, pero sin una presentación atractiva.",
+    "en": "- All new features become **available immediately** after updating the code, but without a beautiful showcase."
+  },
+  "- Раз в **1-3 недели** я присылаю такой отчёт, где собираю всё, что уже работает.": {
+    "ru": "- Раз в **1-3 недели** я присылаю такой отчёт, где собираю всё, что уже работает.",
+    "es": "- Una vez cada **1-3 semanas** envío un informe donde recojo todo lo que ya está funcionando.",
+    "en": "- Once every **1-3 weeks** I send a report where I collect everything that is already working."
+  },
+  "- Если завтра появится глобальная функция — вы сможете ею пользоваться сразу,": {
+    "ru": "- Если завтра появится глобальная функция — вы сможете ею пользоваться сразу,",
+    "es": "- Si mañana aparece una función global, podrás usarla inmediatamente,",
+    "en": "- If a global function appears tomorrow, you will be able to use it immediately,"
+  },
+  "  а в разделе новостей она появится в следующем дайджесте.": {
+    "ru": "а в разделе новостей она появится в следующем дайджесте.",
+    "es": "y en la sección de noticias aparecerá en el próximo resumen.",
+    "en": "and in the news section it will appear in the next digest."
+  },
+  "• ⏱️ Форматы: `10s`, `2h`, `1h 30m`, `1.5h`": {
+    "ru": "• ⏱️ Формат: «10 секунд», «2 часа», «1 час 30 минут», «1,5 часа».",
+    "es": "• ⏱️ Formato: `10s`, `2h`, `1h 30m`, `1,5h`",
+    "en": "• ⏱️ Format: `10s`, `2h`, `1h 30m`, `1.5h`"
+  },
+  "• 🛠️ Чище архитектура": {
+    "ru": "• 🛠️ Чище архитектура",
+    "es": "• 🛠️ Arquitectura más limpia",
+    "en": "• 🛠️ Cleaner architecture"
+  },
+  "-# Фичи активны сразу, отчёты — раз в 1-3 недели": {
+    "ru": "-# Фичи активны сразу, отчёты — раз в 1-3 недели",
+    "es": "-# Las funciones se activan inmediatamente, informes: una vez cada 1 a 3 semanas",
+    "en": "-# Features are active immediately, reports - once every 1-3 weeks"
   }
 }

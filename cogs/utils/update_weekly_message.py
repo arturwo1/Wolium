@@ -12,8 +12,8 @@ from cogs.utils.translate_message import TranslateMessage
 from cogs.utils.get_data import GetData
 
 class UpdateWeeklyMessage(commands.Cog):
-  def __init__(self, bot):
-    self.bot: commands.Bot = bot
+  def __init__(self, bot: commands.Bot):
+    self.bot = bot
     self.update_message.start()
 
   def cog_unload(self):
@@ -88,21 +88,29 @@ class UpdateWeeklyMessage(commands.Cog):
       print("update weekly message unban exception:\n",''.join(format_exception(type(e), e, e.__traceback__)))
 
     try:
-      week_message = await self.bot.get_guild(807304463449849938).get_channel(1166364621863661578).fetch_message(1166397100024664114)
-
+      try:
+        week_message = await self.bot.get_guild(807304463449849938).get_channel(1166364621863661578).fetch_message(1166397100024664114)
+      except HTTPException as e:
+        print(f"Ошибка при получении еженедельного сообщения: {e}")
+        return
+  
+      bp1 = f"@here\n`{now}`\n"
       if is_weekend:
         if holiday is None:
-          message = f"@here\n`{now}`\n# **Наступили Выходные!**\nВ Магазине Активированы Скидки(`х2`)!\nУспейте До Понедельника Купить Что Хотели :D"
+          message = f"# **Наступили Выходные!**\nВ Магазине Активированы Скидки(`х2`)!\nУспейте До Понедельника Купить Что Хотели :D"
         else:
-          message = f"@here\n`{now}`\n# **Наступили Выходные, А Также Щас Идет Праздник `{holiday['name']}`, Который Начался В `{holiday['start_date'].strftime('%d.%m.%Y')}` И Закончится В `{holiday['end_date'].strftime('%d.%m.%Y')}`(Длительность: *`{holiday['duration']} дней`*)!**\nВ Магазине Активированы Скидки(`х4`)!!!\nУспейте До Понедельника Купить Что Хотели :D"
+          message = f"# **Наступили Выходные, А Также Щас Идет Праздник `{holiday['name']}`, Который Начался В `{holiday['start_date'].strftime('%d.%m.%Y')}` И Закончится В `{holiday['end_date'].strftime('%d.%m.%Y')}`(Длительность: *`{holiday['duration']} дней`*)!**\nВ Магазине Активированы Скидки(`х4`)!!!\nУспейте До Понедельника Купить Что Хотели :D"
       else:
         if holiday is None:
-          message = f"@here\n`{now}`\n# **К Сожелению Выходные Закончились Как И Скидки :(**\nВ Магазине Активированы Скидки(`х1`)\n Ждите Следующие Выходные Или Праздники :D"
+          message = f"# **К Сожелению Выходные Закончились Как И Скидки :(**\nВ Магазине Активированы Скидки(`х1`)\n Ждите Следующие Выходные Или Праздники :D"
         else:
-          message = f"@here\n`{now}`\n# **К Сожелению Выходные Закончились Но Щас Идет Праздник `{holiday['name']}`, Который Начался В `{holiday['start_date'].strftime('%d.%m.%Y')}` И Закончится В `{holiday['end_date'].strftime('%d.%m.%Y')}`(Длительность: *`{holiday['duration']} дней`*)!**\nВ Магазине Активированы Скидки(`х2`)\n Ждите Следующие Выходные Если Хотите Ещё Выше Скидки!(Главное Чтоб Праздник Не Прошел) :D"
+          message = f"# **К Сожелению Выходные Закончились Но Щас Идет Праздник `{holiday['name']}`, Который Начался В `{holiday['start_date'].strftime('%d.%m.%Y')}` И Закончится В `{holiday['end_date'].strftime('%d.%m.%Y')}`(Длительность: *`{holiday['duration']} дней`*)!**\nВ Магазине Активированы Скидки(`х2`)\n Ждите Следующие Выходные Если Хотите Ещё Выше Скидки!(Главное Чтоб Праздник Не Прошел) :D"
 
       if week_message and week_message.content != message:
-        await week_message.edit(content=message)
+        try:
+          await week_message.edit(content=bp1+message)
+        except HTTPException as e:
+          print(f"Ошибка при обновлении еженедельного сообщения: {e}")
         Utils.config.WM_times_updated += 1
 
     except HTTPException as e:

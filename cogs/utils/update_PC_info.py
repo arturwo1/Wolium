@@ -1340,10 +1340,9 @@ class UpdatePCInfo(commands.Cog):
 
     try:
       message_to_edit = await channel.fetch_message(self.STATUS_MESSAGE_ID)
-    except NotFound:
-      dummy = await channel.send("Подготавливаю статус Wolium...")
-      self.STATUS_MESSAGE_ID = dummy.id
-      message_to_edit = dummy
+    except (NotFound, HTTPException):
+      print(f"{datetime.now()} | UpdatePCInfo | Status message not found / RateLimit.")
+      return
 
     await self._ensure_lhm_ready()
 

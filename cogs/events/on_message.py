@@ -9,10 +9,9 @@ from cogs.utils.get_invite import GetInvite
 from Utils.config import servers_with_no_acces_for_bot, users_with_no_acces_for_bot, гласные, согласные
 from cogs.utils.ensure_guild_exists import EnsureGuildExists
 from cogs.utils.ensure_user_exists import EnsureUserExists
-from cogs.utils.ensure_guild_user_exists import EnsureGuildUserExists
-from cogs.utils.ensure_user_data_exists import EnsureUserDataExists
 from cogs.utils.send_embed import SendEmbed
-from Utils.config import users
+from Utils.config import users, pending
+from Utils.parse_time import parse_time
 from cogs.utils.get_data import GetData
 from cogs.utils.update_data import UpdateData
 from cogs.utils.translate_message import TranslateMessage
@@ -20,11 +19,17 @@ from json import dumps, loads
 from langdetect import detect
 from langdetect.lang_detect_exception import LangDetectException
 from spellchecker import SpellChecker
+from datetime import timezone
 
 class OnMessage(commands.Cog):
   def __init__(self, bot):
     self.bot:commands.Bot = bot
     self.spellcheckers = {}
+
+  def _dt_to_ts(self, dt) -> int:
+    if getattr(dt, "tzinfo", None) is None:
+      dt = dt.replace(tzinfo=timezone.utc)
+    return int(dt.timestamp())
 
   async def get_spellchecker_cached(self, lang: str) -> SpellChecker:
     if lang in self.spellcheckers:
@@ -403,17 +408,31 @@ class OnMessage(commands.Cog):
     create_task(self.GPTTalk(message, language, invite))
     await self.games(message,language)
     
-    if search(f"[{гласные}]{3}",message.content) or search(f"[{согласные}]{3}",message.content) or not any(c in ascii_letters + " " for c in message.content) or match(r"^[\W\d_]+$", message.content.strip()) or len(message.content.strip()) < 3 or not message.guild:
-      return
-    if 'http' in message.content:
-      return
+    # if search(f"[{гласные}]{3}",message.content) or search(f"[{согласные}]{3}",message.content) or not any(c in ascii_letters + " " for c in message.content) or match(r"^[\W\d_]+$", message.content.strip()) or len(message.content.strip()) < 3 or not message.guild:
+    #   return
+    # if 'http' in message.content:
+    #   return
+
     if message.guild:
-      guild_config = await (GetData(self.bot)).get_data(message.guild.id,['mod_log_channel','moderation','moderation_type','rules'],'guild_settings','guild_id',message.guild)
+      guild_config = await (GetData(self.bot)).get_data(message.guild.id,['mod_log_channel','moderation','moderation_type','rules', 'ttl_channel'],'guild_settings','guild_id',message.guild)
       if guild_config['mod_log_channel'] and guild_config['moderation'] and guild_config['moderation_type']=='AI' and message.guild.get_channel(int(guild_config['mod_log_channel'])):
         guild_locale = message.guild.preferred_locale
         mod_lang = guild_locale if guild_locale !='en-US' and guild_locale !='en-GB' and guild_locale !='es-ES' and guild_locale !='sv-SE' else 'en' if guild_locale =='en-US' or guild_locale =='en-GB' and guild_locale !='es-ES' and guild_locale !='sv-SE' else 'es' if guild_locale !='en-US' and guild_locale !='en-GB' and guild_locale =='es-ES' and guild_locale !='sv-SE' else 'sv'
         automod = self.bot.get_cog("GPT").automod
         await automod(message,mod_lang,invite,guild_config)
+
+      ttl_channels = loads(guild_config["ttl_channel"])
+      ttl_str = ttl_channels.get(str(message.channel.id))
+      if ttl_str:
+        ttl_sec = int(parse_time(ttl_str) or 0)
+        if ttl_sec > 0:
+          guild_id = message.guild.id
+          ch_key = str(message.channel.id)
+          created_ts = self._dt_to_ts(message.created_at)
+
+          g = pending.setdefault(guild_id, {})
+          bucket = g.setdefault(ch_key, {})
+          bucket[str(message.id)] = created_ts
 
     if message.author!=self.bot.user:
       user_privacy = await (GetData(self.bot)).get_data(user_id,['save_messages', 'save_message_data'], 'user_privacy', 'user_id', message.guild)
@@ -434,10 +453,8 @@ class OnMessage(commands.Cog):
             await connection.execute(query, guild_id, channel_id, user_id, date_time, content, message_url, attachments)
 
             if user_id not in users:
-              await (EnsureUserExists(self.bot)).ensure_user_exists(user_id,message.author.name,language,message.guild) 
               await (EnsureGuildExists(self.bot)).ensure_guild_exists(message.guild.id)
-              await (EnsureGuildUserExists(self.bot)).ensure_guild_user_exists(message.guild.id, user_id)
-              await (EnsureUserDataExists(self.bot)).ensure_user_data_exists(user_id, message.guild)
+              await (EnsureUserExists(self.bot)).ensure_user_exists(user_id,message.author.name,language,message.guild) 
               users.add(user_id)
       
       user_data = await (GetData(self.bot)).get_data(user_id,['xp','bank_balance','balance','upgrade'],'user_data','user_id',message.guild)

@@ -6,7 +6,7 @@ from decimal import Decimal
 from datetime import datetime, timezone
 from traceback import format_exception
 from nextcord.ext import commands, tasks
-from nextcord import Embed, Colour
+from nextcord import Embed, Colour, channel
 from Utils.calculate_LvL import calculate_LvL
 
 QUEUE_TABLE = "public.web_requests"
@@ -156,7 +156,7 @@ class WebRequestsWorker(commands.Cog):
       cid = None
 
     if not gid:
-      return ("ЛС", "ЛС", True)
+      return ("DM", "")
 
     g = self.bot.get_guild(gid)
     guild_name = g.name if g else f"Server {gid}"
@@ -171,8 +171,8 @@ class WebRequestsWorker(commands.Cog):
       if ch:
         ch_name = getattr(ch, "name", None)
 
-    channel_name = ch_name if ch_name else (f"channel {cid}" if cid else "channel")
-    return (guild_name, channel_name, False)
+    channel_name = f"#{ch_name}" if ch_name else (f"channel {cid}" if cid else "channel")
+    return (guild_name, channel_name)
 
   @tasks.loop(seconds=POLL_SECONDS)
   async def loop(self):
@@ -398,18 +398,14 @@ class WebRequestsWorker(commands.Cog):
         gid_raw = d.get("sample_guild_id")
         cid_raw = d.get("sample_channel_id")
 
-        guild_name, channel_name, is_dm = self._resolve_guild_channel_names(gid_raw, cid_raw)
+        guild_name, channel_name = self._resolve_guild_channel_names(gid_raw, cid_raw)
 
         msg_url = d.get("sample_url") or None
-        msg_id = self._parse_message_id(msg_url)
 
         d["meta"] = {
-          "guild_id": str(gid_raw) if gid_raw not in (None, "") else None,
-          "channel_id": str(cid_raw) if cid_raw not in (None, "") else None,
-          "message_id": msg_id,
+          "url": msg_url,
           "guild_name": guild_name,
-          "channel_name": channel_name,
-          "is_dm": is_dm
+          "channel_name": channel_name
         }
         out.append(d)
 

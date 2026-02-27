@@ -4,8 +4,6 @@ from datetime import datetime, timezone
 import traceback
 from cogs.utils.ensure_user_exists import EnsureUserExists
 from cogs.utils.ensure_guild_exists import EnsureGuildExists
-from cogs.utils.ensure_guild_user_exists import EnsureGuildUserExists
-from cogs.utils.ensure_user_data_exists import EnsureUserDataExists
 from Utils.config import users
 import json
 from asyncio import sleep
@@ -26,10 +24,8 @@ class LogMemberActivity(commands.Cog):
 						if guild:
 							if user_id not in users:
 								language = guild.preferred_locale if guild.preferred_locale!='en-US' and guild.preferred_locale!='en-GB' and guild.preferred_locale!='es-ES' and guild.preferred_locale!='sv-SE' else 'en' if guild.preferred_locale=='en-US' or guild.preferred_locale=='en-GB' and guild.preferred_locale!='es-ES' and guild.preferred_locale!='sv-SE' else 'es' if guild.preferred_locale!='en-US' and guild.preferred_locale!='en-GB' and guild.preferred_locale=='es-ES' and guild.preferred_locale!='sv-SE' else 'sv'
-								await (EnsureUserExists(self.bot)).ensure_user_exists(user_id,user.name,language,guild) 
 								await (EnsureGuildExists(self.bot)).ensure_guild_exists(guild.id)
-								await (EnsureGuildUserExists(self.bot)).ensure_guild_user_exists(guild.id, user_id)
-								await (EnsureUserDataExists(self.bot)).ensure_user_data_exists(user_id, guild)
+								await (EnsureUserExists(self.bot)).ensure_user_exists(user_id,user.name,language,guild) 
 								users.add(user_id)
 						elif not guild and user:
 							await (EnsureUserExists(self.bot)).ensure_user_exists(user_id, user.name)
