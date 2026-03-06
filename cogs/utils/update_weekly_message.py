@@ -88,6 +88,27 @@ class UpdateWeeklyMessage(commands.Cog):
       print("update weekly message unban exception:\n",''.join(format_exception(type(e), e, e.__traceback__)))
 
     try:
+      if hasattr(self.bot, "db_pool") and self.bot.db_pool:
+        servers = len(self.bot.guilds)
+        users = sum(g.member_count or 0 for g in self.bot.guilds)
+
+        async with self.bot.db_pool.acquire() as conn:
+          await conn.execute(
+            """
+            INSERT INTO public_stats (key, value)
+            VALUES
+              ('servers', $1),
+              ('users', $2)
+            ON CONFLICT (key)
+            DO UPDATE SET value = EXCLUDED.value
+            """,
+            str(servers),
+            str(users)
+          )
+    except Exception as e:
+      print(f"update weekly message stats update exception: {e}")
+
+    try:
       try:
         week_message = await self.bot.get_guild(807304463449849938).get_channel(1166364621863661578).fetch_message(1166397100024664114)
       except HTTPException as e:

@@ -1,9 +1,22 @@
 PROPRIETARY LICENSE — WOLIUM
 
-Copyright (c) 2026 arturwol (GitHub: arturwo1)
+Copyright (c) 2026 arturwol (GitHub: https://github.com/arturwo1)
 All rights reserved.
 
-This software, service, website, and related assets ("Wolium") are proprietary and confidential.
+This software, bot, website, backend services, APIs, infrastructure, repositories,
+design, documentation, branding, and all related assets ("Wolium") are proprietary
+and confidential.
+
+The Wolium ecosystem may include, but is not limited to:
+
+• Discord bots and related services
+• Websites and dashboards
+• APIs and backend infrastructure
+• Documentation and developer resources
+• UI/UX design, branding, and visual assets
+• Data models, economy systems, prompts, and internal logic
+
+Unless explicitly stated otherwise, all components are protected under this license.
 
 ---
 
@@ -11,11 +24,12 @@ This software, service, website, and related assets ("Wolium") are proprietary a
 
 You are granted permission to:
 
-• View the public repository via GitHub interface;
-• Use the Wolium bot as a hosted service;
-• Access official Wolium websites and documentation.
+• Access and use Wolium as a hosted service;
+• Access official Wolium websites and documentation;
+• View public repositories via the GitHub interface.
 
-No ownership or usage rights to the source code are granted.
+No ownership rights, license to the source code, or permission to reuse any part
+of Wolium are granted.
 
 ---
 
@@ -23,27 +37,30 @@ No ownership or usage rights to the source code are granted.
 
 Without prior written permission from the author, you may NOT:
 
-• Copy, reproduce, or redistribute any part of the source code;
-• Use the code in any commercial or non-commercial project;
-• Create derivative works based on the code or architecture;
-• Deploy, host, or mirror the bot, website, or backend infrastructure;
-• Use the code to build competing or similar services;
-• Extract business logic, AI prompts, economy systems, or data models;
-• Remove copyright or proprietary notices.
+• Copy, reproduce, distribute, or publish any part of the source code;
+• Fork, mirror, archive, or redistribute repositories or their contents;
+• Modify, adapt, reverse engineer, or create derivative works;
+• Deploy, host, mirror, or reproduce Wolium services or infrastructure;
+• Copy or replicate UI/UX design, layouts, or branding;
+• Extract or reuse business logic, systems, algorithms, prompts, or architecture;
+• Train artificial intelligence models using the code or project assets;
+• Use Wolium code, design, or concepts to build competing or similar services;
+• Remove or alter copyright, trademark, or proprietary notices.
 
-Forking the repository (if technically possible) does NOT grant any usage rights.
+Forking a repository (if technically possible) does NOT grant any rights to use
+the code.
 
 ---
 
 3. Service Usage
 
-Use of the Wolium bot is governed by:
+Use of Wolium services may additionally be governed by:
 
-• Terms of Service  
-• Privacy Policy  
-• Community Rules  
+• Terms of Service
+• Privacy Policy
+• Community Rules
 
-Using the live service implies acceptance of those documents.
+Using Wolium services implies acceptance of those documents.
 
 ---
 
@@ -52,15 +69,16 @@ Using the live service implies acceptance of those documents.
 The author reserves the right to:
 
 • Issue takedown requests (including DMCA or equivalent legal mechanisms);
-• Request removal of infringing content;
-• Restrict access to services;
-• Pursue legal remedies where applicable.
+• Request removal of infringing content from hosting platforms or repositories;
+• Restrict access to Wolium services;
+• Pursue civil or criminal legal remedies where applicable.
 
 ---
 
 5. Termination
 
-Any violation of this license automatically terminates granted rights.
+Any use of Wolium not expressly permitted by this license automatically
+terminates all granted rights.
 
 Continued use after termination constitutes unauthorized use.
 
@@ -68,9 +86,10 @@ Continued use after termination constitutes unauthorized use.
 
 6. Warranty Disclaimer
 
-The software and service are provided "AS IS", without warranty of any kind.
+Wolium is provided "AS IS", without warranty of any kind, express or implied.
 
-The author is not liable for damages resulting from misuse or unauthorized modification.
+The author shall not be liable for damages resulting from misuse,
+unauthorized modification, or redistribution.
 
 ---
 
@@ -84,17 +103,26 @@ This license is governed by the laws of the European Union and Lithuania.
 
 These terms apply worldwide.
 
-Violations may be pursued under applicable laws of relevant jurisdictions.
+Any violation may be pursued under the applicable laws of relevant jurisdictions.
+
+The owner reserves the right to seek:
+
+• injunctive relief
+• removal or seizure of infringing materials
+• statutory or actual damages
+• recovery of legal fees and enforcement costs
+
+from any person, entity, or organization violating these terms.
 
 ---
 
 9. Legal Contact
 
-Legal notices and reports of unauthorized use:
+Legal notices and reports of unauthorized use should be sent to:
 
 GitHub: https://github.com/arturwo1
 
 ---
 
 WOLIUM — All rights reserved.
-Unauthorized copying, reuse, or deployment is prohibited.
+Unauthorized copying, reuse, redistribution, or deployment is prohibited.

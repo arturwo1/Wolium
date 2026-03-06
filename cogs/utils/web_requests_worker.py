@@ -5,8 +5,10 @@ from time import time
 from decimal import Decimal
 from datetime import datetime, timezone
 from traceback import format_exception
+from turtle import up
 from nextcord.ext import commands, tasks
 from nextcord import Embed, Colour, channel
+from sympy import use
 from Utils.calculate_LvL import calculate_LvL
 
 QUEUE_TABLE = "public.web_requests"
@@ -263,7 +265,7 @@ class WebRequestsWorker(commands.Cog):
             await self._set_done(conn, job["id"], cached)
             return
 
-          result = await self._process_kind(conn, kind, discord_id, payload)
+          result = await self._process_kind(conn, kind, discord_id, payload, job)
           result = self._convert_decimals(result)
 
           await self.cache.set(ck, result)
@@ -276,7 +278,22 @@ class WebRequestsWorker(commands.Cog):
           except:
             pass
 
-  async def _process_kind(self, conn, kind: str, discord_id: int, payload: dict):
+  async def _process_kind(self, conn, kind: str, discord_id: int, payload: dict, job: dict):
+    get_data = self.bot.get_cog("GetData")
+    if not get_data: return {"error": "Failed to get data."}
+
+    user_info = await get_data.get_data(discord_id, ["banned", "auth_user_id"], "users", "user_id", None)
+
+    if user_info.get("banned"):
+      return {"error": "You are banned."}
+    
+    if not user_info.get("auth_user_id"):
+      update_data = self.bot.get_cog("UpdateData")
+      if update_data:
+        await update_data.update_data(discord_id, {"auth_user_id": job["user_id"]}, "users", "user_id", None)
+    else:
+      return {"error": "You already logged in another account."}
+
     u = self.bot.get_user(discord_id)
     username = u.display_name if u else "Unknown Name"
 
@@ -325,12 +342,8 @@ class WebRequestsWorker(commands.Cog):
       """, discord_id)
       result = dict(row) if row else {}
 
-      get_data = self.bot.get_cog("GetData")
-      if get_data:
-        user_data = await get_data.get_data(discord_id, ["xp"], "user_data", "user_id", None)
-        xp = user_data.get("xp") or 0
-      else:
-        xp = 0
+      user_data = await get_data.get_data(discord_id, ["xp"], "user_data", "user_id", None)
+      xp = user_data.get("xp") or 0
 
       lvl, xp_need, xp_now = calculate_LvL(xp)
       result["xp"] = xp

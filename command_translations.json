@@ -1631,7 +1631,8 @@
     "en": "And in the hands:"
   },
   "мут": {
-    "ru": "мтм"
+    "ru": "мтм",
+    "en": "mut"
   },
   "мтм": {
     "ru": "Mtm"
@@ -1667,7 +1668,8 @@
     "es": "• ⚡ ¡Trabajando nuevamente 24 horas al día, 7 días a la semana, listo para la acción!\n• 🐌 A veces respondo lentamente, pero trato de ser útil 😊\n• 👀 A veces puedo ser demasiado persistente sin querer, pero eso es porque me importa 😎\n• 💡 Se aceptan ideas y sugerencias: ¡puedo implementar una función rápidamente!\n• 🛠 Si algo se rompe, lo arreglaré de inmediato, ¡lo prometo!"
   },
   "М-м, не знаю, что сказать 🤔": {
-    "ru": "М-м, не знаю, что сказать 🤔"
+    "ru": "М-м, не знаю, что сказать 🤔",
+    "en": "Mmm, I don’t know what to say 🤔"
   },
   "Не Удалось Сгенерировать Сообщение.\nВы Отвечаете На Сообщение Которое Дискорд Либо Не Успел Сохранить, Либо Оно Слишком Старое.": {
     "ru": "Не Удалось Сгенерировать Сообщение.\nВы Отвечаете На Сообщение Которое Дискорд Либо Не Успел Сохранить, Либо Оно Слишком Старое."
@@ -1703,7 +1705,8 @@
     "ru": "В Прошлом Сообщении Не Число, Я Его Щас Удалю."
   },
   "Конфиденциальность": {
-    "ru": "Конфиденциальность"
+    "ru": "Конфиденциальность",
+    "en": "Confidentiality"
   },
   "🛡️ **Конфиденциальность и данные**\n\n": {
     "ru": "🛡️ **Конфиденциальность и данные**"
@@ -1745,55 +1748,72 @@
     "ru": "**Диагностика команд** — где и когда использовалась команда (помогает находить ошибки и улучшать команды)."
   },
   "🧹 **Управление:** вы всегда можете отключить категории и удалить данные.": {
-    "ru": "🧹 **Управление:** вы всегда можете отключить категории и удалить данные."
+    "ru": "🧹 **Управление:** вы всегда можете отключить категории и удалить данные.",
+    "en": "🧹 **Management:** you can always disable categories and delete data."
   },
   "Контент Сообщений": {
-    "ru": "Контент Сообщений"
+    "ru": "Контент Сообщений",
+    "en": "Message Content"
   },
   "Войс-Активность": {
-    "ru": "Войс-Активность"
+    "ru": "Войс-Активность",
+    "en": "Voice Activity"
   },
   "Активность": {
-    "ru": "Активность"
+    "ru": "Активность",
+    "en": "Activity"
   },
   "Контент Активности": {
-    "ru": "Контент Активности"
+    "ru": "Контент Активности",
+    "en": "Content Activities"
   },
   "Слежка": {
-    "ru": "Слежка"
+    "ru": "Слежка",
+    "en": "Surveillance"
   },
   "🛡️ **Конфиденциальность и данные**": {
-    "ru": "🛡️ **Конфиденциальность и данные**"
+    "ru": "🛡️ **Конфиденциальность и данные**",
+    "en": "🛡️ **Privacy and Data**"
   },
   "Я стараюсь быть максимально прозрачным: **что сохраняю** и **зачем**.": {
-    "ru": "Я стараюсь быть максимально прозрачным: **что сохраняю** и **зачем**."
+    "ru": "Я стараюсь быть максимально прозрачным: **что сохраняю** и **зачем**.",
+    "en": "I try to be as transparent as possible about **what I save** and **why**."
   },
   "По умолчанию я сохраняю только технические данные для стабильной работы:": {
-    "ru": "По умолчанию я сохраняю только технические данные для стабильной работы:"
+    "ru": "По умолчанию я сохраняю только технические данные для стабильной работы:",
+    "en": "By default, I only save technical data for stable operation:"
   },
   "• 🧪 ошибки при использовании команд": {
-    "ru": "• 🧪 ошибки при использовании команд"
+    "ru": "• 🧪 ошибки при использовании команд",
+    "en": "• 🧪 errors when using commands"
   },
   "• ⚙️ вводимые команды (для поиска багов и улучшения функций)": {
-    "ru": "• ⚙️ вводимые команды (для поиска багов и улучшения функций)"
+    "ru": "• ⚙️ вводимые команды (для поиска багов и улучшения функций)",
+    "en": "• ⚙️ entered commands (to find bugs and improve functions)"
   },
   "📦 **Срок хранения:** данные хранятся **без ограничения по времени**, пока вы сами не удалите их.": {
-    "ru": "📦 **Срок хранения:** данные хранятся **без ограничения по времени**, пока вы сами не удалите их."
+    "ru": "📦 **Срок хранения:** данные хранятся **без ограничения по времени**, пока вы сами не удалите их.",
+    "en": "📦 **Retention period:** data is stored **without time limit** until you delete it yourself."
   },
   "🔐 **Настройки ниже:**": {
-    "ru": "🔐 **Настройки ниже:**"
+    "ru": "🔐 **Настройки ниже:**",
+    "en": "🔐 **Settings below:**"
   },
   "**Сообщения (метаданные)** — `UserId`, `GuildId`, `ChannelId`, ссылка, время отправки. Нужны для графика активности.": {
-    "ru": "**Сообщения (метаданные)** — `UserId`, `GuildId`, `ChannelId`, ссылка, время отправки. Нужны для графика активности."
+    "ru": "**Сообщения (метаданные)** — `UserId`, `GuildId`, `ChannelId`, ссылка, время отправки. Нужны для графика активности.",
+    "en": "**Messages (metadata)** - `UserId`, `GuildId`, `ChannelId`, link, sending time. Needed for the activity schedule."
   },
   "**Контент сообщений** — текст сообщений и вложения. Работает только если включены **Сообщения**.": {
-    "ru": "**Контент сообщений** — текст сообщений и вложения. Работает только если включены **Сообщения**."
+    "ru": "**Контент сообщений** — текст сообщений и вложения. Работает только если включены **Сообщения**.",
+    "en": "**Message content**—message text and attachments. Works only if **Messages** are enabled."
   },
   "**Войс-активность** — вход/выход/переход между войс-каналами (без записи голоса/экрана).": {
-    "ru": "**Войс-активность** — вход/выход/переход между войс-каналами (без записи голоса/экрана)."
+    "ru": "**Войс-активность** — вход/выход/переход между войс-каналами (без записи голоса/экрана).",
+    "en": "**Voice activity** - entry/exit/transition between voice channels (without voice/screen recording)."
   },
   "**Активность Discord** — игры/стрим/музыка/статус/часть изменений профиля.": {
-    "ru": "**Активность Discord** — игры/стрим/музыка/статус/часть изменений профиля."
+    "ru": "**Активность Discord** — игры/стрим/музыка/статус/часть изменений профиля.",
+    "en": "**Discord activity** - games/stream/music/status/part of profile changes."
   },
   "**Контент активности** — расширенные данные активности (если используются функциями бота). Работает только если включена **Активность**.": {
     "ru": "**Контент активности** — расширенные данные активности (если используются функциями бота). Работает только если включена **Активность**."
@@ -1802,10 +1822,12 @@
     "ru": "**Диагностика команд** — где и когда использовалась команда (помогает находить ошибки и улучшать команды)."
   },
   "Уведомления": {
-    "ru": "Уведомления"
+    "ru": "Уведомления",
+    "en": "Notifications"
   },
   "Настройка News/Important/Critical уведомлений.": {
-    "ru": "Настройка News/Important/Critical уведомлений."
+    "ru": "Настройка News/Important/Critical уведомлений.",
+    "en": "Setting up News/Important/Critical notifications."
   },
   "Изменено": {
     "ru": "Изменено"
@@ -1832,19 +1854,24 @@
     "ru": "Отключить новости"
   },
   "Эта команда позволяет вам выбрать, что именно вы разрешаете боту сохранять связанное с вашей активностью в Discord.": {
-    "ru": "Эта команда позволяет вам выбрать, что именно вы разрешаете боту сохранять связанное с вашей активностью в Discord."
+    "ru": "Эта команда позволяет вам выбрать, что именно вы разрешаете боту сохранять связанное с вашей активностью в Discord.",
+    "en": "This command allows you to choose what you allow the bot to save related to your Discord activity."
   },
   "конфиденциальность": {
-    "ru": "конфиденциальность"
+    "ru": "конфиденциальность",
+    "en": "confidentiality"
   },
   "Позволяет Вам Удалить Все Сохраненные Сообщения и Войс-Активность!": {
-    "ru": "Позволяет Вам Удалить Все Сохраненные Сообщения и Войс-Активность!"
+    "ru": "Позволяет Вам Удалить Все Сохраненные Сообщения и Войс-Активность!",
+    "en": "Allows you to Delete All Saved Messages and Voice Activity!"
   },
   "удалить_дату": {
-    "ru": "удалить_дату"
+    "ru": "удалить_дату",
+    "en": "delete_date"
   },
   "Все Ваши Сообщения И Вся Ваша Войс Активность Была Удалена С Моей Базы Данных Успешно.": {
-    "ru": "Все Ваши Сообщения И Вся Ваша Войс Активность Была Удалена С Моей Базы Данных Успешно."
+    "ru": "Все Ваши Сообщения И Вся Ваша Войс Активность Была Удалена С Моей Базы Данных Успешно.",
+    "en": "All Your Messages And All Your Voice Activity Was Deleted From My Database Successfully."
   },
   "Title": {
     "es": "Título",
@@ -1896,10 +1923,12 @@
     "en": "No, this is the wrong channel"
   },
   "**Контент активности** — расширенные данные активности. Работает только если включена **Активность**.": {
-    "ru": "**Контент активности** — расширенные данные активности. Работает только если включена **Активность**."
+    "ru": "**Контент активности** — расширенные данные активности. Работает только если включена **Активность**.",
+    "en": "**Activity Content**—extended activity data. Works only if **Activity** is enabled."
   },
   "**Диагностика команд** — где и когда использовалась команда (помогает мне находить ошибки и улучшать команды).": {
-    "ru": "**Диагностика команд** — где и когда использовалась команда (помогает мне находить ошибки и улучшать команды)."
+    "ru": "**Диагностика команд** — где и когда использовалась команда (помогает мне находить ошибки и улучшать команды).",
+    "en": "**Command diagnostics** - where and when the command was used (helps me find errors and improve commands)."
   },
   "Важно": {
     "ru": "Важно",
@@ -2163,10 +2192,12 @@
     "ru": "Ты уже голосовал за этот канал."
   },
   "Auto-Delete": {
-    "ru": "Автоудаление"
+    "ru": "Автоудаление",
+    "en": "Auto-Delete"
   },
   "Автоудаление сообщений по каналам.": {
-    "ru": "Автоудаление сообщений по каналам."
+    "ru": "Автоудаление сообщений по каналам.",
+    "en": "Auto-delete messages by channel."
   },
   "Выберите канал": {
     "ru": "Выберите канал"
@@ -2387,5 +2418,145 @@
     "ru": "-# Фичи активны сразу, отчёты — раз в 1-3 недели",
     "es": "-# Las funciones se activan inmediatamente, informes: una vez cada 1 a 3 semanas",
     "en": "-# Features are active immediately, reports - once every 1-3 weeks"
+  },
+  "Принято: отметил(а), что канал выбран неверно.": {
+    "ru": "Принято: отметил(а), что канал выбран неверно."
+  },
+  "schedule": {
+    "en": "schedule"
+  },
+  "You can find out your activity in any period of time from the moment I set me.": {
+    "en": "You can find out your activity in any period of time from the moment I set me."
+  },
+  "formatting_": {
+    "en": "formatting_"
+  },
+  "The team has no description.": {
+    "en": "The team has no description."
+  },
+  "**Wolium — обновление v2.2.0**\n": {
+    "en": "**Wolium - update v2.2.0**",
+    "ru": "**Wolium — обновление v2.2.0**",
+    "es": "**Wolium - actualización v2.2.0**"
+  },
+  "# 🌐 Сайт Wolium": {
+    "en": "# 🌐 Wolium website",
+    "ru": "# 🌐 Сайт Wolium",
+    "es": "# 🌐 Sitio web de Wolium"
+  },
+  "• Добавлена новая главная страница сайта.": {
+    "en": "• Added a new home page of the site.",
+    "ru": "• Добавлена новая главная страница сайта.",
+    "es": "• Se agregó una nueva página de inicio del sitio."
+  },
+  "• Улучшен интерфейс сайта и дашборда.": {
+    "en": "• Improved website and dashboard interface.",
+    "ru": "• Улучшен интерфейс сайта и дашборда.",
+    "es": "• Sitio web mejorado y interfaz de panel de control."
+  },
+  "• Улучшена локализация сайта.": {
+    "en": "• Site localization has been improved.",
+    "ru": "• Улучшена локализация сайта.",
+    "es": "• Se ha mejorado la localización del sitio."
+  },
+  "## 🔒 Приватность и безопасность": {
+    "en": "## 🔒 Privacy and security",
+    "ru": "## 🔒 Приватность и безопасность",
+    "es": "## 🔒 Privacidad y seguridad"
+  },
+  "• Личные сообщения больше не попадают в систему сохранения данных.": {
+    "en": "• Personal messages are no longer saved in the data storage system.",
+    "ru": "• Личные сообщения больше не попадают в систему сохранения данных.",
+    "es": "• Los mensajes personales ya no se guardan en el sistema de almacenamiento de datos."
+  },
+  "• Добавлена защита от привязки нескольких Discord-аккаунтов к одному профилю.": {
+    "en": "• Added protection against linking multiple Discord accounts to one profile.",
+    "ru": "• Добавлена защита от привязки нескольких Discord-аккаунтов к одному профилю.",
+    "es": "• Se agregó protección contra la vinculación de múltiples cuentas de Discord a un perfil."
+  },
+  "• Заблокированные пользователи не смогут использовать веб-часть Wolium.": {
+    "en": "• Blocked users will not be able to use the Wolium web part.",
+    "ru": "• Заблокированные пользователи не смогут использовать веб-часть Wolium.",
+    "es": "• Los usuarios bloqueados no podrán utilizar el elemento web Wolium."
+  },
+  "## 🎖️ Лидерборды": {
+    "en": "## 🎖️ Leaderboards",
+    "ru": "## 🎖️ Лидерборды",
+    "es": "## 🎖️ Tablas de clasificación"
+  },
+  "• Вместо @упоминаний теперь показываются нормальные имена пользователей.": {
+    "en": "• Instead of @mentions, normal usernames are now shown.",
+    "ru": "• Вместо @упоминаний теперь показываются нормальные имена пользователей.",
+    "es": "• En lugar de @menciones, ahora se muestran nombres de usuario normales."
+  },
+  "• Улучшено отображение пользователей вне сервера.": {
+    "en": "• Improved display of users outside the server.",
+    "ru": "• Улучшено отображение пользователей вне сервера.",
+    "es": "• Visualización mejorada de usuarios fuera del servidor."
+  },
+  "• Улучшено отображение серверов в рейтингах.": {
+    "en": "• Improved display of servers in ratings.",
+    "ru": "• Улучшено отображение серверов в рейтингах.",
+    "es": "• Visualización mejorada de servidores en clasificaciones."
+  },
+  "## 🌍 Переводы": {
+    "en": "## 🌍 Translations",
+    "ru": "## 🌍 Переводы",
+    "es": "## 🌍 Traducciones"
+  },
+  "• Добавлены новые переводы для команд и настроек.": {
+    "en": "• Added new translations for commands and settings.",
+    "ru": "• Добавлены новые переводы для команд и настроек.",
+    "es": "• Se agregaron nuevas traducciones para comandos y configuraciones."
+  },
+  "• Улучшено отображение названий языков.": {
+    "en": "• Improved display of language names.",
+    "ru": "• Улучшено отображение названий языков.",
+    "es": "• Visualización mejorada de nombres de idiomas."
+  },
+  "## ⚙️ Стабильность": {
+    "en": "## ⚙️ Stability",
+    "ru": "## ⚙️ Стабильность",
+    "es": "## ⚙️ Estabilidad"
+  },
+  "• Улучшено отслеживание подвисаний бота.": {
+    "en": "• Improved tracking of bot freezes.",
+    "ru": "• Улучшено отслеживание подвисаний бота.",
+    "es": "• Seguimiento mejorado de congelaciones de bots."
+  },
+  "• Улучшена стабильность фоновых запросов.": {
+    "en": "• Improved stability of background queries.",
+    "ru": "• Улучшена стабильность фоновых запросов.",
+    "es": "• Estabilidad mejorada de consultas en segundo plano."
+  },
+  "• Исправлены мелкие проблемы, влияющие на профиль, графики и сайт.": {
+    "en": "• Fixed minor issues affecting the profile, graphics and website.",
+    "ru": "• Исправлены мелкие проблемы, влияющие на профиль, графики и сайт.",
+    "es": "• Se corrigieron problemas menores que afectaban el perfil, los gráficos y el sitio web."
+  },
+  "• 🌐 Обновлён сайт Wolium": {
+    "en": "• 🌐 Updated Wolium website",
+    "ru": "• 🌐 Обновлён сайт Wolium",
+    "es": "• 🌐 Sitio web de Wolium actualizado"
+  },
+  "• 🔒 ЛС больше не сохраняются": {
+    "en": "• 🔒 DMs are no longer saved",
+    "ru": "• 🔒 ЛС больше не сохраняются",
+    "es": "• 🔒 Los DM ya no se guardan"
+  },
+  "• 🎖️ Улучшены лидерборды": {
+    "en": "• 🎖️ Improved leaderboards",
+    "ru": "• 🎖️ Улучшены лидерборды",
+    "es": "• 🎖️ Tablas de clasificación mejoradas"
+  },
+  "• 🌍 Новые переводы": {
+    "en": "• 🌍 New translations",
+    "ru": "• 🌍 Новые переводы",
+    "es": "• 🌍 Nuevas traducciones"
+  },
+  " • Wolium v2.2.0": {
+    "en": "• Wolium v2.2.0",
+    "ru": "• Волиум v2.2.0",
+    "es": "• Wolio v2.2.0"
   }
 }

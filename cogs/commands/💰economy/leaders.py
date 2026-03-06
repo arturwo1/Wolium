@@ -275,26 +275,25 @@ class Leaders(commands.Cog):
             sort_value = sort_value if сортировка not in ['voice'] else timedelta(seconds=sort_value)
             if interaction.guild.get_member(user_id):
               lead.add_field(
-                name=f"**#{rank}**. {str_badge_in_description}{interaction.guild.get_member(user_id).mention}",
+                name=f"**#{rank}**. {str_badge_in_description}{interaction.guild.get_member(user_id).display_name}",
                 value=f"{euro}{await suffics(number=sort_value, variation=variation) if сортировка not in ['voice'] else f'{sort_value.days}d {sort_value.seconds // 3600}h {(sort_value.seconds % 3600) // 60}m'}",
                 inline=False
               )
             elif self.bot.get_guild(user_id):
-              invite = await (GetInvite(self.bot)).invite(self.bot.get_guild(user_id),'leaders')
               lead.add_field(
-                name=f"**#{rank}**. {(f'[**`{self.bot.get_guild(user_id).name}`**]({invite})') if invite not in ['Нет инвайтов','Нет прав для просмотра инвайтов','ошибка','ЛС'] else f'**`{self.bot.get_guild(user_id).name}`**'}",
+                name=f"**#{rank}**. **`{self.bot.get_guild(user_id).name}`**",
                 value=f"{euro}{await suffics(number=sort_value, variation=variation) if сортировка not in ['voice'] else f'{sort_value.days}d {sort_value.seconds // 3600}h {(sort_value.seconds % 3600) // 60}m'}",
                 inline=False
               )
             else:
               lead.add_field(
-                name=f"**#{rank}**. {str_badge_in_description}<@{user_id}>",
+                name=f"**#{rank}**. {str_badge_in_description}{(user:=self.bot.get_user(user_id)) and user.display_name or f'ID: {user_id}'}",
                 value=f"{euro}{await suffics(number=sort_value, variation=variation) if сортировка not in ['voice'] else f'{sort_value.days}d {sort_value.seconds // 3600}h {(sort_value.seconds % 3600) // 60}m'}",
                 inline=False
               )
           else:
             lead.add_field(
-              name=f"**#{rank}**. ❓ {str_badge_in_description}<@{user_id}>",
+              name=f"**#{rank}**. ❓ {str_badge_in_description}{(user:=self.bot.get_user(user_id)) and user.display_name or (guild:=self.bot.get_guild(user_id)) and guild.name or f'ID: {user_id}'}",
               value=f"{{euro}}{round(sort_value, 2) if сортировка not in ['voice'] else f'{sort_value.days}d {sort_value.seconds // 3600}h {(sort_value.seconds % 3600) // 60}m'}",
               inline=False
             )

@@ -434,7 +434,7 @@ class OnMessage(commands.Cog):
           bucket = g.setdefault(ch_key, {})
           bucket[str(message.id)] = created_ts
 
-    if message.author!=self.bot.user:
+    if message.author!=self.bot.user and message.guild:
       user_privacy = await (GetData(self.bot)).get_data(user_id,['save_messages', 'save_message_data'], 'user_privacy', 'user_id', message.guild)
       if user_privacy['save_messages']:
         guild_id = message.guild.id
