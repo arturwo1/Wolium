@@ -1,10 +1,7 @@
-import nextcord
+from nextcord import Member, Colour
 from nextcord.ext import commands
-from cogs.utils.get_data import GetData
-from cogs.utils.log_member_activity import LogMemberActivity
 from Utils.get_member_or_user_updated_data import object_to_dict, deep_compare
-from cogs.utils.send_embed import SendEmbed
-from cogs.utils.translate_message import TranslateMessage
+from Utils.config import servers_with_no_acces_for_bot, users_with_no_acces_for_bot
 
 def format_value(value:dict|list|str, tag=1):
   tag_ = ("#"*tag) if tag<=3 else "-#"
@@ -20,12 +17,33 @@ class OnMemberUpdate(commands.Cog):
     self.bot:commands.Bot = bot
   
   @commands.Cog.listener()
-  async def on_member_update(self, before:nextcord.Member, after:nextcord.Member):
+  async def on_member_update(self, before:Member, after:Member):
     user_id = before.id
     guild_id = before.guild.id
     activity_type = 'update'
     guild =  before.guild
     guild_locale = guild.preferred_locale if guild else None
+
+    if guild_id in servers_with_no_acces_for_bot or user_id in users_with_no_acces_for_bot:
+      return
+    
+    log_member_activity =  self.bot.get_cog("LogMemberActivity")
+    get_data = self.bot.get_cog("GetData")
+    translate_message = self.bot.get_cog("TranslateMessage")
+    send_embed = self.bot.get_cog("SendEmbed")
+    tracker = self.bot.get_cog("ActivityTracker")
+
+    if guild_id:
+      guild_settings = await get_data.get_data(guild_id,['banned'],'guilds','guild_id',before.guild)
+    user_settings = await get_data.get_data(user_id,['banned'],'users','user_id',before.guild)
+
+    if user_settings['banned'] or (guild_settings['banned'] if before.guild else False):
+      servers_with_no_acces_for_bot.append(guild_id)
+      users_with_no_acces_for_bot.append(user_id)
+      return
+    
+    if tracker:
+      await tracker.handle_member_update(before, after)
 
     before_data = object_to_dict(before)
     after_data = object_to_dict(after)
@@ -33,25 +51,25 @@ class OnMemberUpdate(commands.Cog):
     changes = deep_compare(before_data, after_data)
 
     if changes:
-      await (LogMemberActivity(self.bot)).log_member_activity(user_id, guild_id, activity_type, changes)
+      await log_member_activity.log_member_activity(user_id, guild_id, activity_type, changes)
       
-      guild_config = await (GetData(self.bot)).get_data(guild_id,['mod_log_channel'],'guild_settings','guild_id',guild)
+      guild_config = await get_data.get_data(guild_id,['mod_log_channel'],'guild_settings','guild_id',guild)
       mod_log_channel = guild_config['mod_log_channel']
       
       if mod_log_channel and guild and guild.get_channel(mod_log_channel):
         mod_lang = guild_locale if guild_locale !='en-US' and guild_locale !='en-GB' and guild_locale !='es-ES' and guild_locale !='sv-SE' else 'en' if guild_locale =='en-US' or guild_locale =='en-GB' and guild_locale !='es-ES' and guild_locale !='sv-SE' else 'es' if guild_locale !='en-US' and guild_locale !='en-GB' and guild_locale =='es-ES' and guild_locale !='sv-SE' else 'sv'
         fields = [{
-            'name':await (TranslateMessage(self.bot)).translate_message('Пользователь',mod_lang),
+            'name':await translate_message.translate_message('Пользователь',mod_lang),
             'value':f"{user_id} | {before.mention} | {before.name}",
             'inline':False
           }
         ]
-        await (SendEmbed(self.bot)).send_embed(
-          title=await (TranslateMessage(self.bot)).translate_message("Изменение Пользователя",mod_lang),
+        await send_embed.send_embed(
+          title=await translate_message.translate_message("Изменение Пользователя",mod_lang),
           description=str("\n".join(f"# **{key}**:\n{format_value(value, 2)}" for key, value in changes.items()))[:4000],
-          color=nextcord.Colour.yellow(),
+          color=Colour.yellow(),
           fields=fields,
-          footer_text=await (TranslateMessage(self.bot)).translate_message("Изменение Пользователя",mod_lang),
+          footer_text=await translate_message.translate_message("Изменение Пользователя",mod_lang),
           author_text=before.name,
           author_icon=before.display_avatar.url,
           guild_id=guild_id,

@@ -193,20 +193,17 @@ async def listen_PostgreSQL_changes():
     await bot.wait_until_ready()
     conn = None
     try:
-      # Подключаемся к PostgreSQL отдельно (НЕ через пул!)
-      # conn = await asyncpg.connect(f"postgresql://user:{os.getenv('POSTGRESQL_ADMIN_PASSWORD')}@localhost/postgres")
       conn = await (await init_database()).acquire()
 
-      # Добавляем слушателей
       await conn.add_listener("data_changes", handle_PostgreSQL_changes)
       await conn.add_listener("ddl_changes", handle_ddl_PostgreSQL_changes)
 
       while True:
-        await asyncio.sleep(60)  # Поддерживаем соединение активным
+        await asyncio.sleep(60)
       
     except asyncpg.exceptions.ConnectionDoesNotExistError as e:
       print(f"🔴 Потеряно соединение с PostgreSQL: {e}. Переподключение через 5 секунд...")
-      await asyncio.sleep(5)  # Подождать перед переподключением
+      await asyncio.sleep(5)
 
     except Exception as e:
       traceback_msg = str((''.join(traceback.format_exception(type(e), e, e.__traceback__)))[:5000])
@@ -346,9 +343,6 @@ async def on_ready():
   if bot_started: print(f'🔗\033[38;5;51m{bot.user}\033[0m \033[38;5;82mготов снова,\033[0m \033[38;5;226m{datetime.now()}\033[0m');return
   else:
     import Utils.translate_to_all_languages
-    # from cogs.utils.GPT import violationsview as violationsview1
-    # violationsview2 = import_module("cogs.commands.🔨moderation.message_report").violationsview
-    # violationsview3 = import_module("cogs.commands.🔨moderation.user_report").violationsview
     номер_перевода = Utils.translate_to_all_languages.номер_перевода
     DISCORD_LANGUAGES = Utils.translate_to_all_languages.DISCORD_LANGUAGES
     номер_перевода_символы = Utils.translate_to_all_languages.номер_перевода_символы
@@ -362,9 +356,6 @@ async def on_ready():
     app.router.add_post('/discord', bot.get_cog("DiscordWebhook").discord_info)
     app.router.add_get('/.well-known/discord', bot.get_cog("VerifyWebsiteForDiscord").discord_verification)
 
-    # bot.add_view(violationsview1())
-    # bot.add_view(violationsview2())
-    # bot.add_view(violationsview3())
 
     restored = await restore_feedback_views(bot, store)
 
@@ -375,8 +366,6 @@ async def on_ready():
       await site.start()
     except Exception as e:
       print('Произошла ошибка в on_ready при старте сайта\n',''.join(format_exception(type(e), e, e.__traceback__)))
-
-    # bot.loop.create_task(PostgreSQL_backup_data())
 
     text = f"Переведено {номер_перевода}({номер_перевода_символы} символов) текста на {len(DISCORD_LANGUAGES)} языка при запуске бота.\nСо всего было переведено {номер_перевода*len(DISCORD_LANGUAGES)} текста учитывая языки."
     await bot.get_guild(807304463449849938).get_channel(807366228670152764).send(f'```ansi\nтокен от: \033[1;34m{bot.user}\033[0m\n\nБот Начал Запуск В: {time_when_bot_run_firts}\nБот Закончил Запуск В: {str(datetime.now())}\nБот Запускался: {datetime.now()-time_when_bot_run_firts}```\n```ansi\n{lazylightshow(text)[:1700]}```')
@@ -2739,23 +2728,15 @@ if __name__=='__main__i':
   async def on_scheduled_event_user_remove(event, user):
       print(f'❌ {user} отменил запись на событие {event.name}')"""
 
-
-  # @bot.event
-  # async def on_interaction(interaction: nextcord.Interaction):
-  #   print(interaction, datetime.now())
-  #   await bot.process_application_commands(interaction)
-
 if __name__=='__main__':
   print(f"Скрипт закончил запуск в \033[38;5;226m{datetime.now()}\033[0m, Скрипт запускался \033[38;5;226m{datetime.now()-time_when_bot_run_firts}\033[0m")
   bot_started_launch = datetime.now()
   print(f"Начало запуска бота: \033[38;5;226m{bot_started_launch}\033[0m")
   async def load_cogs():
-    for root, _, files in os.walk("cogs"):  # Ищем во всех подпапках внутри cogs
+    for root, _, files in os.walk("cogs"):
       for file in files:
         if file.endswith(".py"):
-          # print(root+" - before")
-          cog_path = f"{root.replace(os.sep, '.')}.{file[:-3]}"  # Формат: "cogs.commands.fun.games"
-          # print(cog_path+" - after")
+          cog_path = f"{root.replace(os.sep, '.')}.{file[:-3]}"
           a = datetime.now()
           print(f"🔹Загружаем cog: \033[38;5;21m{cog_path}\033[0m в \033[38;5;226m{datetime.now()}\033[0m"+" "*50, end="")
           try:
@@ -2767,6 +2748,11 @@ if __name__=='__main__':
   async def main_code():
     await load_cogs()
     print(f"\033[38;5;82m🔹Все cog'и загружены и запущены в\033[0m \033[38;5;226m{datetime.now()}\033[0m\033[38;5;82m, загрузка длилась\033[0m \033[38;5;226m{datetime.now()-bot_started_launch}\033[0m")
-    await bot.start(os.getenv("DISCORD_BOT_TOKEN"))
+    try:
+      await bot.start(os.getenv("DISCORD_BOT_TOKEN"))
+    finally:
+      tracker = bot.get_cog("ActivityTracker")
+      if tracker:
+        await tracker.flush_all_open_sessions()
 
   bot.loop.run_until_complete(main_code())

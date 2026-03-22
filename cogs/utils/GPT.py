@@ -257,7 +257,6 @@ class GPT(commands.Cog):
 
   async def GPT(self, message: Message, language: str, invite: Invite, retries: int = 0):
     global history, models, client, api_keys
-    # print('getting api_key')
     try:
       if not api_keys:
         raise RuntimeError("Список API-ключей пуст. Добавь хотя бы один ключ Hugging Face.")
@@ -268,7 +267,7 @@ class GPT(commands.Cog):
     api_key = api_keys[randint(0,len(api_keys)-1)]
     model = models[randint(0,len(models)-1)]
     client = AsyncInferenceClient(model="openai/gpt-oss-20b",provider="novita",api_key=api_key)
-    # print('getting reference')
+    
     try:
       reference = (
         f'''

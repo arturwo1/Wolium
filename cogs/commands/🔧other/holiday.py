@@ -134,7 +134,6 @@ class Holiday(commands.Cog):
         end_index = min(start_index + 5, len(holidaysers))
 
         for number, (name, start_date, end_date, duration, season) in enumerate(holidaysers[start_index:end_index], start=start_index + 1):
-          # name, start_date, end_date, duration, season = current_holiday
           start_date_obj = datetime.strptime(start_date, '%d.%m.%Y')
           remaining_time = start_date_obj - datetime.now()
 

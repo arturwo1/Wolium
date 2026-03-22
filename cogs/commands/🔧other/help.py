@@ -57,7 +57,6 @@ class помощь_меню(View):
       "value": "formules",
       "description": translate_to_all_languages("Как Идут Подсчеты В Экономике",'message',language)
     })
-    # print(cogs, commands, options)
 
     select_menu = Select(
       row=0,
@@ -99,7 +98,6 @@ class помощь_меню(View):
     for command, keys in self.commands.items():
       if self.selected_value not in keys['path']:
         continue
-      # print('allow\n')
       need_commands[command] = keys
     self.max_page = (len(need_commands) - 1) // 5
 
@@ -179,9 +177,6 @@ class Help(commands.Cog):
         help_embed.set_footer(
           text=await (TranslateMessage(self.bot)).translate_message("Помощь",language)
         )
-        # print('этап 3')
-        # print(commands)
-        # print('')
         if commands:
           start_index = page * 5
           end_index = min(start_index + 5, len(commands))
@@ -189,12 +184,8 @@ class Help(commands.Cog):
             path = keys['path']
             if selected_value not in help_embed.description:
               help_embed.description = "### **"+await (TranslateMessage(self.bot)).translate_message("Вся Информация Обо Мне Здесь!",language)+f" | *{selected_value}***"
-            # print(selected_value)
-            # print(path)
             if selected_value not in path:
-              # print('dont allow')
               continue
-            # print('entered')
             description = keys['description']
             try:
               help_embed.add_field(
@@ -252,7 +243,7 @@ class Help(commands.Cog):
             """, language)
         elif selected_value=='formules':
           help_embed.description = "### **"+await (TranslateMessage(self.bot)).translate_message("Вся Информация Обо Мне Здесь!",language)+f" | *{selected_value}***"
-          # (от **`9.26`** до **`13.98`**) `*` (**`3.5`** `*` **`улучшение`**) `*` (**`2`** если увеличение включен, иначе **`1`**) `*` (**`1.5`** если голосовал за бота, иначе **`1`**)
+          
           help_embed.add_field(
             name='/'+await (TranslateMessage(self.bot)).translate_message("работать",language),
             value='('+await (TranslateMessage(self.bot)).translate_message("От",language)+' **`9.26`** '+await (TranslateMessage(self.bot)).translate_message("До",language)+' **`13.98`**) `*` (**`3.5`** `*` **`'+await (TranslateMessage(self.bot)).translate_message("Upgrade",language)+'`**) `*` (**`2`** '+await (TranslateMessage(self.bot)).translate_message("Если увеличение Включен, иначе",language)+' **`1`**) `*` (**`1.5`** '+await (TranslateMessage(self.bot)).translate_message("Если Голосовал За Бота, Иначе",language)+' **`1`**)\n  **'+await (TranslateMessage(self.bot)).translate_message("Пример",language)+'**: `10.56 * 45.5 * 1 * 1.5`.\n'+await (TranslateMessage(self.bot)).translate_message("УСТАРЕЛО НЕДАВНО",language),
@@ -267,31 +258,21 @@ class Help(commands.Cog):
         await helper.edit(content=None,embed=help_embed)
       
       bot_commands: dict[str,dict[str,str]] = {}
-      # print('этап 1')
       for bot_command in self.bot.get_application_commands(True):
-        # print(bot_command.name)
         if bot_command:
           path = bot_command.parent_cog.__module__
-          # print(path)
-          # print('entered\n')
           if 'owner' in path:
             continue
           bot_commands[await (TranslateMessage(self.bot)).translate_message(bot_command.name,language)] = {'path':path,'description':(await (TranslateMessage(self.bot)).translate_message(str(bot_command.extras['description']),language) if hasattr(bot_command, 'extras') and bot_command.extras else await (TranslateMessage(self.bot)).translate_message("Нет Описания У Команды.",language))}
       need_commands: dict[str,dict[str,str]] = {}
-      # print('этап 2')
       for command, keys in bot_commands.items():
-        # print(command)
-        # print(keys['path'])
         if "🎉fun" not in keys['path']:
-          # print('dont allow\n')
           continue
-        # print('allow\n')
         need_commands[command] = keys
       max_page = (len(need_commands) - 1) // 5
 
       view = помощь_меню(interaction.user.id, language, send_help_message, "🎉fun", max_page, bot_commands)
       helper = await interaction.followup.send(await (TranslateMessage(self.bot)).translate_message("Второй Этап Загрузки Данных.", language),view=view,wait=True)
-      # print(max_page, bot_commands, need_commands)
       await send_help_message(None,None,None,None)
 
     except Exception as e:

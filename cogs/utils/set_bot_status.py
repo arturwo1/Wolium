@@ -35,7 +35,6 @@ class SetBotStatus(commands.Cog):
             название = eval(''.join(status_info['название']), globals(), locals())
           break
         await asyncio.sleep(10)
-      # print(название)
       активность = status_info['активность']
       ссылка = status_info['ссылка']
       статус = status_info['статус']
@@ -52,7 +51,6 @@ class SetBotStatus(commands.Cog):
           locale, count = locale_count.most_common(1)[0]
 
         название = await (TranslateMessage(self.bot)).translate_message(название, locale if locale!='en-US' and locale!='en-GB' and locale!='es-ES' and locale!='sv-SE' else 'en' if locale=='en-US' or locale=='en-GB' and locale!='es-ES' and locale!='sv-SE' else 'es' if locale!='en-US' and locale!='en-GB' and locale=='es-ES' and locale!='sv-SE' else 'sv',save=False)
-        # print(название)
         if активность=="play":
           activity=nextcord.Game(название)
         elif активность=="stream":

@@ -47,9 +47,6 @@ def create_holidays(year:int):
   catholic_easter = catholic_easter_date(year)
   orthodox_easter = orthodox_easter_date(year)
 
-  # catholic_easter_week = [catholic_easter + timedelta(days=i) for i in range(7)]
-  # orthodox_easter_week = [orthodox_easter + timedelta(days=i) for i in range(7)]
-
   tc = datetime(year, 11, 1)
   while tc.weekday() != 3:
     tc += timedelta(days=1)

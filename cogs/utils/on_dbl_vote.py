@@ -81,7 +81,6 @@ class OnDBLVote(commands.Cog):
       }
       total_points = 0
       monthly_points = 0
-      # print('1')
       async with ClientSession() as session:
         async with session.get(url, headers=headers) as resp:
           if resp.status == 200:

@@ -1,6 +1,6 @@
-import nextcord
+from nextcord import Member, VoiceState
 from nextcord.ext import commands
-import asyncio
+from asyncio import sleep
 from datetime import datetime, timedelta
 from Utils.config import servers_with_no_acces_for_bot, users_with_no_acces_for_bot
 
@@ -11,7 +11,7 @@ class OnVoiceStateUpdate(commands.Cog):
     self.bot = bot
   
   @commands.Cog.listener()
-  async def on_voice_state_update(self, member: nextcord.Member, before: nextcord.VoiceState, after: nextcord.VoiceState):
+  async def on_voice_state_update(self, member: Member, before: VoiceState, after: VoiceState):
     if not member:
       return
     global time_of_join
@@ -62,9 +62,9 @@ class OnVoiceStateUpdate(commands.Cog):
         
     if before.channel is None and after.channel and sdeaf!=True and smute!=True and deaf!=True and mute!=True:
       joined_at_voice = datetime.now()
-      await asyncio.sleep(20)
+      await sleep(20)
       if after.channel and len(after.channel.members) == 1:
-        await asyncio.sleep(20)
+        await sleep(20)
         if len(member.guild.voice_channels) == 1 and member in member.guild.voice_channels:
           return
       time_of_join[member.id] = joined_at_voice

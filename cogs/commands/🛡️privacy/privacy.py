@@ -60,7 +60,7 @@ class конф_меню(View):
 
     save_activity = Button(
       style=ButtonStyle.green if not self.privacy['save_activity'] else ButtonStyle.red,
-      label=translate_to_all_languages("Активность", 'message', self.language),
+      label=translate_to_all_languages("Discord Активность", 'message', self.language),
       row=1,
       emoji=_return_emoji(self.privacy['save_activity'])
     )
@@ -69,16 +69,25 @@ class конф_меню(View):
 
     save_activity_data = Button(
       style=ButtonStyle.green if not self.privacy['save_activity_data'] else ButtonStyle.red,
-      label=translate_to_all_languages("Контент Активности", 'message', self.language),
+      label=translate_to_all_languages("Данные Активности", 'message', self.language),
       row=0,
       emoji=_return_emoji(self.privacy['save_activity_data'])
     )
     save_activity_data.callback = lambda i: self.save_flags(i, 'save_activity_data')
     self.add_item(save_activity_data)
 
+    save_activity_profile = Button(
+      style=ButtonStyle.green if not self.privacy['save_activity_profile'] else ButtonStyle.red,
+      label=translate_to_all_languages("Данные Профиля", 'message', self.language),
+      row=0,
+      emoji=_return_emoji(self.privacy['save_activity_profile'])
+    )
+    save_activity_profile.callback = lambda i: self.save_flags(i, 'save_activity_profile')
+    self.add_item(save_activity_profile)
+
     track_activity = Button(
       style=ButtonStyle.green if not self.privacy['track_activity'] else ButtonStyle.red,
-      label=translate_to_all_languages("Слежка", 'message', self.language),
+      label=translate_to_all_languages("Диагностика команд", 'message', self.language),
       row=1,
       emoji=_return_emoji(self.privacy['track_activity'])
     )
@@ -144,7 +153,7 @@ class Privacy(commands.Cog):
       user_settings = await get_data.get_data(user_id,['language'],'users','user_id',interaction.guild)
       language = user_settings['language']
 
-      user_privacy = await get_data.get_data(user_id,['save_messages', 'save_message_data', 'save_voice', 'save_activity', 'save_activity_data', 'track_activity'],'user_privacy','user_id',interaction.guild)
+      user_privacy = await get_data.get_data(user_id,['save_messages', 'save_message_data', 'save_voice', 'save_activity', 'save_activity_data', 'save_activity_profile', 'track_activity'],'user_privacy','user_id',interaction.guild)
       
       await interaction.response.defer(ephemeral=True)
 
@@ -161,8 +170,9 @@ class Privacy(commands.Cog):
           f"{_return_emoji(not data['save_messages'])} " + await translate_message.translate_message("**Сообщения (метаданные)** — `UserId`, `GuildId`, `ChannelId`, ссылка, время отправки. Нужны для графика активности.", language), "\n",
           f"{_return_emoji(not data['save_message_data'])} " + await translate_message.translate_message("**Контент сообщений** — текст сообщений и вложения. Работает только если включены **Сообщения**.", language), "\n",
           f"{_return_emoji(not data['save_voice'])} " + await translate_message.translate_message("**Войс-активность** — вход/выход/переход между войс-каналами (без записи голоса/экрана).", language), "\n",
-          f"{_return_emoji(not data['save_activity'])} " + await translate_message.translate_message("**Активность Discord** — игры/стрим/музыка/статус/часть изменений профиля.", language), "\n",
-          f"{_return_emoji(not data['save_activity_data'])} " + await translate_message.translate_message("**Контент активности** — расширенные данные активности. Работает только если включена **Активность**.", language), "\n",
+          f"{_return_emoji(not data['save_activity'])} " + await translate_message.translate_message("**Discord Активность** — только время и длительность ваших любых активностей.", language), "\n",
+          f"{_return_emoji(not data['save_activity_data'])} " + await translate_message.translate_message("**Данные активности** — полная карточка активности. Работает только если включена **Активность**.", language), "\n",
+          f"{_return_emoji(not data['save_activity_profile'])} " + await translate_message.translate_message("**Данные профиля** — Сохраняет время и все ваши изменения профиля. Работает только если включена **Активность**.", language), "\n",
           f"{_return_emoji(not data['track_activity'])} " + await translate_message.translate_message("**Диагностика команд** — где и когда использовалась команда (помогает мне находить ошибки и улучшать команды).", language), "\n\n",
 
           await translate_message.translate_message("🧹 **Управление:** вы всегда можете отключить категории и удалить данные.", language),

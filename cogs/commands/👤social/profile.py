@@ -144,8 +144,6 @@ class привязать_телеграм(View):
       return
     await interaction.response.defer()
     await interaction.followup.send(await (TranslateMessage(self.bot)).translate_message(f"Пока Эта Функция Недоступна.", self.language),ephemeral=True)
-    # modal = создать_дату_модал(self.bot)
-    # await interaction.response.send_modal(modal)
     self.stop()
 
 
@@ -232,9 +230,7 @@ class Profile(commands.Cog):
             if isinstance(v_value, list):
               for _ in v_value:
                 height += int(90 * upscale)
-            # height+=int(25*upscale)
           height += int(40 * upscale)
-        # height-=int(75*upscale)
       width, height = int(380 * upscale), min(int(4000 * upscale), height)
     elif type_=='cooldowns':
       height = int(185 * upscale)

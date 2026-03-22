@@ -37,7 +37,6 @@ fields: [
         icon_url=author_icon
       )
     if fields:
-      # fields = [{'name':'','value':'','inline':False},{'name':'','value':'','inline':False}] - пример
       for field in fields:
         if 'name' not in field or 'value' not in field or 'inline' not in field:
           continue

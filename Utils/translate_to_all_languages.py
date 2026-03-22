@@ -29,11 +29,8 @@ def write_json(data):
         data=[]
 
 def search(data:list[dict[str,str]],target:str,thing)->dict[str,str]|None:
-  # print(data)
   for item in data:
-    # print(item)
     for key,value in item.items():
-      # print(key,value)
       if value==target:
         if thing=='name':
           for key,value in item.items():
@@ -79,9 +76,6 @@ def translate_to_all_languages(text: str|dict|set|list, thing: str, message_lang
               for key, value in text.items():
                 if value not in translations:
                   translations[value] = {}
-                # print(text)
-                # print(key)
-                # print(value)
                 url = f"https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl={lang}&dt=t&dj=1&source=input&q={key}"
                 response = requests.get(url, headers=headers).json()
                 translated = response['sentences'][0]['trans']
@@ -168,7 +162,7 @@ def translate_to_all_languages(text: str|dict|set|list, thing: str, message_lang
             номер_перевода_символы += len(translated)
 
         except Exception as a:
-          pass # bot.loop.create_task(send_error_embed_message_for_all_languages(text, thing, lang, a))
+          pass
       try:
         for bad_lang in ['en','es','sv']:
           try:
@@ -181,19 +175,10 @@ def translate_to_all_languages(text: str|dict|set|list, thing: str, message_lang
 
       text1 = f"\r{datetime.now()}: Было переведено {номер_перевода} текста на {len(DISCORD_LANGUAGES)} языка, cо всего можно сказать было переведено {номер_перевода*len(DISCORD_LANGUAGES)} текста."
       print(f"{lightshow(text1)}\033[0m", end="")
-      
-      # if thing=='choice':
-      #   print('')
-      #   print(thing+' '+lang)
-      #   print(translations)
-      #   print('')
-      # print(thing+' '+lang)
-      # print(translations)
-      # print('')
+
       if translations:
         data.append(translations)
         write_json(data)
-      # print(translations)
       return translations
     else:
       номер_перевода += 1

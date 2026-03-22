@@ -21,7 +21,7 @@ class прокрутка_лидеров(nextcord.ui.View):
     self.interaction_user_id = interaction_user_id
     self.page = 0
     self.max_page = max_page
-    self.update_callback = update_callback  # Callback для обновления эмбеда
+    self.update_callback = update_callback
     self.update_buttons()
 
   def update_buttons(self):
@@ -147,7 +147,6 @@ class Leaders(commands.Cog):
       if тип in ['server', 'world']:
         if hasattr(self.bot, 'db_pool') and self.bot.db_pool:
           async with self.bot.db_pool.acquire() as conn:
-            #  if sort_key in ['votes','streak']
             query = f"""
             SELECT user_data.user_id, 
               {f'user_data.{sort_key}' if sort_key not in ['messages','voice','votes','streak'] else 'COUNT(*) AS messages_count' if sort_key=='messages' else 'COALESCE(SUM(time_spent), \'0 seconds\'::interval) AS total_time' if sort_key=='voice' else f"topgg.{sort_key}"}, 

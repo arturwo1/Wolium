@@ -282,20 +282,33 @@ class WebRequestsWorker(commands.Cog):
     get_data = self.bot.get_cog("GetData")
     if not get_data: return {"error": "Failed to get data."}
 
-    user_info = await get_data.get_data(discord_id, ["banned", "auth_user_id"], "users", "user_id", None)
+    user_info = await get_data.get_data(discord_id, ["banned", "auth_user_id", "badges"], "users", "user_id", None)
 
     if user_info.get("banned"):
       return {"error": "You are banned."}
     
-    if not user_info.get("auth_user_id"):
+    current_auth_user_id = user_info.get("auth_user_id")
+    new_auth_user_id = job["user_id"]
+
+    if not current_auth_user_id:
       update_data = self.bot.get_cog("UpdateData")
-      if update_data:
-        await update_data.update_data(discord_id, {"auth_user_id": job["user_id"]}, "users", "user_id", None)
-    else:
+      if not update_data:
+        return {"error": "Failed to update data."}
+
+      await update_data.update_data(
+        discord_id,
+        {"auth_user_id": new_auth_user_id},
+        "users",
+        "user_id",
+        None
+      )
+
+    elif current_auth_user_id != new_auth_user_id:
       return {"error": "You already logged in another account."}
 
     u = self.bot.get_user(discord_id)
     username = u.display_name if u else "Unknown Name"
+    member = next((m for m in self.bot.get_all_members() if m.id == discord_id), None)
 
     if kind == "profile_stats":
       row = await conn.fetchrow("""
@@ -351,6 +364,13 @@ class WebRequestsWorker(commands.Cog):
       result["xp_need"] = xp_need
       result["xp_now"] = xp_now
       result["user_name"] = username
+      result["badges"] = user_info["badges"]
+      result["status"] = member and str(member.status) or None
+      result["client_status"] = {
+        "desktop": str(getattr(member, "desktop_status", "offline")) if member else "offline",
+        "mobile": str(getattr(member, "mobile_status", "offline")) if member else "offline",
+        "web": str(getattr(member, "web_status", "offline")) if member else "offline"
+      }
       return result
 
     if kind == "messages_series":
