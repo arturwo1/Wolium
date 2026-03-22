@@ -2613,21 +2613,176 @@
     "en": "**Discord activity** - only the time and duration of your any activities."
   },
   "**Данные активности** — полная карточка активности. Работает только если включена **Активность**.": {
-    "en": "**Activity data** - complete activity card. Works only if **Activity** is enabled."
+    "en": "**Activity data** - complete activity card. Works only if **Activity** is enabled.",
+    "ru": "**Данные активности** — полная карточка активности. Работает только если включена **Активность**."
   },
   "**Данные профиля** — Сохраняет время и все ваши изменения профиля. Работает только если включена **Активность**.": {
-    "en": "**Profile Data** - Saves time and all your profile changes. Works only if **Activity** is enabled."
+    "en": "**Profile Data** - Saves time and all your profile changes. Works only if **Activity** is enabled.",
+    "ru": "**Данные профиля** — Сохраняет время и все ваши изменения профиля. Работает только если включена **Активность**."
   },
   "Данные Профиля": {
-    "en": "Profile Data"
+    "en": "Profile Data",
+    "ru": "Данные Профиля"
   },
   "**Discord Активность** — только время и длительность ваших любых активностей.": {
-    "en": "**Discord Activity** - only the time and duration of your any activities."
+    "en": "**Discord Activity** - only the time and duration of your any activities.",
+    "ru": "**Discord Активность** — только время и длительность ваших любых активностей."
   },
   "Discord Активность": {
-    "en": "Discord Activity"
+    "en": "Discord Activity",
+    "ru": "Discord Активность"
   },
   "Данные Активности": {
-    "en": "Activity Data"
+    "en": "Activity Data",
+    "ru": "Данные Активности"
+  },
+  "**Wolium — обновление за 6-22 марта!**\n": {
+    "es": "**Wolium - ¡actualización del 6 al 22 de marzo!**",
+    "en": "**Wolium - update for March 6-22!**",
+    "ru": "**Wolium — обновление за 6-22 марта!**"
+  },
+  "# 🌐 Сайт Wolium стал живее": {
+    "es": "# 🌐 El sitio web de Wolium se ha vuelto más animado.",
+    "en": "# 🌐 The Wolium website has become more lively",
+    "ru": "# 🌐 Сайт Wolium стал живее"
+  },
+  "• Добавлена страница настроек сайта.": {
+    "es": "• Página de configuración del sitio agregada.",
+    "en": "• Added site settings page.",
+    "ru": "• Добавлена страница настроек сайта."
+  },
+  "• Добавлено согласие на cookies.": {
+    "es": "• Se agregó consentimiento a las cookies.",
+    "en": "• Added consent to cookies.",
+    "ru": "• Добавлено согласие на cookies."
+  },
+  "• Обновлена главная страница и локализации сайта.": {
+    "es": "• Página de inicio actualizada y localización del sitio.",
+    "en": "• Updated home page and site localization.",
+    "ru": "• Обновлена главная страница и локализации сайта."
+  },
+  "• Добавлены анимации переходов между страницами, обновлён логотип и favicon.": {
+    "es": "• Se agregaron animaciones para transiciones entre páginas, logotipo y favicon actualizados.",
+    "en": "• Added animations for transitions between pages, updated logo and favicon.",
+    "ru": "• Добавлены анимации переходов между страницами, обновлён логотип и favicon."
+  },
+  "## 👤 Профиль на сайте": {
+    "es": "## 👤 Perfil en el sitio",
+    "en": "## 👤 Profile on the site",
+    "ru": "## 👤 Профиль на сайте"
+  },
+  "• На аватаре теперь показывается статус Discord.": {
+    "es": "• El avatar ahora muestra el estado de Discord.",
+    "en": "• The avatar now shows Discord status.",
+    "ru": "• На аватаре теперь показывается статус Discord."
+  },
+  "• При наведении видно, где именно пользователь онлайн: ПК, телефон или браузер.": {
+    "es": "• Cuando pasa el cursor, puede ver exactamente dónde está en línea el usuario: PC, teléfono o navegador.",
+    "en": "• When you hover, you can see exactly where the user is online: PC, phone or browser.",
+    "ru": "• При наведении видно, где именно пользователь онлайн: ПК, телефон или браузер."
+  },
+  "• Улучшено поведение превью в графиках профиля.": {
+    "es": "• Comportamiento de vista previa mejorado en gráficos de perfil.",
+    "en": "• Improved preview behavior in profile graphs.",
+    "ru": "• Улучшено поведение превью в графиках профиля."
+  },
+  "## 🔐 Приватность и активность": {
+    "es": "## 🔐 Privacidad y actividad",
+    "en": "## 🔐 Privacy and activity",
+    "ru": "## 🔐 Приватность и активность"
+  },
+  "• Настройки приватности стали подробнее.": {
+    "es": "• La configuración de privacidad se ha vuelto más detallada.",
+    "en": "• Privacy settings have become more detailed.",
+    "ru": "• Настройки приватности стали подробнее."
+  },
+  "• Активность разделена на отдельные категории: время активности, данные активности и данные профиля.": {
+    "es": "• La actividad se divide en categorías separadas: tiempo de actividad, datos de actividad y datos de perfil.",
+    "en": "• Activity is divided into separate categories: activity time, activity data and profile data.",
+    "ru": "• Активность разделена на отдельные категории: время активности, данные активности и данные профиля."
+  },
+  "• Подготовлена новая система сохранения Discord-активностей для сайта и будущих графиков.": {
+    "es": "• Se ha preparado un nuevo sistema para guardar actividades de Discord para el sitio y horarios futuros.",
+    "en": "• A new system for saving Discord activities has been prepared for the site and future schedules.",
+    "ru": "• Подготовлена новая система сохранения Discord-активностей для сайта и будущих графиков."
+  },
+  "## ⚙️ Внутренние улучшения": {
+    "es": "## ⚙️ Mejoras internas",
+    "en": "## ⚙️ Internal improvements",
+    "ru": "## ⚙️ Внутренние улучшения"
+  },
+  "• Улучшены графики сообщений и войса.": {
+    "es": "• Mensajes mejorados y gráficos de voz.",
+    "en": "• Improved message and voice graphics.",
+    "ru": "• Улучшены графики сообщений и войса."
+  },
+  "• Улучшена обработка импорта данных из Discord `.zip`(теперь загрузка быстрее и вы видите результаты в реальном времени).": {
+    "es": "• Manejo mejorado de la importación de datos desde Discord `.zip` (ahora la carga es más rápida y ves los resultados en tiempo real).",
+    "en": "• Improved handling of importing data from Discord `.zip` (now loading is faster and you see the results in real time).",
+    "ru": "• Улучшена обработка импорта данных из Discord `.zip`(теперь загрузка быстрее и вы видите результаты в реальном времени)."
+  },
+  "## 🔜 Что будет в следующем обновлении": {
+    "es": "## 🔜 ¿Qué pasará en la próxima actualización?",
+    "en": "## 🔜 What will happen in the next update",
+    "ru": "## 🔜 Что будет в следующем обновлении"
+  },
+  "• На сайте появится просмотр **всех активностей** в виде графика с разными подробностями.": {
+    "es": "• Aparecerá una vista de **todas las actividades** en el sitio en forma de gráfico con varios detalles.",
+    "en": "• A view of **all activities** will appear on the site in the form of a graph with various details.",
+    "ru": "• На сайте появится просмотр **всех активностей** в виде графика с разными подробностями."
+  },
+  "• Для сообщений появится фильтрация не только по диапазону, но и по:": {
+    "es": "• Los mensajes se filtrarán no sólo por rango, sino también por:",
+    "en": "• Messages will be filtered not only by range, but also by:",
+    "ru": "• Для сообщений появится фильтрация не только по диапазону, но и по:"
+  },
+  "  серверам, каналам, контексту сообщений, отправленных пользователем.": {
+    "es": "servidores, canales, contexto de los mensajes enviados por el usuario.",
+    "en": "servers, channels, context of messages sent by the user.",
+    "ru": "серверам, каналам, контексту сообщений, отправленных пользователем."
+  },
+  "• Для войса сортировка станет такой же расширенной, как у сообщений.": {
+    "es": "• Para la voz, la clasificación será tan avanzada como para los mensajes.",
+    "en": "• For voice, sorting will become as advanced as for messages.",
+    "ru": "• Для войса сортировка станет такой же расширенной, как у сообщений."
+  },
+  "• Для активностей появится похожая расширенная сортировка.": {
+    "es": "• Aparecerá una clasificación avanzada similar para las actividades.",
+    "en": "• Similar advanced sorting will appear for activities.",
+    "ru": "• Для активностей появится похожая расширенная сортировка."
+  },
+  "• в превью сообщений можно будет видеть картинки, отправленные пользователем.": {
+    "es": "• en las vistas previas de mensajes puedes ver las imágenes enviadas por el usuario.",
+    "en": "• in message previews you can see pictures sent by the user.",
+    "ru": "• в превью сообщений можно будет видеть картинки, отправленные пользователем."
+  },
+  "• 🌐 Страница настроек сайта + cookies": {
+    "es": "• 🌐 Página de configuración del sitio + cookies",
+    "en": "• 🌐 Site settings page + cookies",
+    "ru": "• 🌐 Страница настроек сайта + cookies"
+  },
+  "• 👤 Статус Discord в профиле сайта": {
+    "es": "• 👤 Estado de discordia en el perfil del sitio",
+    "en": "• 👤 Discord status in the site profile",
+    "ru": "• 👤 Статус Discord в профиле сайта"
+  },
+  "• 🔐 Расширена приватность активностей": {
+    "es": "• 🔐 Se ha ampliado la privacidad de las actividades.",
+    "en": "• 🔐 Privacy of activities has been expanded",
+    "ru": "• 🔐 Расширена приватность активностей"
+  },
+  "• 🔜 Следом — подробные графики и фильтры": {
+    "es": "• 🔜 Siguiente: gráficos y filtros detallados",
+    "en": "• 🔜 Next - detailed charts and filters",
+    "ru": "• 🔜 Следом — подробные графики и фильтры"
+  },
+  " • Wolium v2.3.0": {
+    "es": "• Wolio v2.3.0",
+    "en": "• Wolium v2.3.0",
+    "ru": "• Волиум v2.3.0"
+  },
+  "Диагностика команд": {
+    "en": "Command Diagnostics",
+    "ru": "Диагностика команд"
   }
 }
