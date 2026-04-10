@@ -14,17 +14,21 @@ class EnsureGuildExists(commands.Cog):
     try:
       while True:
         if hasattr(self.bot, 'db_pool') and self.bot.db_pool:
-          async with self.bot.db_pool.acquire() as conn:
-            async with conn.transaction():
-              await conn.execute(
-                "INSERT INTO guilds (guild_id) VALUES ($1) ON CONFLICT (guild_id) DO NOTHING",
-                guild_id
-              )
-              
-              await conn.execute(
-                "INSERT INTO guild_settings (guild_id) VALUES ($1) ON CONFLICT (guild_id) DO NOTHING",
-                guild_id
-              )
+          try:
+            async with self.bot.db_pool.acquire() as conn:
+              async with conn.transaction():
+                await conn.execute(
+                  "INSERT INTO guilds (guild_id) VALUES ($1) ON CONFLICT (guild_id) DO NOTHING",
+                  guild_id
+                )
+                
+                await conn.execute(
+                  "INSERT INTO guild_settings (guild_id) VALUES ($1) ON CONFLICT (guild_id) DO NOTHING",
+                  guild_id
+                )
+          except Exception as e:
+            await sleep(10)
+            continue
           break
         else:
           await sleep(10)

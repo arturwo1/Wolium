@@ -131,7 +131,6 @@ class Help(commands.Cog):
     description="Абсолютно всё обо мне.",
     name_localizations=translate_to_all_languages('помощь', 'name'),
     description_localizations=translate_to_all_languages('Абсолютно всё обо мне.', 'description'),
-    force_global=True,
     integration_types=[
       IntegrationType.user_install,
       IntegrationType.guild_install,

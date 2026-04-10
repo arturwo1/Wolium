@@ -20,7 +20,6 @@ class Transaction(commands.Cog):
   @nextcord.slash_command(description="Вывод/Ввод Средств В Банк",
     name_localizations=translate_to_all_languages('transaction', 'name'),
     description_localizations=translate_to_all_languages('Withdrawal/Input of Funds to the Bank', 'description'),
-    force_global=True,
     integration_types=[
       IntegrationType.user_install,
       IntegrationType.guild_install,

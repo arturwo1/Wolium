@@ -47,7 +47,6 @@ class Link(commands.Cog):
   @slash_command(description="Параметры Ссылки.",
     name_localizations=translate_to_all_languages('ссылка', 'name'),
     description_localizations=translate_to_all_languages('Параметры Ссылки.', 'description'),
-    force_global=True,
     integration_types=[
       IntegrationType.user_install,
       IntegrationType.guild_install,

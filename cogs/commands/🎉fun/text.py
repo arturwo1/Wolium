@@ -22,7 +22,7 @@ class Text(commands.Cog):
     description="Написать Сообщение От Имени Бота. Стоимость €50.",
     name_localizations=translate_to_all_languages('text', 'name'),
     description_localizations=translate_to_all_languages('Write a Message in the Bot\'s Name. Cost €50.', 'description'),
-    force_global=True,)
+  )
   async def текст(self,
     interaction: nextcord.Interaction,
     текст: str=SlashOption(name="текст", description="Напишите Здесь То Что Отправит Бот.",max_length=2000,required=True, name_localizations=translate_to_all_languages('text', 'name'), description_localizations=translate_to_all_languages('Write Here What Bot Sends.', 'description')),

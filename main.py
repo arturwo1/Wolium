@@ -383,7 +383,6 @@ if __name__=='__main__i':
   #     description="Отправить Полный Эмбед. Стоимость €250.",
   #     name_localizations=translate_to_all_languages('Embed', 'name'),
   #     description_localizations=translate_to_all_languages('Send Full Embed. cost €250.', 'description'),
-  #     force_global=True,
   #     integration_types=[
   #           IntegrationType.user_install,
   #           IntegrationType.guild_install,
@@ -582,7 +581,6 @@ if __name__=='__main__i':
     description="Магазин Предметов",
     name_localizations=translate_to_all_languages('магазин', 'name'),
     description_localizations=translate_to_all_languages('Магазин Предметов.', 'description'),
-    force_global=True,
     integration_types=[
           IntegrationType.user_install,
           IntegrationType.guild_install,
@@ -1403,7 +1401,6 @@ if __name__=='__main__i':
   @bot.slash_command(description="Ставишь Свои Деньги И Выбираешь Число",
     name_localizations=translate_to_all_languages('casino', 'name'),
     description_localizations=translate_to_all_languages('Ставишь Свои Деньги И Выбираешь Число', 'description'),
-    force_global=True,
     integration_types=[
           IntegrationType.user_install,
           IntegrationType.guild_install,
@@ -2106,7 +2103,6 @@ if __name__=='__main__i':
   @bot.slash_command(description="Посчитать Почти Любой Вид Задачи.  Стоимость €2550.",
     name_localizations=translate_to_all_languages('калькулятор', 'name'),
     description_localizations=translate_to_all_languages('Можно Посчитать Почти Любой Вид Задачи.  Стоимость €2550.', 'description'),
-    force_global=True,
     integration_types=[
           IntegrationType.user_install,
           IntegrationType.guild_install,
@@ -2275,7 +2271,6 @@ if __name__=='__main__i':
   @bot.slash_command(description="Полная Рандома Рулетка",
     name_localizations=translate_to_all_languages('рулетка', 'name'),
     description_localizations=translate_to_all_languages('Полная Рандома Рулетка', 'description'),
-    force_global=True,
     integration_types=[
           IntegrationType.user_install,
           IntegrationType.guild_install,

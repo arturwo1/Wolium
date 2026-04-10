@@ -20,7 +20,6 @@ class Language(commands.Cog):
   @nextcord.slash_command(description="Выбрать Язык Бота.",
     name_localizations=translate_to_all_languages('язык', 'name'),
     description_localizations=translate_to_all_languages('Выбрать Язык Бота', 'description'),
-    force_global=True,
     integration_types=[
       IntegrationType.user_install,
       IntegrationType.guild_install,

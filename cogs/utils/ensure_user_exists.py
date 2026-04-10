@@ -20,37 +20,41 @@ class EnsureUserExists(commands.Cog):
 				return
 			while True:
 				if hasattr(self.bot, 'db_pool') and self.bot.db_pool:
-					async with self.bot.db_pool.acquire() as conn:
-						async with conn.transaction():
-							await conn.execute(
-								"INSERT INTO users (user_id, username, reg_data, language, telegram_id, discord_id, badges) VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (user_id) DO NOTHING",
-								user_id, username if username!=None else name, time.time(), language if language else 'en', None, user_id, json.dumps(["discord"])
-							)
-
-							await conn.execute(
-								"INSERT INTO user_data (user_id) VALUES ($1) "
-								"ON CONFLICT (user_id) DO NOTHING",
-								user_id
-							)
-
-							await conn.execute(
-								"INSERT INTO user_privacy (user_id) VALUES ($1) "
-								"ON CONFLICT (user_id) DO NOTHING",
-								user_id
-							)
-
-							await conn.execute(
-								"INSERT INTO topgg (user_id) VALUES ($1) "
-								"ON CONFLICT (user_id) DO NOTHING",
-								user_id
-							)
-
-							if guild and guild.id:
+					try:
+						async with self.bot.db_pool.acquire() as conn:
+							async with conn.transaction():
 								await conn.execute(
-									"INSERT INTO guild_users (guild_id, user_id) VALUES ($1, $2) "
-									"ON CONFLICT (guild_id, user_id) DO NOTHING",
-									guild.id, user_id
+									"INSERT INTO users (user_id, username, reg_data, language, telegram_id, discord_id, badges) VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (user_id) DO NOTHING",
+									user_id, username if username!=None else name, time.time(), language if language else 'en', None, user_id, json.dumps(["discord"])
 								)
+
+								await conn.execute(
+									"INSERT INTO user_data (user_id) VALUES ($1) "
+									"ON CONFLICT (user_id) DO NOTHING",
+									user_id
+								)
+
+								await conn.execute(
+									"INSERT INTO user_privacy (user_id) VALUES ($1) "
+									"ON CONFLICT (user_id) DO NOTHING",
+									user_id
+								)
+
+								await conn.execute(
+									"INSERT INTO topgg (user_id) VALUES ($1) "
+									"ON CONFLICT (user_id) DO NOTHING",
+									user_id
+								)
+
+								if guild and guild.id:
+									await conn.execute(
+										"INSERT INTO guild_users (guild_id, user_id) VALUES ($1, $2) "
+										"ON CONFLICT (guild_id, user_id) DO NOTHING",
+										guild.id, user_id
+									)
+					except Exception as e:
+						await sleep(10)
+						continue
 					break
 				else:
 					await sleep(10)

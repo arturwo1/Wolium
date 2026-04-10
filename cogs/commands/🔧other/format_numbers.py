@@ -21,7 +21,6 @@ class FormatNumbers(commands.Cog):
   @slash_command(description="Позволяет Форматировать Числа.",
     name_localizations=translate_to_all_languages('форматирование_чисел', 'name'),
     description_localizations=translate_to_all_languages('Позволяет Форматировать Числа.', 'description'),
-    force_global=True,
     integration_types=[
       IntegrationType.user_install,
       IntegrationType.guild_install,

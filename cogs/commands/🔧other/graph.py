@@ -39,7 +39,6 @@ class Graph(commands.Cog):
     name_localizations=translate_to_all_languages('график', 'name'),
     description="Показать График Активности",
     description_localizations=translate_to_all_languages('Показать График Активности.', 'description'),
-    force_global=True,
     integration_types=[
       IntegrationType.user_install,
       IntegrationType.guild_install,
@@ -244,7 +243,7 @@ class Graph(commands.Cog):
 
         fig.subplots_adjust(left=0.08, right=0.92, top=0.88, bottom=0.24)
 
-        message = await translate_message.translate_message("Сессий:",language)+" "+str(sum(sessions))+"\n"+await translate_message.translate_message("Часов В Войсе:",language)+" "+str(sum(hours))
+        message = await translate_message.translate_message("Сессий:",language)+" "+str(sum(sessions))+"\n"+await translate_message.translate_message("Часов В Войсе:",language)+" "+str(sum(hours))+"\n\n## "+await translate_message.translate_message("На моём сайте вы уже можете посмотреть всё, что вас интересует, более подробно!", language)+"\n**https://wolium.netlify.app/**"
       else:
         return await interaction.send(await translate_message.translate_message("Неизвестный тип данных.",language))
 

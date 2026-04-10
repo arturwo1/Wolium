@@ -423,7 +423,7 @@ class OnMessage(commands.Cog):
         date_time = message.created_at.replace(tzinfo=None)
         content = message.content if user_privacy['save_message_data'] else None
         message_url = message.jump_url
-        attachments = str(message.attachments) if user_privacy['save_message_data'] else None
+        attachments = ([str(a.url) for a in message.attachments] if user_privacy['save_message_data'] else [])
 
         if hasattr(self.bot, 'db_pool') and self.bot.db_pool:
           async with self.bot.db_pool.acquire() as connection:
@@ -431,7 +431,7 @@ class OnMessage(commands.Cog):
             INSERT INTO messages (guild_id, channel_id, user_id, date_time, content, message_url, attachments)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             """
-            await connection.execute(query, guild_id, channel_id, user_id, date_time, content, message_url, attachments)
+            await connection.execute(query, guild_id, channel_id, user_id, date_time, content, message_url, dumps(attachments))
 
             if user_id not in users:
               ensure_guild_exists = self.bot.get_cog("EnsureGuildExists")

@@ -41,7 +41,6 @@ class Work(commands.Cog):
     description="Для Заработка Денег",
     name_localizations=translate_to_all_languages('work', 'name'),
     description_localizations=translate_to_all_languages('Для Заработка Денег', 'description'),
-    force_global=True,
     integration_types=[
       IntegrationType.user_install,
       IntegrationType.guild_install,

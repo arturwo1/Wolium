@@ -39,26 +39,30 @@ class UpdateData(commands.Cog):
 					elif not guild and user:
 						await ensure_user.ensure_user_exists(user_id, user.name)
 
-					async with self.bot.db_pool.acquire() as conn:
-						async with conn.transaction():
-							if len(data_str)>2000:
-								await conn.execute(
-									f"UPDATE {table} SET {data_str} = '' WHERE {checker} = $1",
-									checker
-								)
-								for i in range(0, len(data_str), 2000):
-									chunk = data_str[i:i+2000]
+					try:
+						async with self.bot.db_pool.acquire() as conn:
+							async with conn.transaction():
+								if len(data_str)>2000:
 									await conn.execute(
-										f"UPDATE {table} SET {data_str} = {data_str} || $1 WHERE {checker} = $2",
-										chunk, checker
+										f"UPDATE {table} SET {data_str} = '' WHERE {checker} = $1",
+										checker
 									)
-							else:
-								query = f"UPDATE {table} SET {data_str} WHERE {checker} = $1"
-								adapted = [self._adapt_value(v) for v in data.values()]
-								values = [user_id] + adapted
-								edit_data = adapted
-								await conn.execute(query,*values)
-					break
+									for i in range(0, len(data_str), 2000):
+										chunk = data_str[i:i+2000]
+										await conn.execute(
+											f"UPDATE {table} SET {data_str} = {data_str} || $1 WHERE {checker} = $2",
+											chunk, checker
+										)
+								else:
+									query = f"UPDATE {table} SET {data_str} WHERE {checker} = $1"
+									adapted = [self._adapt_value(v) for v in data.values()]
+									values = [user_id] + adapted
+									edit_data = adapted
+									await conn.execute(query,*values)
+					except Exception as e:
+						await sleep(10)
+						continue
+					return True
 				else:
 					await sleep(10)
 		except Exception as e:
@@ -101,7 +105,7 @@ class UpdateData(commands.Cog):
 				icon_url="https://cdn.discordapp.com/attachments/886241481118068906/1145385898637271060/2088617.png"
 			)
 			await self.bot.get_guild(807304463449849938).get_channel(1159138280651104256).send(embed=log)
-		return None
+		return False
 
 def setup(bot:commands.Bot):
 	bot.add_cog(UpdateData(bot))

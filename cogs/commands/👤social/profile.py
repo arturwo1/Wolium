@@ -10,9 +10,6 @@ from traceback import format_exception
 import Utils.translate_to_all_languages
 from Utils.config import slash_command_cooldown
 from Utils.suffics import suffics
-from cogs.utils.get_invite import GetInvite
-from cogs.utils.translate_message import TranslateMessage
-from cogs.utils.get_data import GetData
 from random import choices
 from PIL import Image, ImageDraw, ImageFont, ImageOps, ImageChops
 from os import getenv, path, listdir
@@ -22,6 +19,7 @@ from aiohttp import ClientSession
 from copy import deepcopy
 from babel.dates import format_datetime
 from Utils.calculate_LvL import calculate_LvL
+from cogs.utils import get_invite
 
 translate_to_all_languages = Utils.translate_to_all_languages.translate_to_all_languages
 executor = ThreadPoolExecutor()
@@ -40,10 +38,13 @@ class создать_дату_модал(Modal):
     self.add_item(self.user_telegram_id)
       
   async def callback(self, interaction: Interaction):
+    translate_message = self.bot.get_cog("TranslateMessage")
+    get_data = self.bot.get_cog("GetData")
+
     user_telegram_id = self.user_telegram_id.value
     if user_telegram_id==0:
-      return await interaction.send(await (TranslateMessage(self.bot)).translate_message(f"Телеграм ID:",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv')+f" **`{user_telegram_id}`** "+await (TranslateMessage(self.bot)).translate_message(f"Не Правильный!", interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv'),ephemeral=True)
-    user_settings = await (GetData(self.bot)).get_data(self.user_telegram_id.value,['language'],'users','user_id',interaction.guild)
+      return await interaction.send(await translate_message.translate_message(f"Телеграм ID:",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv')+f" **`{user_telegram_id}`** "+await translate_message.translate_message(f"Не Правильный!", interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv'),ephemeral=True)
+    user_settings = await get_data.get_data(self.user_telegram_id.value,['language'],'users','user_id',interaction.guild)
     language = user_settings['language']
     if hasattr(self.bot, 'db_pool') and self.bot.db_pool:
       async with self.bot.db_pool.acquire() as conn:
@@ -53,7 +54,7 @@ class создать_дату_модал(Modal):
             interaction.user.id, self.user_telegram_id.value
           )
         except Exception:
-          return await interaction.send(await (TranslateMessage(self.bot)).translate_message(f"Телеграм ID:",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv')+f" **`{user_telegram_id}`** "+await (TranslateMessage(self.bot)).translate_message(f"Не Правильный!", interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv'),ephemeral=True)
+          return await interaction.send(await translate_message.translate_message(f"Телеграм ID:",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv')+f" **`{user_telegram_id}`** "+await translate_message.translate_message(f"Не Правильный!", interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv'),ephemeral=True)
         return await interaction.send(translate_to_all_languages(f"Теперь Вы Можете Спокойно Использовать Бота Одновременно В Телеграм И Дискорд Одновременно!\nА Также У Вас Теперь Есть Значок Дискорда В Профиле Бота. :D\nВам Нужно Ввести Команду Заново.", 'message', language),ephemeral=True)
     return await interaction.send('PostgreSQL not loaded in profile', ephemeral=True)
 
@@ -138,12 +139,14 @@ class привязать_телеграм(View):
     await self.update_callback(selected_value)
     
   async def custom_button_callback(self, interaction: Interaction):
+    translate_message = self.bot.get_cog("TranslateMessage")
+
     if interaction.user.id!=self.user_id:
       return
     if interaction.response.is_done():
       return
     await interaction.response.defer()
-    await interaction.followup.send(await (TranslateMessage(self.bot)).translate_message(f"Пока Эта Функция Недоступна.", self.language),ephemeral=True)
+    await interaction.followup.send(await translate_message.translate_message(f"Пока Эта Функция Недоступна.", self.language), ephemeral=True)
     self.stop()
 
 
@@ -209,6 +212,8 @@ class Profile(commands.Cog):
     voted: bool,
     **kwargs
   ):
+    translate_message = self.bot.get_cog("TranslateMessage")
+    
     upscale = 2.0
     xp = kwargs.get("xp", 0)
     LvL, XP_need, XP_now = calculate_LvL(xp)
@@ -301,9 +306,9 @@ class Profile(commands.Cog):
       img.paste(badge2, (int(24 * upscale), int(200 * upscale)), badge2)
       img.paste(badge3, (int(24 * upscale), int(230 * upscale)), badge3)
 
-      draw.text((int(50 * upscale), int(175 * upscale)), await (TranslateMessage(bot)).translate_message("Сообщения:", language) + f" {kwargs.get('messages', 0)}", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
-      draw.text((int(50 * upscale), int(205 * upscale)), await (TranslateMessage(bot)).translate_message("Время В Голосовом Канале:", language) + f" {kwargs.get('voice', 0)}.", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
-      draw.text((int(50 * upscale), int(235 * upscale)), await (TranslateMessage(bot)).translate_message("Дата Регистрации:", language) + f" {kwargs.get('reg_data', 0)}.", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
+      draw.text((int(50 * upscale), int(175 * upscale)), await translate_message.translate_message("Сообщения:", language) + f" {kwargs.get('messages', 0)}", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
+      draw.text((int(50 * upscale), int(205 * upscale)), await translate_message.translate_message("Время В Голосовом Канале:", language) + f" {kwargs.get('voice', 0)}.", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
+      draw.text((int(50 * upscale), int(235 * upscale)), await translate_message.translate_message("Дата Регистрации:", language) + f" {kwargs.get('reg_data', 0)}.", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
     elif type_ == 'economy':
       badge1 = Image.open(path.join('images', 'economy.png')).resize((int(24 * upscale), int(24 * upscale)), resample=Image.Resampling.LANCZOS).convert("RGBA")
       badge2 = Image.open(path.join('images', 'bank_balance.png')).resize((int(24 * upscale), int(24 * upscale)), resample=Image.Resampling.LANCZOS).convert("RGBA")
@@ -319,17 +324,17 @@ class Profile(commands.Cog):
       img.paste(badge5, (int(24 * upscale), int(290 * upscale)), badge5)
       img.paste(badge6, (int(24 * upscale), int(320 * upscale)), badge6)
 
-      draw.text((int(50 * upscale), int(175 * upscale)), await (TranslateMessage(bot)).translate_message("Всего Денег:", language) + f" €{kwargs.get('total_balance', 0)}", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
-      draw.text((int(50 * upscale), int(205 * upscale)), await (TranslateMessage(bot)).translate_message("В Банке Денег:", language) + f" €{kwargs.get('bank_balance', 0)}", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
-      draw.text((int(50 * upscale), int(235 * upscale)), await (TranslateMessage(bot)).translate_message("В Руках Денег:", language) + f" €{kwargs.get('balance', 0)}", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
-      draw.text((int(50 * upscale), int(265 * upscale)), await (TranslateMessage(bot)).translate_message("Улучшение:", language) + f" {kwargs.get('upgrade', 0)}", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
-      draw.text((int(50 * upscale), int(295 * upscale)), await (TranslateMessage(bot)).translate_message("x2 Заработок Количество:", language) + f" {kwargs.get('x2workamount', 0)}", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
-      draw.text((int(50 * upscale), int(325 * upscale)), await (TranslateMessage(bot)).translate_message("х2 Покупок Количество:", language) + f" {kwargs.get('x2buyamount', 0)}", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
+      draw.text((int(50 * upscale), int(175 * upscale)), await translate_message.translate_message("Всего Денег:", language) + f" €{kwargs.get('total_balance', 0)}", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
+      draw.text((int(50 * upscale), int(205 * upscale)), await translate_message.translate_message("В Банке Денег:", language) + f" €{kwargs.get('bank_balance', 0)}", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
+      draw.text((int(50 * upscale), int(235 * upscale)), await translate_message.translate_message("В Руках Денег:", language) + f" €{kwargs.get('balance', 0)}", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
+      draw.text((int(50 * upscale), int(265 * upscale)), await translate_message.translate_message("Улучшение:", language) + f" {kwargs.get('upgrade', 0)}", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
+      draw.text((int(50 * upscale), int(295 * upscale)), await translate_message.translate_message("x2 Заработок Количество:", language) + f" {kwargs.get('x2workamount', 0)}", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
+      draw.text((int(50 * upscale), int(325 * upscale)), await translate_message.translate_message("х2 Покупок Количество:", language) + f" {kwargs.get('x2buyamount', 0)}", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
     elif type_ == 'moderation':
-      str_reason = await (TranslateMessage(self.bot)).translate_message(f"Причина", language)
-      str_mod = await (TranslateMessage(self.bot)).translate_message(f"Модератор", language)
-      str_data = await (TranslateMessage(self.bot)).translate_message(f"Дата", language)
-      str_time = await (TranslateMessage(self.bot)).translate_message(f"Длительность", language)
+      str_reason = await translate_message.translate_message(f"Причина", language)
+      str_mod = await translate_message.translate_message(f"Модератор", language)
+      str_data = await translate_message.translate_message(f"Дата", language)
+      str_time = await translate_message.translate_message(f"Длительность", language)
       if violation:
         text_height = int(165 * upscale)
 
@@ -351,7 +356,7 @@ class Profile(commands.Cog):
             continue
 
           # Заголовок
-          translated_title = await TranslateMessage(self.bot).translate_message(type_titles.get(v_name, v_name), language)
+          translated_title = await translate_message.translate_message(type_titles.get(v_name, v_name), language)
           text_bbox = draw.textbbox((0, 0), translated_title, font=font_large)
           text_width = text_bbox[2] - text_bbox[0]
           center_x = (width - text_width) // 2
@@ -376,19 +381,19 @@ class Profile(commands.Cog):
 
             text_height += int(15 * upscale)
       else:
-        text = await TranslateMessage(self.bot).translate_message("Нет Данных", language)
+        text = await translate_message.translate_message("Нет Данных", language)
         text_bbox = draw.textbbox((0, 0), text, font=font_large)
         text_width = text_bbox[2] - text_bbox[0]
         center_x = (width - text_width) // 2
         draw.text((center_x, int(165 * upscale)), text, font=font_large, fill=text_color, stroke_width=0.6 * upscale)
     elif type_=='cooldowns':
       text_height = int(165 * upscale)
-      str_in = await (TranslateMessage(self.bot)).translate_message(f"Через", language)
-      str_used = await (TranslateMessage(self.bot)).translate_message(f"Использовал", language)
+      str_in = await translate_message.translate_message(f"Через", language)
+      str_used = await translate_message.translate_message(f"Использовал", language)
       for cd_name, cd_value in cooldowns.items():
-        str_cd_name = await (TranslateMessage(self.bot)).translate_message(cd_name, language)
-        _in = cd_value.get('in',await (TranslateMessage(self.bot)).translate_message("Сейчас!", language))
-        used = cd_value.get('used',await (TranslateMessage(self.bot)).translate_message("Никогда!", language))
+        str_cd_name = await translate_message.translate_message(cd_name, language)
+        _in = cd_value.get('in',await translate_message.translate_message("Сейчас!", language))
+        used = cd_value.get('used',await translate_message.translate_message("Никогда!", language))
 
         text_bbox = draw.textbbox((0, 0), str_cd_name, font=font_large)
         text_width = text_bbox[2] - text_bbox[0]
@@ -399,12 +404,12 @@ class Profile(commands.Cog):
         draw.text((int(24 * upscale), text_height), f"{str_used} {used}.", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
         text_height += int(25 * upscale)
 
-        draw.text((int(24 * upscale), text_height), f"{str_in}: {_in if _in!="0:00:00" else await (TranslateMessage(self.bot)).translate_message("Сейчас!", language)}", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
+        draw.text((int(24 * upscale), text_height), f"{str_in}: {_in if _in!="0:00:00" else await translate_message.translate_message("Сейчас!", language)}", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
         text_height += int(40 * upscale)
 
     timeimage = Image.open(path.join('images', 'clock.png')).resize((int(15 * upscale), int(20 * upscale)), resample=Image.Resampling.LANCZOS).convert("RGBA")
     img.paste(timeimage, (int(25 * upscale), height - int(22 * upscale)), timeimage)
-    draw.text((int(41.25 * upscale), height - int(20 * upscale)), f"{await (TranslateMessage(bot)).translate_message('Вызвал Команду:', language)} {real_username} | {datetime.now(timezone.utc).strftime('%d.%m.%y %H:%M:%S.%f')[:-3]}", font=font_verysmall, fill=(173, 176, 179), stroke_width=0.1 * upscale)
+    draw.text((int(41.25 * upscale), height - int(20 * upscale)), f"{await translate_message.translate_message('Вызвал Команду:', language)} {real_username} | {datetime.now(timezone.utc).strftime('%d.%m.%y %H:%M:%S.%f')[:-3]}", font=font_verysmall, fill=(173, 176, 179), stroke_width=0.1 * upscale)
 
     return img 
   
@@ -412,7 +417,6 @@ class Profile(commands.Cog):
     description="Просмотр Профиля",
     name_localizations=translate_to_all_languages('профиль', 'name'),
     description_localizations=translate_to_all_languages('Просмотр Профиля.', 'description'),
-    force_global=True,
     integration_types=[
       IntegrationType.user_install,
       IntegrationType.guild_install,
@@ -431,10 +435,14 @@ class Profile(commands.Cog):
       user_id = interaction.user.id
       current_time = time()
 
+      translate_message = self.bot.get_cog("TranslateMessage")
+      get_data = self.bot.get_cog("GetData")
+      get_invite = self.bot.get_cog("GetInvite")
+
       if user_id in slash_command_cooldown:
         last_command_time = slash_command_cooldown[user_id]['time']
         if current_time - last_command_time < 10:
-          await interaction.response.send_message(await (TranslateMessage(self.bot)).translate_message(f"You write commands so fast,",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv')+f" **<t:{round(last_command_time+10)}:R>** "+await (TranslateMessage(self.bot)).translate_message(f"you can write commands.",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv'), ephemeral=True)
+          await interaction.response.send_message(await translate_message.translate_message(f"You write commands so fast,",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv')+f" **<t:{round(last_command_time+10)}:R>** "+await translate_message.translate_message(f"you can write commands.",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv'), ephemeral=True)
           return
         else:
           slash_command_cooldown[user_id]['time'] = current_time
@@ -445,12 +453,12 @@ class Profile(commands.Cog):
         try:
           member_id = пользователь.id
         except Exception:
-          await interaction.response.send_message(await (TranslateMessage(self.bot)).translate_message('Пользователь Не Найден.',interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv'),ephemeral=True)
+          await interaction.response.send_message(await translate_message.translate_message('Пользователь Не Найден.',interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv'),ephemeral=True)
           return
       else:
         member_id = None
 
-      user_settings = await (GetData(self.bot)).get_data(user_id,['language','variation','discord_id','telegram_id','reg_data','badges'],'users','user_id',interaction.guild)
+      user_settings = await get_data.get_data(user_id,['language','variation','discord_id','telegram_id','reg_data','badges'],'users','user_id',interaction.guild)
       language = user_settings['language']
       variation = user_settings['variation']
       discord = user_settings['discord_id']
@@ -463,14 +471,14 @@ class Profile(commands.Cog):
       except InteractionResponded:
         send_bank_message = await interaction.followup.send(translate_to_all_languages("Загрузка Данных", 'message', language),ephemeral=лично)
 
-      invite = await (GetInvite(self.bot)).invite(interaction.guild)
+      invite = await get_invite.invite(interaction.guild)
 
       if member_id:
-        member_settings = await (GetData(self.bot)).get_data(member_id,['variation','discord_id','telegram_id','reg_data','badges'],'users','user_id',interaction.guild)
+        member_settings = await get_data.get_data(member_id,['variation','discord_id','telegram_id','reg_data','badges'],'users','user_id',interaction.guild)
         variation = member_settings['variation']
         reg_data = member_settings['reg_data']
         badges = member_settings['badges']
-        member_data = await (GetData(self.bot)).get_data(member_id,['bank_balance','balance','xp','x2workamount','x2buyamount','upgrade'],'user_data','user_id',interaction.guild)
+        member_data = await get_data.get_data(member_id,['bank_balance','balance','xp','x2workamount','x2buyamount','upgrade'],'user_data','user_id',interaction.guild)
         xp = member_data['xp']
         bank_balance = member_data['bank_balance']
         balance = member_data['balance']
@@ -478,7 +486,7 @@ class Profile(commands.Cog):
         x2buyamount = member_data['x2buyamount']
         upgrade = member_data['upgrade']
       else:
-        user_data = await (GetData(self.bot)).get_data(user_id,['bank_balance','balance','xp','x2workamount','x2buyamount','upgrade'],'user_data','user_id',interaction.guild)
+        user_data = await get_data.get_data(user_id,['bank_balance','balance','xp','x2workamount','x2buyamount','upgrade'],'user_data','user_id',interaction.guild)
         xp = user_data['xp']
         bank_balance = user_data['bank_balance']
         balance = user_data['balance']
@@ -754,20 +762,20 @@ class Profile(commands.Cog):
           file=None
         if file:
           try:
-            await send_bank_message.edit("",file=file)
+            await send_bank_message.edit("## "+await translate_message.translate_message("На моём сайте вы уже можете посмотреть всё, что вас интересует, более подробно!", language)+"\n**https://wolium.netlify.app/**",file=file)
           except Exception:
-            await interaction.followup.send("",file=file,ephemeral=True)
+            await interaction.followup.send("## "+await translate_message.translate_message("На моём сайте вы уже можете посмотреть всё, что вас интересует, более подробно!", language)+"\n**https://wolium.netlify.app/**",file=file,ephemeral=True)
         else:
           try:
-            await send_bank_message.edit("Еще Не Обновил С Эмбеда На Картинки")
+            await send_bank_message.edit("Еще Не Обновил С Эмбеда На Картинки"+"\n\n## "+await translate_message.translate_message("На моём сайте вы уже можете посмотреть всё, что вас интересует, более подробно!", language)+"\n**https://wolium.netlify.app/**")
           except Exception:
-            await interaction.followup.send("Еще Не Обновил С Эмбеда На Картинки",ephemeral=True)
+            await interaction.followup.send("Еще Не Обновил С Эмбеда На Картинки"+"\n\n## "+await translate_message.translate_message("На моём сайте вы уже можете посмотреть всё, что вас интересует, более подробно!", language)+"\n**https://wolium.netlify.app/**",ephemeral=True)
             
       view = привязать_телеграм(interaction.user.id, language, update_callback, vote, self.bot)
       try:
-        await send_bank_message.edit(translate_to_all_languages("Второй Этап Загрузки Данных.", 'message', language),view=view)
+        await send_bank_message.edit(await translate_message.translate_message("Второй Этап Загрузки Данных.", language),view=view)
       except Exception:
-        await interaction.followup.send(translate_to_all_languages("Второй Этап Загрузки Данных.", 'message', language),ephemeral=True,view=view)
+        await interaction.followup.send(await translate_message.translate_message("Второй Этап Загрузки Данных.", language),ephemeral=True,view=view)
       await update_callback("discord")
 
     except Exception as e:

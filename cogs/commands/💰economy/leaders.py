@@ -76,7 +76,6 @@ class Leaders(commands.Cog):
   @nextcord.slash_command(description="Просмотр ЛидерБордов",
     name_localizations=translate_to_all_languages('leaders', 'name'),
     description_localizations=translate_to_all_languages('View LeaderBoards', 'description'),
-    force_global=True,
     integration_types=[
           IntegrationType.user_install,
           IntegrationType.guild_install,

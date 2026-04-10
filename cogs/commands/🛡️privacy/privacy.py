@@ -118,7 +118,6 @@ class Privacy(commands.Cog):
     description="Управление сбором данных.",
     name_localizations=translate_to_all_languages('конфиденциальность', 'name'),
     description_localizations=translate_to_all_languages('Управление сбором данных.', 'description'),
-    force_global=True,
     integration_types=[
       IntegrationType.user_install,
       IntegrationType.guild_install,

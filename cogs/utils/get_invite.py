@@ -1,3 +1,4 @@
+import asyncio
 from nextcord.ext import commands
 from nextcord import Guild
 from time import time
@@ -6,26 +7,47 @@ class GetInvite(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
     self.invites: dict[str, tuple[str, float]] = {}
+    self._locks: dict[str, asyncio.Lock] = {}
 
-  async def invite(self,guild:Guild=None,*args):
-    if guild:
+  def _get_lock(self, guild_id: str) -> asyncio.Lock:
+    if guild_id not in self._locks:
+      self._locks[guild_id] = asyncio.Lock()
+    return self._locks[guild_id]
+
+  async def invite(self, guild: Guild = None, *args):
+    if not guild:
+      return "ЛС"
+
+    gid = str(guild.id)
+    now = time()
+
+    if gid in self.invites and self.invites[gid][1] + 60 > now:
+      url = self.invites[gid][0]
+      return f'[**`инвайт`**]({url})' if not args else url
+
+    async with self._get_lock(gid):
+      now = time()
+      if gid in self.invites and self.invites[gid][1] + 60 > now:
+        url = self.invites[gid][0]
+        return f'[**`инвайт`**]({url})' if not args else url
+
       try:
-        if str(guild.id) in self.invites and self.invites[str(guild.id)][1] + 60 > time():
-          return '[**`инвайт`**]('+str(self.invites[str(guild.id)][0])+')' if not args else str(self.invites[str(guild.id)][0])
-        
-        if guild.me and guild.me.guild_permissions.manage_guild:
-          invites = await guild.invites()
-          if invites:
-            invite_url = invites[0].url
-            self.invites[str(guild.id)] = (invite_url, time())
-            return '[**`инвайт`**]('+str(invite_url)+')' if not args else str(invite_url)
-          else:
-            return "Нет инвайтов"
-        else:
+        if not (guild.me and guild.me.guild_permissions.manage_guild):
           return "Нет прав для просмотра инвайтов"
+
+        invites = await guild.invites()
+        if not invites:
+          return "Нет инвайтов"
+
+        best = next(
+          (i for i in invites if i.max_age == 0 and i.max_uses == 0),
+          invites[0]
+        )
+        self.invites[gid] = (best.url, time())
+        return f'[**`инвайт`**]({best.url})' if not args else best.url
+
       except Exception as e:
         return f"Ошибка {e} при просмотре инвайтов"
-    return "ЛС"
 
-def setup(bot:commands.Bot):
+def setup(bot: commands.Bot):
   bot.add_cog(GetInvite(bot))

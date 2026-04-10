@@ -11,9 +11,9 @@ from traceback import format_exception, print_exc
 from typing import Any, Optional
 from re import compile, I
 
-from nextcord import Embed, Colour, Message, NotFound
+from nextcord import Embed, Colour, Message
 from nextcord.ext import commands, tasks
-from nextcord.errors import HTTPException
+from nextcord.errors import HTTPException, Forbidden, NotFound, DiscordServerError
 
 from aiohttp import ClientSession
 from cpuinfo import get_cpu_info
@@ -1383,6 +1383,8 @@ class UpdatePCInfo(commands.Cog):
 
     try:
       await message_to_edit.edit(embeds=embeds, content=None)
+    except (NotFound, Forbidden, DiscordServerError):
+      await asyncio.sleep(15)
     except HTTPException as err:
       print(f"{datetime.now()} | UpdatePCInfo | {err}")
       print_exc()

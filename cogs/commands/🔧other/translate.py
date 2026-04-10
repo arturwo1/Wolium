@@ -14,7 +14,6 @@ class Translate(commands.Cog):
     self.bot: commands.Bot = bot
 
   @message_command(name_localizations=translate_to_all_languages('перевести', 'name'),
-    force_global=True,
     integration_types=[
       IntegrationType.user_install,
       IntegrationType.guild_install,

@@ -1,9 +1,13 @@
+from textwrap import indent
+
 import nextcord
 from nextcord.ext import commands,tasks
 import json
 from collections import Counter
 import aiohttp
 import asyncio
+
+import nextcord.gateway
 from cogs.utils.translate_message import TranslateMessage
 from traceback import format_exception
 from cogs.utils.send_embed import SendEmbed
@@ -19,21 +23,36 @@ class SetBotStatus(commands.Cog):
   @tasks.loop(minutes=15) 
   async def set_bot_status(self):
     try:
-      try:
-        with open('economy_data.json', 'r', encoding='utf-8') as f:
-          economy_data = json.load(f)
-      except FileNotFoundError:
-        economy_data: dict = {}
+      status_info = {}
       try:
         with open('status_data.json', 'r', encoding='utf-8') as f:
-          status_info: dict = json.load(f)['status']
+          status_info = json.load(f).get('status', {})
       except FileNotFoundError:
         pass
+
+      expr = status_info.get("название", "")
+
       while True:
         if hasattr(self.bot, 'db_pool') and self.bot.db_pool:
-          async with self.bot.db_pool.acquire() as conn:
-            название = eval(''.join(status_info['название']), globals(), locals())
-          break
+          try:
+            async with self.bot.db_pool.acquire() as conn:
+              ctx = {
+                "self": self,
+                "conn": conn,
+              }
+
+              code = (
+                "async def __render__():\n"
+                + indent(expr, "  ")
+              )
+
+              ns = {}
+              exec(code, ctx, ns)
+              название_1 = await ns["__render__"]()
+            break
+          except Exception as e:
+            await asyncio.sleep(10)
+            continue
         await asyncio.sleep(10)
       активность = status_info['активность']
       ссылка = status_info['ссылка']
@@ -48,9 +67,9 @@ class SetBotStatus(commands.Cog):
         for shard_guild in shard_guilds:
           locales.append(shard_guild.preferred_locale)
           locale_count = Counter(locales)
-          locale, count = locale_count.most_common(1)[0]
+          locale, _ = locale_count.most_common(1)[0]
 
-        название = await (TranslateMessage(self.bot)).translate_message(название, locale if locale!='en-US' and locale!='en-GB' and locale!='es-ES' and locale!='sv-SE' else 'en' if locale=='en-US' or locale=='en-GB' and locale!='es-ES' and locale!='sv-SE' else 'es' if locale!='en-US' and locale!='en-GB' and locale=='es-ES' and locale!='sv-SE' else 'sv',save=False)
+        название = await (TranslateMessage(self.bot)).translate_message(название_1, locale if locale!='en-US' and locale!='en-GB' and locale!='es-ES' and locale!='sv-SE' else 'en' if locale=='en-US' or locale=='en-GB' and locale!='es-ES' and locale!='sv-SE' else 'es' if locale!='en-US' and locale!='en-GB' and locale=='es-ES' and locale!='sv-SE' else 'sv',save=False)
         if активность=="play":
           activity=nextcord.Game(название)
         elif активность=="stream":

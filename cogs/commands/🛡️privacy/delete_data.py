@@ -16,7 +16,6 @@ class DeleteData(Cog):
     description="Удаление Данных С Бота",
     name_localizations=translate_to_all_languages('удалить_дату', 'name'),
     description_localizations=translate_to_all_languages('Удаление Данных С Бота', 'description'),
-    force_global=True,
     integration_types=[
       IntegrationType.user_install,
       IntegrationType.guild_install,

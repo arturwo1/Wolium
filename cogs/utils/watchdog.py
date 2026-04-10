@@ -1,53 +1,70 @@
-from nextcord.ext import commands, tasks
-from time import perf_counter
+from nextcord.ext import commands
 from sys import _current_frames
 from traceback import format_stack
 from datetime import datetime
-from threading import main_thread
-from asyncio import get_running_loop
+from threading import Thread, Event, enumerate as thread_enumerate
+from time import time
 
-threshold = 2.0
-interval = 0.2
+THRESHOLD = 2.0
+INTERVAL = 0.2
+COOLDOWN = 10.0
+
+def _frame_key(frame):
+  return (frame.f_code.co_filename, frame.f_lineno, frame.f_code.co_name)
 
 class Watchdog(commands.Cog):
   def __init__(self, bot: commands.Bot):
     self.bot = bot
-    self.last = None
-    self.cooldown_until = 0
-    self.freeze_watcher.start()
+    self._stop = Event()
+    self._seen: dict[int, tuple] = {}
+    self._thread = Thread(target=self._monitor, daemon=True, name="watchdog")
+    self._thread.start()
 
   def cog_unload(self):
-    self.freeze_watcher.cancel()
+    self._stop.set()
 
-  @staticmethod
-  def _collect_main_stack(limit: int = 20) -> str:
-    frame = _current_frames().get(main_thread().ident)
-    if not frame:
-      return "Неизвестен виновник\n"
-    return "".join(format_stack(frame, limit=limit))
+  def _is_idle(self, frame) -> bool:
+    return "DiscordBot" not in frame.f_code.co_filename
 
-  @tasks.loop(seconds=interval)
-  async def freeze_watcher(self):
-    loop = get_running_loop()
-    now = loop.time()
-    lag = (now - self.last) - interval
-    self.last = now
+  def _monitor(self):
+    while not self._stop.wait(INTERVAL):
+      now = time()
+      frames = _current_frames()
 
-    if now < self.cooldown_until or lag < threshold:
-      return
+      for tid in list(self._seen):
+        if tid not in frames:
+          del self._seen[tid]
 
-    self.cooldown_until = perf_counter() + 10
+      for tid, frame in frames.items():
+        if tid == self._thread.ident:
+          continue
 
-    print(f"\n\033[38;5;196m⛔ Event Loop завис на\033[0m \033[38;5;226m{lag:.1f}\033[0m \033[38;5;196mсекунд в\033[0m \033[38;5;226m{datetime.now()}\033[0m\n\033[38;5;240m{'-'*50}\033[0m")
+        if self._is_idle(frame):
+          self._seen.pop(tid, None)
+          continue
 
-    print(self._collect_main_stack(20), end="")
+        key = _frame_key(frame)
+        prev_key, first_seen, reported_until = self._seen.get(tid, (None, now, 0))
 
-    print(f"\033[38;5;240m{'-'*50}\033[0m\n")
+        if key != prev_key:
+          self._seen[tid] = (key, now, 0)
+          continue
 
-  @freeze_watcher.before_loop
-  async def before_freeze_watcher(self):
-    await self.bot.wait_until_ready()
-    self.last = get_running_loop().time()
+        lag = now - first_seen
+
+        if lag < THRESHOLD or now < reported_until:
+          self._seen[tid] = (key, first_seen, reported_until)
+          continue
+
+        self._seen[tid] = (key, first_seen, now + COOLDOWN)
+
+        thread_name = next(
+          (t.name for t in thread_enumerate() if t.ident == tid),
+          f"tid={tid}"
+        )
+        stack = "".join(format_stack(frame, limit=20))
+
+        print(f"\n\033[38;5;196m⛔ Завис\033[0m \033[38;5;33m{thread_name}\033[0m на \033[38;5;226m{lag:.1f}s\033[0m | {datetime.now()}\n\033[38;5;240m{'─'*50}\033[0m\n\033[38;5;220m{frame.f_code.co_name}\033[0m @ \033[38;5;37m{frame.f_code.co_filename}:{frame.f_lineno}\033[0m\n{stack}\033[38;5;240m{'─'*50}\033[0m\n")
 
 def setup(bot: commands.Bot) -> None:
   bot.add_cog(Watchdog(bot))

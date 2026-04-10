@@ -57,7 +57,6 @@ class Holiday(commands.Cog):
   @slash_command(description="Узнать Праздники Которые Бот Использует.",
     name_localizations=translate_to_all_languages('праздник', 'name'),
     description_localizations=translate_to_all_languages('Узнать Праздники Которые Бот Использует.', 'description'),
-    force_global=True,
     integration_types=[
           IntegrationType.user_install,
           IntegrationType.guild_install,

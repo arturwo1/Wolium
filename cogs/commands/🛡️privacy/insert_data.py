@@ -208,7 +208,12 @@ class InsertData(Cog):
               if not isinstance(msg, dict):
                 continue
 
-              attachments = msg.get("Attachments", None)
+              attachments: str = msg.get("Attachments", "")
+              attachments = [
+                url.strip()
+                for url in attachments.split()
+                if url.strip()
+              ]
               content = msg.get("Contents", None)
               text = (content or "").strip()
 
@@ -233,7 +238,7 @@ class InsertData(Cog):
                   if all([channel_id, message_id])
                   else None
                 ),
-                attachments,
+                dumps(attachments),
               )
 
               rows.append(row)
@@ -266,7 +271,6 @@ class InsertData(Cog):
     description="Перенос Данных С Дискорда",
     name_localizations=translate_to_all_languages('вставить_дату', 'name'),
     description_localizations=translate_to_all_languages('Перенос Данных С Дискорда', 'description'),
-    force_global=True,
     integration_types=[
       IntegrationType.user_install,
       IntegrationType.guild_install,

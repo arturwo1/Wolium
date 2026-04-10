@@ -2,6 +2,7 @@ import sys, ctypes, clr
 from time import sleep, time
 from re import sub
 from typing import Any, Iterator
+from threading import Thread
 
 if __name__ == "__main__":
   def is_admin():
@@ -53,6 +54,14 @@ def enum_name(x: Any) -> str:
     return x.ToString()               # .NET Enum
   except Exception:
     return str(x).split(".")[-1]      # "HardwareType.Cpu" -> "Cpu"
+  
+def init_lhm(self):
+  thread = Thread(target=self.pc.Open)
+  thread.start()
+
+def update_hw(hw):
+  thread = Thread(target=hw.Update)
+  thread.start()
 
 class Node:
   __slots__ = ("_data",)
@@ -111,14 +120,14 @@ class LHM:
     self.pc.IsStorageEnabled = True
     self.pc.IsControllerEnabled = True
     self.pc.IsNetworkEnabled = True
-    self.pc.Open()
+    init_lhm(self)
     self.update(force=True)
 
   def close(self):
     self.pc.Close()
 
   def _scan_hw(self, hw: IHardware):
-    hw.Update()
+    update_hw(hw)
 
     hw_path = ident_to_path(hw.Identifier)
     if hw_path:
