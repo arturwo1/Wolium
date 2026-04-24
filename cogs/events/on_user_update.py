@@ -1,7 +1,7 @@
-from nextcord import User, Colour
+from nextcord import User
 from nextcord.ext import commands
-from Utils.get_member_or_user_updated_data import object_to_dict, deep_compare
-from Utils.config import servers_with_no_acces_for_bot, users_with_no_acces_for_bot
+# from Utils.get_member_or_user_updated_data import object_to_dict, deep_compare
+from Utils.config import users_with_no_acces_for_bot
 
 def format_value(value:dict|list|str, tag=1):
   tag_ = ("#"*tag) if tag<=3 else "-#"
@@ -23,10 +23,10 @@ class OnUserUpdate(commands.Cog):
     if user_id in users_with_no_acces_for_bot:
       return
     
-    get_data = self.bot.get_cog("GetData")
+    gd = self.bot.get_cog("GetData")
     tracker = self.bot.get_cog("ActivityTracker")
 
-    user_settings = await get_data.get_data(user_id,['banned'],'users','user_id',None)
+    user_settings = await gd.get_data(user_id,['banned'],'users','user_id',None)
 
     if user_settings['banned']:
       users_with_no_acces_for_bot.append(user_id)

@@ -4,8 +4,6 @@ from nextcord.ext import commands, tasks
 import json
 import traceback
 import asyncio
-from cogs.utils.get_invite import GetInvite
-from cogs.utils.send_embed import SendEmbed
 from main import init_database
 import asyncpg
 from time import time
@@ -56,24 +54,28 @@ class CheckPostgreSQLData(commands.Cog):
       guild_id = any_data.get('guild_id')
       channel_id = any_data.get('channel_id')
 
+      se = self.bot.get_cog("SendEmbed")
+      gi = self.bot.get_cog("GetInvite")
+      tm = self.bot.get_cog("TranslateMessage")
+
       fields.append({
-        'name': 'Информация',
+        'name': 'Information',
         'value': (
-          f"Юзер: **`{user}`**\n"+
-          f"Запрос: **```sql\n{query}```**"+
-          f"Время: **`{timestamp}`**"
+          f"User: **`{user}`**\n"+
+          f"Query: **```sql\n{query}```**\n"+
+          f"Time: **`{timestamp}`**"
         ),
         'inline': False
       })
       if 'old_data' in data and table not in dont_track:
         fields.append({
-          'name': 'Старые Данные',
+          'name': 'Old Data',
           'value': '**```json\n'+str(json.dumps(data['old_data'], indent=2, ensure_ascii=False))+'```**',
           'inline': False
         })
       if 'new_data' in data and table not in dont_track:
         fields.append({
-          'name': 'Новые Данные',
+          'name': 'New Data',
           'value': '**```json\n'+str(json.dumps(data['new_data'], indent=2, ensure_ascii=False))+'```**',
           'inline': True
         })
@@ -111,12 +113,12 @@ class CheckPostgreSQLData(commands.Cog):
           return
 
         fields.append({
-          'name': 'Разница',
+          'name': 'Difference',
           'value': (
-            f"Название ключа/ей: **```json\n{key_name.strip()}```**\n"+
-            f"Значение ключа/ей до: **```json\n{key_value_before.strip()}```**"+
-            f"Значение ключа/ей после: **```json\n{key_value_after.strip()}```**"+
-            (f"Разница: **```json\n{diff}```**")
+            f"Key name(s): **```json\n{key_name.strip()}```**\n"+
+            f"Key value(s) before: **```json\n{key_value_before.strip()}```**\n"+
+            f"Key value(s) after: **```json\n{key_value_after.strip()}```**\n"+
+            (f"Difference: **```json\n{diff}```**")
           ),
           'inline': False
         })
@@ -126,24 +128,24 @@ class CheckPostgreSQLData(commands.Cog):
         discord_user = self.bot.get_user(user_id)
         if discord_user:
           fields.append({
-            'name':'Пользователь',
+            'name':'User',
             'value':f"{user_id} | {discord_user.mention} | {discord_user.name}",
             'inline':False
           })
       if guild_id:
         guild = self.bot.get_guild(guild_id)
-        invite = await (GetInvite(self.bot)).invite(guild)
+        invite = gi.invite(guild)
         if guild:
           fields.append({
-            'name':'Сервер',
-            'value':f"{guild_id} | {invite} | {guild.name}" if guild else "ЛС",
+            'name':'Server',
+            'value':f"{guild_id} | {invite} | {guild.name}" if guild else "DM",
             'inline':True
           })
       if channel_id:
         channel = self.bot.get_channel(channel_id)
         if channel:
           fields.append({
-            'name':'Канал',
+            'name':'Channel',
             'value':f"{channel_id} | {channel.mention} | {channel.name}",
             'inline':True
           })
@@ -157,8 +159,8 @@ class CheckPostgreSQLData(commands.Cog):
 
         if count > self.change_limit:
           fields.append({
-            'name': 'СПАМ таблицами',
-            'value': f"Пользователь отправил **{count} новых таблиц** за последнюю минуту.",
+            'name': await tm.translate_message('error.table_spam', 'en'),
+            'value': await tm.translate_message('spam.user_sent_tables', 'en', variables={"count": str(count)}),
             'inline': False
           })
           self.change_history[key_id] = deque()
@@ -176,24 +178,24 @@ class CheckPostgreSQLData(commands.Cog):
           key_id = f"{user_id}:{guild_id}:{table}:{name}"
           count = await self.track_change(key_id)
           if count > self.change_limit:
-            value_+=f'Ключ `{name}` был изменён **{count} раз** за последнюю минуту.\n'
+            value_+=f'Key `{name}` was changed **{count} times** in the last minute.\n'
         if value_:
           fields.append({
-            'name': 'Превышен лимит изменений',
+            'name': 'Limit Exceeded',
             'value': value_,
             'inline': False
           })
           self.change_history[key_id] = deque()
       color = {"INSERT": Color.green(), "UPDATE": Color.gold(), "DELETE": Color.red()}.get(operation, Color.blurple())
 
-      if any(field['name']in['Разница','Старые Данные','Новые Данные','Превышен лимит изменений','СПАМ таблицами'] for field in fields):
-        await (SendEmbed(self.bot)).send_embed(
-          title=f'PostgreSQL | Изменение данных({operation})',
-          description=f'Таблица: `{table}`',
+      if any(field['name']in['Difference','Old Data','New Data','Limit Exceeded','TABLE SPAM'] for field in fields):
+        await se.send_embed(
+          title=f'PostgreSQL | Data Changes({operation})',
+          description=f'Table: `{table}`',
           color=color,
           fields=fields,
-          footer_text=f'Изменение данных({operation})',
-          author_text=f'ДАННЫЕ PostgreSQL',
+          footer_text=f'Data Changes({operation})',
+          author_text=f'DATA PostgreSQL',
           author_icon=self.bot.get_user(user_id).display_avatar.url if user_id and self.bot.get_user(user_id) else None,
           guild_id=807304463449849938,
           channel_id=1294702500435198105
@@ -204,16 +206,16 @@ class CheckPostgreSQLData(commands.Cog):
         exc_user = self.bot.get_user(user_id)
         if exc_user:
           fields.append({
-            'name':'Пользователь',
+            'name':'User',
             'value':f"{user_id} | {exc_user.mention} | {exc_user.name}",
             'inline':True
           })
       if guild_id:
         guild = self.bot.get_guild(guild_id)
-        invite = await (GetInvite(self.bot)).invite(guild)
+        invite = gi.invite(guild)
         fields.append({
-          'name':'Сервер',
-          'value':f"{guild_id} | {invite} | {guild.name}" if guild else "ЛС",
+          'name':'Server',
+          'value':f"{guild_id} | {invite} | {guild.name}" if guild else "DM",
           'inline':True
         })
 
@@ -222,7 +224,7 @@ class CheckPostgreSQLData(commands.Cog):
         'value': '**```py\n'+traceback_msg+'```**',
         'inline': False
       })
-      await (SendEmbed(self.bot)).send_embed(f'PostgreSQL | Изменение данных',f'Произошла ошибка в handle_data_changes PostgreSQL\n\n{e}',Color.red(),fields,f'Изменение данных | ОШИБКА',f'ДАННЫЕ PostgreSQL | ОШИБКА',None,807304463449849938,1159138280651104256)
+      await se.send_embed(f'PostgreSQL | Data Changes',f'Error in handle_data_changes PostgreSQL\n\n{e}',Color.red(),fields,f'Data Changes | ERROR',f'DATA PostgreSQL | ERROR',None,807304463449849938,1159138280651104256)
 
   async def handle_ddl_PostgreSQL_changes(self,conn,pid,channel,payload):
     try:
@@ -234,20 +236,23 @@ class CheckPostgreSQLData(commands.Cog):
       timestamp = data['timestamp']
       query = data['query']
       user = data['user']
+
+      se = self.bot.get_cog("SendEmbed")
+
       fields.append({
-        'name': 'Информация',
+        'name': 'Information',
         'value': (
-          f"Время: **`{timestamp}`**\n"+
-          f"Схема: **`{schema}`**\n"+
-          f"Ивент: **`{event}`**\n"+
-          f"Объект: **```sql\n{obj}```**\n"+
-          f"Запрос: **```sql\n{query}```**\n"+
-          f"Юзер: **`{user}`**"
+          f"Time: **`{timestamp}`**\n"+
+          f"Schema: **`{schema}`**\n"+
+          f"Event: **`{event}`**\n"+
+          f"Object: **```sql\n{obj}```**\n"+
+          f"Query: **```sql\n{query}```**\n"+
+          f"User: **`{user}`**"
         ),
         'inline': False
       })
 
-      await (SendEmbed(self.bot)).send_embed(f'PostgreSQL | Изменение структуры БД({event})',f'Структура БД была изменена:',Color.purple(),fields,f'Изменение структуры БД({event})',f'СТРУКТУРА PostgreSQL',None,807304463449849938,1294702500435198105)
+      await se.send_embed(f'PostgreSQL | DB Structure Change({event})',f'DB structure was changed:',Color.purple(),fields,f'DB Structure Change({event})',f'STRUCTURE PostgreSQL',None,807304463449849938,1294702500435198105)
     except Exception as e:
       traceback_msg = str((''.join(traceback.format_exception(type(e), e, e.__traceback__)))[:5000])
       fields.append({
@@ -255,7 +260,7 @@ class CheckPostgreSQLData(commands.Cog):
         'value': '**```py\n'+traceback_msg+'```**',
         'inline': False
       })
-      await (SendEmbed(self.bot)).send_embed(f'PostgreSQL | Изменение структуры БД',f'Произошла ошибка в handle_ddl_changes PostgreSQL\n\n{e}',Color.red(),fields,f'Изменение структуры БД | ОШИБКА',f'СТРУКТУРА PostgreSQL | ОШИБКА',807304463449849938,1159138280651104256)
+      await se.send_embed(f'PostgreSQL | DB Structure Change',f'Error in handle_ddl_changes PostgreSQL\n\n{e}',Color.red(),fields,f'DB Structure Change | ERROR',f'STRUCTURE PostgreSQL | ERROR',807304463449849938,1159138280651104256)
 
   @tasks.loop(count=1)
   async def listen_PostgreSQL_changes(self):
@@ -267,16 +272,17 @@ class CheckPostgreSQLData(commands.Cog):
 
         await conn.add_listener("data_changes", self.handle_PostgreSQL_changes)
         await conn.add_listener("ddl_changes", self.handle_ddl_PostgreSQL_changes)
-        print("🔌 Соединение с PostgreSQL установлено и слушатели добавлены.")
+        print("🔌 Connected to PostgreSQL, listeners added.")
 
         while True:
           await asyncio.sleep(60)
         
       except asyncpg.exceptions.ConnectionDoesNotExistError as e:
-        print(f"🔴 Потеряно соединение с PostgreSQL: {e}. Переподключение через 5 секунд...")
+        print(f"🔴 Lost connection to PostgreSQL: {e}. Reconnecting in 5 seconds...")
         await asyncio.sleep(5)
 
       except Exception as e:
+        se = self.bot.get_cog("SendEmbed")
         traceback_msg = str((''.join(traceback.format_exception(type(e), e, e.__traceback__)))[:5000])
         fields = []
         fields.append({
@@ -284,26 +290,26 @@ class CheckPostgreSQLData(commands.Cog):
           'value': '**```py\n'+traceback_msg+'```**',
           'inline': False
         })
-        await (SendEmbed(self.bot)).send_embed(
-          "PostgreSQL | Ошибка Прослушивания БД",
-          f"Произошла ошибка: {e}",
+        await se.send_embed(
+          "PostgreSQL | Database Listener Error",
+          f"Error occurred: {e}",
           Color.red(),
           fields,
-          "Прослушивание БД | ОШИБКА",
-          "ПРОСЛУШИВАНИЕ PostgreSQL | ОШИБКА",
+          "Database Listener | ERROR",
+          "DATABASE LISTENER PostgreSQL | ERROR",
           807304463449849938,
           1159138280651104256
         )
 
       except asyncio.CancelledError:
-        print("⏹️  Остановка слушателя PostgreSQL...")
+        print("⛹️  Stopping PostgreSQL listener...")
 
       finally:
         if conn:
           await conn.remove_listener("data_changes", self.handle_PostgreSQL_changes)
           await conn.remove_listener("ddl_changes", self.handle_ddl_PostgreSQL_changes)
           await conn.close()
-          print("🔌 Соединение закрыто")
+          print("🔌 Connection closed")
       
   @listen_PostgreSQL_changes.before_loop
   async def before_listen_PostgreSQL_changes(self):

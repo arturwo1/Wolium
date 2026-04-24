@@ -64,7 +64,7 @@ class Watchdog(commands.Cog):
         )
         stack = "".join(format_stack(frame, limit=20))
 
-        print(f"\n\033[38;5;196m⛔ Завис\033[0m \033[38;5;33m{thread_name}\033[0m на \033[38;5;226m{lag:.1f}s\033[0m | {datetime.now()}\n\033[38;5;240m{'─'*50}\033[0m\n\033[38;5;220m{frame.f_code.co_name}\033[0m @ \033[38;5;37m{frame.f_code.co_filename}:{frame.f_lineno}\033[0m\n{stack}\033[38;5;240m{'─'*50}\033[0m\n")
+        print(f"\n\033[38;5;196m⛔ Hung\033[0m \033[38;5;33m{thread_name}\033[0m on \033[38;5;226m{lag:.1f}s\033[0m | {datetime.now()}\n\033[38;5;240m{'─'*50}\033[0m\n\033[38;5;220m{frame.f_code.co_name}\033[0m @ \033[38;5;37m{frame.f_code.co_filename}:{frame.f_lineno}\033[0m\n{stack}\033[38;5;240m{'─'*50}\033[0m\n")
 
 def setup(bot: commands.Bot) -> None:
   bot.add_cog(Watchdog(bot))

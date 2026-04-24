@@ -3,8 +3,6 @@ from nextcord.ext import commands
 from datetime import datetime, timezone
 import traceback
 
-from cogs.utils.get_invite import GetInvite
-
 class OnApplicationCommandError(commands.Cog):
   def __init__(self, bot):
     self.bot:commands.Bot = bot
@@ -12,7 +10,7 @@ class OnApplicationCommandError(commands.Cog):
   @commands.Cog.listener()
   async def on_application_command_error(self, interaction: nextcord.Interaction, exception: Exception):
     traceback_msg = ((''.join(traceback.format_exception(type(exception), exception, exception.__traceback__)))[:4000])
-    invite = await (GetInvite(self.bot)).invite(interaction.guild)
+    invite = await self.bot.get_cog("GetInvite").invite(interaction.guild)
     try:
       log = nextcord.Embed(
         title=f"Application Command Error",
@@ -21,24 +19,24 @@ class OnApplicationCommandError(commands.Cog):
         timestamp=datetime.now(timezone.utc)
       )
       log.add_field(
-        name="Пользователь",
+        name="User",
         value=f"{interaction.user.id} | {interaction.user.mention} | {interaction.user.name}",
         inline=True
       )
       if interaction.guild:
         log.add_field(
-          name="Сервер",
-          value=f"{interaction.guild.id} | {invite} | {interaction.guild.name}" if interaction.guild else "ЛС" if interaction.guild else "ЛС",
+          name="Server",
+          value=f"{interaction.guild.id} | {invite} | {interaction.guild.name}" if interaction.guild else "DM",
           inline=False
         )
       log.add_field(
-        name="Канал",
+        name="Channel",
         value=f"<#{interaction.channel.id}>(`{interaction.channel.id}` | `{interaction.channel.name if interaction.guild else f'[<@{interaction.author.id}>({interaction.author.id} | {interaction.author.name}({interaction.author.display_name})]'}`)",
         inline=False
       )
       for i in range(0, len(traceback_msg), 1000):
         log.add_field(
-          name="Ошибка",
+          name="Error",
           value=f"```py\n{traceback_msg[i:i+1000]}```",
           inline=False
         )

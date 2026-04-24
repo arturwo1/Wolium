@@ -2,13 +2,9 @@ import nextcord
 from nextcord.ext import commands
 from datetime import datetime, timezone
 import traceback
-from cogs.utils.ensure_user_exists import EnsureUserExists
-from cogs.utils.ensure_guild_exists import EnsureGuildExists
 from Utils.config import users
 import json
 from asyncio import sleep
-
-from cogs.utils.get_invite import GetInvite
 
 class LogMemberActivity(commands.Cog):
 	def __init__(self, bot):
@@ -24,11 +20,11 @@ class LogMemberActivity(commands.Cog):
 						if guild:
 							if user_id not in users:
 								language = guild.preferred_locale if guild.preferred_locale!='en-US' and guild.preferred_locale!='en-GB' and guild.preferred_locale!='es-ES' and guild.preferred_locale!='sv-SE' else 'en' if guild.preferred_locale=='en-US' or guild.preferred_locale=='en-GB' and guild.preferred_locale!='es-ES' and guild.preferred_locale!='sv-SE' else 'es' if guild.preferred_locale!='en-US' and guild.preferred_locale!='en-GB' and guild.preferred_locale=='es-ES' and guild.preferred_locale!='sv-SE' else 'sv'
-								await (EnsureGuildExists(self.bot)).ensure_guild_exists(guild.id)
-								await (EnsureUserExists(self.bot)).ensure_user_exists(user_id,user.name,language,guild) 
+								await self.bot.get_cog("EnsureGuildExists").ensure_guild_exists(guild.id)
+								await self.bot.get_cog("EnsureUserExists").ensure_user_exists(user_id,user.name,language,guild)
 								users.add(user_id)
 						elif not guild and user:
-							await (EnsureUserExists(self.bot)).ensure_user_exists(user_id, user.name)
+							await self.bot.get_cog("EnsureUserExists").ensure_user_exists(user_id, user.name)
 						query = """
 						INSERT INTO users_members_activity (user_id, guild_id, type, data)
 						VALUES ($1, $2, $3, $4)
@@ -46,7 +42,7 @@ class LogMemberActivity(commands.Cog):
 				timestamp=datetime.now(timezone.utc)
 			)
 			if guild:
-				invite = await (GetInvite(self.bot)).invite(guild)
+				invite = await self.bot.get_cog("GetInvite").invite(guild)
 				log.add_field(
 					name="Сервер",
 					value=f"{guild.id} | {invite} | {guild.name}" if guild else "ЛС",

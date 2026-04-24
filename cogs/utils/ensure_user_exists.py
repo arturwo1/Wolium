@@ -4,7 +4,6 @@ from datetime import datetime,timezone
 import traceback
 import time
 import json
-from cogs.utils.get_invite import GetInvite
 from asyncio import sleep
 
 class EnsureUserExists(commands.Cog):
@@ -61,35 +60,35 @@ class EnsureUserExists(commands.Cog):
 		except Exception as e:
 			traceback_msg = ((''.join(traceback.format_exception(type(e), e, e.__traceback__)))[:5000])
 			log = nextcord.Embed(
-				title=f"Postgresql | Ошибка добавления пользователя в БД",
+				title=f"PostgreSQL | Error adding user to database",
 				description=(f"{e}")[:500],
 				color=nextcord.Colour.red(),
 				timestamp=datetime.now(timezone.utc)
 			)
 			if guild:
-				invite = await (GetInvite(self.bot)).invite(guild)
+				invite = await self.bot.get_cog("GetInvite").invite(guild)
 				log.add_field(
-					name="Сервер",
-					value=f"{guild.id} | {invite} | {guild.name}" if guild else "ЛС",
+					name="Server",
+					value=f"{guild.id} | {invite} | {guild.name}" if guild else "DM",
 					inline=False
 				)
 			if user:
 				log.add_field(
-					name="Пользователь",
+					name="User",
 					value=f"{user_id} | {user.mention} | {name}",
 					inline=True
 				)
 			log.add_field(
-				name="Данные",
+				name="Data",
 				value=f"user_id: {user_id}\nusername: {username}\nlanguage: {language}\nguild: {guild}",
 				inline=True
 			)
 			log.set_author(
-				name=f"ЕРРОР",
+				name=f"ERROR",
 			)
 			for i in range(0, len(traceback_msg), 1000):
 				log.add_field(
-					name="Ошибка",
+					name="Error",
 					value=f"```py\n{traceback_msg[i:i+1000]}```",
 					inline=False
 				)

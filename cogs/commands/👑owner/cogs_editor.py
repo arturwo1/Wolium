@@ -3,7 +3,6 @@ from nextcord.ext import commands
 from os import walk, sep
 from sys import modules
 from traceback import format_exception
-from cogs.utils.send_embed import SendEmbed
 
 class CogsEditor(commands.Cog):
   def __init__(self, bot):
@@ -17,27 +16,28 @@ class CogsEditor(commands.Cog):
     @slash_command(description="Позволяет выключать, перезагружать, удалять коги", 
       default_member_permissions=8, 
       guild_ids=[807304463449849938, 1297240282806620193])
-    async def управление_cogами(self,
+    async def manage_cogs(self,
       interaction: Interaction,
       cog: str = SlashOption(name="cog", description="Выбор cog'а.", required=False),
-      действие: str = SlashOption(name="действие", description="Что делать с cog'ом.", choices={"загрузить": "load_extension", "перезагрузить": "reload_extension", "отключить": "unload_extension"}, required=False),
+      action: str = SlashOption(name="действие", description="Что делать с cog'ом.", choices={"загрузить": "load_extension", "перезагрузить": "reload_extension", "отключить": "unload_extension"}, required=False),
     ):
       if not await self.bot.is_owner(interaction.user):
         await interaction.response.send_message("Ты не создатель бота.", ephemeral=True)
         return
       
+      se = self.bot.get_cog("SendEmbed")
       await interaction.response.defer(ephemeral=True)
       try:
-        if cog and действие:
+        if cog and action:
           if cog in modules:
             del modules[cog]
           cog_name = self.bot.get_cog(cog)
           self.bot.remove_cog(cog_name)
-          getattr(self.bot, действие)(cog)
-        elif cog and not действие:
+          getattr(self.bot, action)(cog)
+        elif cog and not action:
           await interaction.followup.send(f"Ты забыл выбрать `действие`.",ephemeral=True)
           return
-        elif not cog and действие:
+        elif not cog and action:
           await interaction.followup.send(f"Ты забыл выбрать `cog`.",ephemeral=True)
           return
         else:
@@ -62,7 +62,7 @@ class CogsEditor(commands.Cog):
                       'inline':False
                     }
                   ]
-                  await (SendEmbed(self.bot)).send_embed(
+                  await se.send_embed(
                     title='Ошибка при перезагрузке/загрузке когов с помощью команды /управление_cogами',
                     description=(
                       "### **Загрузка cog'а**\n"+
@@ -72,7 +72,7 @@ class CogsEditor(commands.Cog):
                     ),
                     color=Color.red(),
                     fields=fields,
-                    footer_text='управление_cogами',
+                    footer_text='manage_cogs',
                     channel_id=1159138280651104256
                   )
       except commands.ExtensionNotFound as e:
@@ -100,8 +100,8 @@ class CogsEditor(commands.Cog):
       await interaction.followup.send(f"✅Команда выполнена успешно.",ephemeral=True)
 
     try:
-      @управление_cogами.on_autocomplete("cog")
-      async def коги(self, interaction: Interaction, cog: str):
+      @manage_cogs.on_autocomplete("cog")
+      async def cogs_autocomplete(self, interaction: Interaction, cog: str):
         try:
           cogs: list[str] = []
           for root, _, files in walk("cogs"):
@@ -118,7 +118,7 @@ class CogsEditor(commands.Cog):
     except ValueError:
       pass
 
-    @управление_cogами.error
+    @manage_cogs.error
     async def command_error(self, interaction:Interaction, error: Exception):
       if isinstance(error, commands.CommandError):
         await interaction.followup.send(f"❌ Произошла ошибка: {str(error)}",ephemeral=True)

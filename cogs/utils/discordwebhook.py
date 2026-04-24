@@ -5,7 +5,6 @@ from nacl.exceptions import BadSignatureError
 from json import loads
 from aiohttp import web
 from nextcord import Color
-from cogs.utils.send_embed import SendEmbed
 from os import getenv
 
 class DiscordWebhook(commands.Cog):
@@ -34,15 +33,15 @@ class DiscordWebhook(commands.Cog):
         'inline':False
       }]
     try:
-      await (SendEmbed(self.bot)).send_embed(
-        title="Дискорд вебхук",
-        description=f"### Дискорд чето пишет",
+      await self.bot.get_cog("SendEmbed").send_embed(
+        title="Discord webhook",
+        description=f"### Discord received a message",
         color=Color.brand_green(),
         fields=fields,
         footer_text="Discord webhook!"
       )
     except Exception as e:
-      print('Произошла ошибка в on_dbl_vote\n',''.join(format_exception(type(e), e, e.__traceback__)))
+      print('Error in on_dbl_vote\n',''.join(format_exception(type(e), e, e.__traceback__)))
       return web.Response(status=400,text=str(e))
 
     return web.Response(status=200,text="OK")

@@ -13,21 +13,21 @@ class slash_Command(commands.Cog):
   @nextcord.slash_command(
     guild_ids=[807304463449849938, 1297240282806620193],
     default_member_permissions=8,
-    description="Ввести команду/скрипт"
+    description="Execute a command or script"
   )
-  async def команда(self, interaction: nextcord.Interaction, команда: str = SlashOption(name="команда", description="Ввод команды/скрипта", required=True)):
+  async def execute_command(self, interaction: nextcord.Interaction, command: str = SlashOption(name="command", description="Command/script to execute", required=True)):
     if interaction.user.id != self.bot.owner_id:
       await interaction.response.send_message(f"Ты не <@{self.bot.owner_id}>!", ephemeral=True)
       return
 
     embeds = []
-    основной_embed = nextcord.Embed(
-      title="Результат выполнения команды:",
-      description=f"Количество символов в **команде**: `{len(команда)}`\n## **Команда:**\n```py\n{команда[:4000]}```",
+    main_embed = nextcord.Embed(
+      title="Command execution result:",
+      description=f"Character count in **command**: `{len(command)}`\n## **Command:**\n```py\n{command[:4000]}```",
       color=nextcord.Colour.yellow(),
       timestamp=datetime.now(timezone.utc)
     )
-    await interaction.response.send_message(embed=основной_embed, ephemeral=True)
+    await interaction.response.send_message(embed=main_embed, ephemeral=True)
 
     try:
       buf = io.StringIO()
@@ -36,41 +36,41 @@ class slash_Command(commands.Cog):
       locals_ = {}
       
       with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(err_buf):
-        if "async def" in команда or "await" in команда:
-          exec(f"async def __aexec():\n  " + "\n  ".join(команда.split("\n")), globals_)
-          результат = await globals_["__aexec"]()
+        if "async def" in command or "await" in command:
+          exec(f"async def __aexec():\n  " + "\n  ".join(command.split("\n")), globals_)
+          result = await globals_["__aexec"]()
         else:
-          exec(команда, globals_, locals_)
-          результат = buf.getvalue()
+          exec(command, globals_, locals_)
+          result = buf.getvalue()
 
-      ошибка = err_buf.getvalue().strip()
-      результат = (str(результат) if результат is not None else buf.getvalue().strip() if buf else "None").strip()
+      error = err_buf.getvalue().strip()
+      result = (str(result) if result is not None else buf.getvalue().strip() if buf else "None").strip()
 
-      if ошибка:
-        raise Exception(f"Результат:\n{результат}\n\nОшибка:\n{ошибка}")
+      if error:
+        raise Exception(f"Result:\n{result}\n\nError:\n{error}")
 
-      основной_embed.description = (
-        f"Количество символов в **команде**: `{len(команда)}`\n"
-        f"Количество символов в **результате**: `{len(результат)}`\n## **Команда:**\n```py\n{команда[:4000]}```"
+      main_embed.description = (
+        f"Character count in **command**: `{len(command)}`\n"
+        f"Character count in **result**: `{len(result)}`\n## **Command:**\n```py\n{command[:4000]}```"
       )
-      await interaction.followup.edit_message(message_id=(await interaction.original_message()).id, embed=основной_embed)
+      await interaction.followup.edit_message(message_id=(await interaction.original_message()).id, embed=main_embed)
       
-      части = [результат[i:i + 4000] for i in range(0, len(результат), 4000)]
-      for idx, часть in enumerate(части, start=1):
+      parts = [result[i:i + 4000] for i in range(0, len(result), 4000)]
+      for idx, part in enumerate(parts, start=1):
         embed = nextcord.Embed(
-          title=f"Результат выполнения (часть {idx}):",
-          description=f"```py\n{часть}```",
+          title=f"Execution result (part {idx}):",
+          description=f"```py\n{part}```",
           color=nextcord.Colour.brand_green(),
           timestamp=datetime.now(timezone.utc),
         )
         embeds.append(embed)
     except Exception as e:
       traceback_msg = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
-      части = [traceback_msg[i:i + 4000] for i in range(0, len(traceback_msg), 4000)]
-      for idx, часть in enumerate(части, start=1):
+      parts = [traceback_msg[i:i + 4000] for i in range(0, len(traceback_msg), 4000)]
+      for idx, part in enumerate(parts, start=1):
         embed = nextcord.Embed(
-          title=f"Ошибка (часть {idx}):",
-          description=f"```py\n{часть}```",
+          title=f"Error (part {idx}):",
+          description=f"```py\n{part}```",
           color=nextcord.Colour.dark_red(),
           timestamp=datetime.now(timezone.utc),
         )
@@ -83,7 +83,7 @@ class slash_Command(commands.Cog):
           await interaction.followup.send(embed=embed, ephemeral=True)
     except Exception as e:
       await interaction.followup.send(
-        content=f"Ошибка при отправке сообщения: ```py\n{str(e)}```",
+        content=f"Error sending message: ```py\n{str(e)}```",
         ephemeral=True
       )
 

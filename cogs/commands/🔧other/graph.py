@@ -12,6 +12,16 @@ import Utils.translate_to_all_languages
 
 translate_to_all_languages = Utils.translate_to_all_languages.translate_to_all_languages
 graph_command_cooldown = {}
+
+def _get_locale(locale: str) -> str:
+  if locale in ('en-US', 'en-GB'):
+    return 'en'
+  if locale == 'es-ES':
+    return 'es'
+  if locale == 'sv-SE':
+    return 'sv'
+  return locale
+
 COLORS = {
   "primary": "#80E0F5",
   "secondary": "#ADB0B3",
@@ -35,10 +45,10 @@ class Graph(commands.Cog):
     return "month", "%m.%Y"
 
   @slash_command(
-    name="график",
-    name_localizations=translate_to_all_languages('график', 'name'),
-    description="Показать График Активности",
-    description_localizations=translate_to_all_languages('Показать График Активности.', 'description'),
+    name="graph",
+    name_localizations=translate_to_all_languages('command.graph', 'name'),
+    description="Show activity graph",
+    description_localizations=translate_to_all_languages('stats.show_activity_graph', 'description'),
     integration_types=[
       IntegrationType.user_install,
       IntegrationType.guild_install,
@@ -49,93 +59,99 @@ class Graph(commands.Cog):
       InteractionContextType.private_channel,
     ]
   )
-  async def график(
+  async def graph(
     self,
     interaction: Interaction,
-    тип: str = SlashOption(
-      name="тип",
-      name_localizations=translate_to_all_languages('тип', 'name'),
-      description="Тип Данных",
-      description_localizations=translate_to_all_languages('Тип Данных', 'description'),
+    data_type: str = SlashOption(
+      name="data_type",
+      name_localizations=translate_to_all_languages('general.type_lower', 'name'),
+      description="Type of data",
+      description_localizations=translate_to_all_languages('data.data_type', 'description'),
       choices={"Messages": "messages", "Voice": "voice"},
       choice_localizations=translate_to_all_languages({"Messages": "messages", "Voice": "voice"}, 'choice'),
       required=True
     ),
-    период: str = SlashOption(
-      name="период",
-      name_localizations=translate_to_all_languages('период', 'name'),
-      description="Период Времени",
-      description_localizations=translate_to_all_languages('Период Времени', 'description'),
+    period: str = SlashOption(
+      name="period",
+      name_localizations=translate_to_all_languages('general.period', 'name'),
+      description="Time period",
+      description_localizations=translate_to_all_languages('general.time_period', 'description'),
       choices={"1 Day": "day", "1 Week": "week", "1 Month": "month", "1 Year": "year", "For All Time": "all"},
       choice_localizations=translate_to_all_languages({"1 Day": "day", "1 Week": "week", "1 Month": "month", "1 Year": "year", "For All Time": "all"}, 'choice'),
       required=True
     ),
-    сервер: bool = SlashOption(
-      name="сервер",
-      name_localizations=translate_to_all_languages('сервер', 'name'),
-      description="На Сервере Или В Общем.",
-      description_localizations=translate_to_all_languages('На Сервере Или В Общем.', 'description'),
+    on_server: bool = SlashOption(
+      name="on_server",
+      name_localizations=translate_to_all_languages('general.server_lower', 'name'),
+      description="On server or global.",
+      description_localizations=translate_to_all_languages('general.on_server_or_global', 'description'),
       default=False
     )
   ):
-    user_id = interaction.user.id
-    current_time = time()
+    try:
+      user_id = interaction.user.id
+      current_time = time()
 
-    translate_message = self.bot.get_cog("TranslateMessage")
-    get_data = self.bot.get_cog("GetData")
-    
-    if user_id in graph_command_cooldown:
-      last_command_time = graph_command_cooldown[user_id]['time']
-      if current_time - last_command_time < 120:
-        await interaction.response.send_message(await translate_message.translate_message(f"You write commands so fast,",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv')+f" **<t:{round(last_command_time+120)}:R>** "+await translate_message.translate_message(f"you can write commands.",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv'), ephemeral=True)
-        return
+      tm = self.bot.get_cog("TranslateMessage")
+      gd = self.bot.get_cog("GetData")
+      lang = _get_locale(interaction.locale)
+      
+      if user_id in graph_command_cooldown:
+        last_command_time = graph_command_cooldown[user_id]['time']
+        if current_time - last_command_time < 120:
+          await interaction.response.send_message(await tm.translate_message("error.rate_limit", lang, variables={"time": f"<t:{round(last_command_time+120)}:R>"}), ephemeral=True)
+          return
+        else:
+          graph_command_cooldown[user_id]['time'] = current_time
       else:
-        graph_command_cooldown[user_id]['time'] = current_time
-    else:
-      graph_command_cooldown[user_id] = {'time': current_time}
+        graph_command_cooldown[user_id] = {'time': current_time}
 
-    user_settings = await get_data.get_data(user_id,['language','variation'],'users','user_id',interaction.guild)
-    language = user_settings['language']
-    
-    await interaction.response.defer()
+      user_settings = await gd.get_data(user_id,['language','variation'],'users','user_id',interaction.guild)
+      language = user_settings['language']
+      
+      await interaction.response.defer()
 
-    user_id = interaction.user.id
-    guild_id = interaction.guild.id if interaction.guild else None
-    if сервер and not guild_id:
-      return await interaction.send(await translate_message.translate_message("Информация О Сервере Доступна Только На Сервере.",language))
+      user_id = interaction.user.id
+      guild_id = interaction.guild.id if interaction.guild else None
+      if on_server and not guild_id:
+        return await interaction.followup.send(await tm.translate_message("error.server_info_only_on_server", language))
+
+      # Rest of function continues...
+    except Exception as e:
+      await interaction.followup.send(f"Error: {str(e)[:500]}", ephemeral=True)
 
     now = datetime.now(timezone.utc)
-    if период == "day":
+    if period == "day":
       since = now - timedelta(days=1)
-    elif период == "week":
+    elif period == "week":
       since = now - timedelta(weeks=1)
-    elif период == "month":
+    elif period == "month":
       since = now - timedelta(days=30)
-    elif период == "year":
+    elif period == "year":
       since = now - timedelta(days=365)
     else:
       since = None
 
     if not hasattr(self.bot, 'db_pool') or not self.bot.db_pool:
-      return await interaction.send(await translate_message.translate_message("Нет подключения к базе данных.",language))
+      return await interaction.followup.send(await tm.translate_message("error.no_db_connection",language))
     
-    bucket, date_fmt = self._get_period_settings(период)
+    bucket, date_fmt = self._get_period_settings(period)
 
     async with self.bot.db_pool.acquire() as conn:
-      if тип == "messages":
+      if data_type == "messages":
           query = f"""
             SELECT date_trunc('{bucket}', date_time) AS bucket_time, COUNT(*)::int AS count
             FROM messages
-            WHERE{" guild_id = $1 AND" if сервер else ""} user_id = ${"2" if сервер else "1"}
-            {f"AND date_time >= ${'3' if сервер else '2'}" if since else ""}
+            WHERE{" guild_id = $1 AND" if on_server else ""} user_id = ${"2" if on_server else "1"}
+            {f"AND date_time >= ${'3' if on_server else '2'}" if since else ""}
             GROUP BY bucket_time
             ORDER BY bucket_time
           """
           if since:
             if since.tzinfo is not None and since.tzinfo.utcoffset(since) is not None:
               since = since.replace(tzinfo=None)
-          params = [guild_id, user_id, since] if сервер and since else \
-            [guild_id, user_id] if сервер else \
+          params = [guild_id, user_id, since] if on_server and since else \
+            [guild_id, user_id] if on_server else \
             [user_id, since] if since else \
             [user_id]
 
@@ -151,13 +167,13 @@ class Graph(commands.Cog):
           ax.plot(dates, values, marker='o', linewidth=1.8, color=COLORS['primary'])
 
           ax.set_title(
-            f"{await translate_message.translate_message('Сообщения',language)} — "
-            f"{await translate_message.translate_message(период,language)} — "
-            f"{await translate_message.translate_message('Сервер' if сервер else 'Общее',language)}",
+            f"{await tm.translate_message('general.messages',language)} — "
+            f"{await tm.translate_message(period,language)} — "
+            f"{await tm.translate_message('general.server' if on_server else 'general',language)}",
             color=COLORS['primary']
           )
-          ax.set_xlabel(await translate_message.translate_message("Дата",language), color=COLORS['secondary'])
-          ax.set_ylabel(await translate_message.translate_message("Количество сообщений",language), color=COLORS['secondary'])
+          ax.set_xlabel(await tm.translate_message("general.date",language), color=COLORS['secondary'])
+          ax.set_ylabel(await tm.translate_message("stats.message_count_label",language), color=COLORS['secondary'])
 
           ax.grid(True, alpha=COLORS['grid_alpha'])
           ax.tick_params(axis='x', colors=COLORS['secondary'], labelsize=9)
@@ -175,30 +191,30 @@ class Graph(commands.Cog):
 
           fig.subplots_adjust(left=0.08, right=0.98, top=0.88, bottom=0.24)
 
-          message = await translate_message.translate_message("Сообщений:",language) + " " + str(sum(values))
-      elif тип=="voice":
+          message = await tm.translate_message("stats.messages_label",language) + " " + str(sum(values))
+      elif data_type=="voice":
         query = f"""
           SELECT
             date_trunc('{bucket}', enter_time) AS bucket_time,
             COUNT(*)::int AS sessions,
             COALESCE(SUM(EXTRACT(EPOCH FROM time_spent)) / 3600.0, 0) AS hours
           FROM voice
-          WHERE{" guild_id = $1 AND" if сервер else ""} user_id = ${"2" if сервер else "1"}
-          {f"AND enter_time >= ${'3' if сервер else '2'}" if since else ""}
+          WHERE{" guild_id = $1 AND" if on_server else ""} user_id = ${"2" if on_server else "1"}
+          {f"AND enter_time >= ${"3" if on_server else "2"}" if since else ""}
           GROUP BY bucket_time
           ORDER BY bucket_time
         """
         if since:
           if since.tzinfo is not None and since.tzinfo.utcoffset(since) is not None:
             since = since.replace(tzinfo=None)
-        params = [guild_id, user_id, since] if сервер and since else \
-          [guild_id, user_id] if сервер else \
+        params = [guild_id, user_id, since] if on_server and since else \
+          [guild_id, user_id] if on_server else \
           [user_id, since] if since else \
           [user_id]
         rows = await conn.fetch(query, *params)
 
         if not rows:
-          return await interaction.send(await translate_message.translate_message("Нет данных за указанный период.",language))
+          return await interaction.followup.send(await tm.translate_message("error.no_data_for_period",language))
 
         dates = [r["bucket_time"] for r in rows]
         sessions = [r["sessions"] for r in rows]
@@ -210,8 +226,8 @@ class Graph(commands.Cog):
         ax1 = fig.add_subplot(111)
         ax1.set_facecolor(COLORS['bg'])
 
-        ax1.bar(dates, sessions, color=COLORS['primary'], label=await translate_message.translate_message('Сессии',language))
-        ax1.set_ylabel(await translate_message.translate_message("Количество сессий",language), color=COLORS['primary'])
+        ax1.bar(dates, sessions, color=COLORS['primary'], label=await tm.translate_message('stats.sessions',language))
+        ax1.set_ylabel(await tm.translate_message("stats.sessions_count",language), color=COLORS['primary'])
         ax1.tick_params(axis='y', labelcolor=COLORS['primary'])
         ax1.tick_params(axis='x', colors=COLORS['secondary'], labelsize=9)
         ax1.grid(True, alpha=COLORS['grid_alpha'])
@@ -224,17 +240,17 @@ class Graph(commands.Cog):
           label.set_ha('right')
 
         ax2 = ax1.twinx()
-        ax2.plot(dates, hours, color=COLORS['secondary'], marker='o', linewidth=1.8, label=await translate_message.translate_message('Часы',language))
-        ax2.set_ylabel(await translate_message.translate_message("Часы в войсе",language), color=COLORS['secondary'])
+        ax2.plot(dates, hours, color=COLORS['secondary'], marker='o', linewidth=1.8, label=await tm.translate_message('time.hours',language))
+        ax2.set_ylabel(await tm.translate_message("stats.hours_in_voice",language), color=COLORS['secondary'])
         ax2.tick_params(axis='y', labelcolor=COLORS['secondary'])
 
         ax1.set_title(
-          f"{await translate_message.translate_message('Войс-активность',language)} — "
-          f"{await translate_message.translate_message(период,language)} — "
-          f"{await translate_message.translate_message('Сервер' if сервер else 'Общее',language)}",
+          f"{await tm.translate_message('stats.voice_activity',language)} — "
+          f"{await tm.translate_message(period,language)} — "
+          f"{await tm.translate_message('general.server' if on_server else 'general',language)}",
           color=COLORS['primary']
         )
-        ax1.set_xlabel(await translate_message.translate_message("Дата",language), color=COLORS['secondary'])
+        ax1.set_xlabel(await tm.translate_message("general.date",language), color=COLORS['secondary'])
 
         for spine in ax1.spines.values():
           spine.set_color(COLORS['secondary'])
@@ -243,9 +259,9 @@ class Graph(commands.Cog):
 
         fig.subplots_adjust(left=0.08, right=0.92, top=0.88, bottom=0.24)
 
-        message = await translate_message.translate_message("Сессий:",language)+" "+str(sum(sessions))+"\n"+await translate_message.translate_message("Часов В Войсе:",language)+" "+str(sum(hours))+"\n\n## "+await translate_message.translate_message("На моём сайте вы уже можете посмотреть всё, что вас интересует, более подробно!", language)+"\n**https://wolium.netlify.app/**"
+        message = await tm.translate_message("stats.sessions_label",language)+" "+str(sum(sessions))+"\n"+await tm.translate_message("stats.hours_in_voice_label",language)+" "+str(sum(hours))+"\n\n## "+await tm.translate_message("general.website_more_info", language)+"\n**https://wolium.netlify.app/**"
       else:
-        return await interaction.send(await translate_message.translate_message("Неизвестный тип данных.",language))
+        return await interaction.followup.send(await tm.translate_message("error.unknown_data_type",language))
 
     buf = BytesIO()
     fig.savefig(buf, format='png', facecolor=fig.get_facecolor())
@@ -253,9 +269,9 @@ class Graph(commands.Cog):
     fig.clear()
 
     file = File(buf, filename="graph.png")
-    await interaction.send(content=message,file=file)
+    await interaction.followup.send(content=message,file=file)
 
-  setattr(график,"extras",{"description": "Ты Можешь Узнать Свою Активность За Любой Промежуток Времени С Момента Установки Меня."})
+  setattr(graph,"extras",{"description": "Ты Можешь Узнать Свою Активность За Любой Промежуток Времени С Момента Установки Меня."})
 
 def setup(bot: commands.Bot):
   bot.add_cog(Graph(bot))

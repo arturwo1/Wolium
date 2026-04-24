@@ -5,11 +5,7 @@ from nextcord import Color, ButtonStyle
 from nextcord.ui import View, Button
 from aiohttp import web, ClientSession
 from os import getenv
-from cogs.utils.ensure_user_exists import EnsureUserExists
-from cogs.utils.get_data import GetData
-from cogs.utils.send_embed import SendEmbed
 from time import time
-from cogs.utils.update_data import UpdateData
 
 class Vote(View):
   def __init__(self):
@@ -40,7 +36,7 @@ class OnDBLVote(commands.Cog):
       while True:
         if hasattr(self.bot, 'db_pool') and self.bot.db_pool:
           async with self.bot.db_pool.acquire() as conn:
-            await (EnsureUserExists(self.bot)).ensure_user_exists(user_id, user.name)
+            await (self.bot.get_cog("EnsureUserExists")).ensure_user_exists(user_id, user.name)
             await conn.execute(
               "INSERT INTO topgg (user_id) VALUES ($1) "
               "ON CONFLICT (user_id) DO NOTHING",user_id)
@@ -49,7 +45,7 @@ class OnDBLVote(commands.Cog):
           await sleep(10)
       h12 = 12*60*60
       is_weekend = data.get("isWeekend", False)
-      uti = await (GetData(self.bot)).get_data(user_id,['votes','streak','voted_in'],'topgg','user_id',None)
+      uti = await (self.bot.get_cog("GetData")).get_data(user_id,['votes','streak','voted_in'],'topgg','user_id',None)
       votes:int = uti['votes']+(1 if not is_weekend else 2)
       streak:int = uti['streak']
       voted_in_day_ago:float = uti['voted_in']
@@ -72,7 +68,7 @@ class OnDBLVote(commands.Cog):
         'streak': streak,
         'voted_in': voted_in
       }
-      await (UpdateData(self.bot)).update_data(user_id, data, 'topgg', 'user_id', None)
+      await (self.bot.get_cog("UpdateData")).update_data(user_id, data, 'topgg', 'user_id', None)
 
       url = f"https://top.gg/api/bots/{self.bot.user.id}"
       headers = {
@@ -113,7 +109,7 @@ class OnDBLVote(commands.Cog):
         } if not query in ['',None] else {})
       ]
 
-      await (SendEmbed(self.bot)).send_embed(
+      await self.bot.get_cog("SendEmbed").send_embed(
         title="Голос",
         description=f"### **<@{user_id}>** проголосовал За Меня!{'(**`2x`** выходные!)' if is_weekend else ''}",
         color=Color.brand_green(),

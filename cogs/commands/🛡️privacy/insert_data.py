@@ -14,6 +14,15 @@ from pathlib import PurePosixPath
 
 translate_to_all_languages = Utils.translate_to_all_languages.translate_to_all_languages
 
+def _get_locale(locale: str) -> str:
+  if locale in ('en-US', 'en-GB'):
+    return 'en'
+  if locale == 'es-ES':
+    return 'es'
+  if locale == 'sv-SE':
+    return 'sv'
+  return locale
+
 ALLOWED_CHARS = set(" \t\n.,!?-()[]{}\"':;")
 
 def parse_dt(ts):
@@ -52,7 +61,7 @@ class InsertData(Cog):
       return None, None
 
   async def import_zip_streaming(self, interaction:Interaction, file: Attachment, language: str):
-    translate_message = self.bot.get_cog("TranslateMessage")
+    tm = self.bot.get_cog("TranslateMessage")
 
     zip_bytes = await wait_for(file.read(), timeout=120)
 
@@ -80,7 +89,7 @@ class InsertData(Cog):
       s = text.strip()
       if len(s) < 3:
         return True
-      
+
       letters = 0
       bad = 0
       nums = 0
@@ -132,20 +141,19 @@ class InsertData(Cog):
             total_uncompressed += info.file_size
             if total_uncompressed > 200 * 1024**2:
               await interaction.followup.send(
-                await translate_message.translate_message("Размер .zip Файла Превышает `200МБ`!\nЕго размер", language)
-                + f": {total_uncompressed/1024**2:.2f}MB.",
+                await tm.translate_message("privacy.zip_too_large", language, variables={"size": f"{total_uncompressed/1024**2:.2f}MB"}),
                 ephemeral=True
               )
               return 0, 0
             if file_count > 100000:
               await interaction.followup.send(
-                await translate_message.translate_message("Слишком Много Файлов В .zip Файле! Максимум `100000` Файлов!", language),
+                await tm.translate_message("privacy.zip_too_many_files", language),
                 ephemeral=True
               )
               return 0, 0
 
           if self.last_msg.get(interaction.user.id):
-            await self.last_msg[interaction.user.id].edit(content=await translate_message.translate_message("Извлечение Метаданных Каналов...", language))
+            await self.last_msg[interaction.user.id].edit(content=await tm.translate_message("privacy.extracting_channels", language))
 
           for info in infos:
             name = info.filename
@@ -167,7 +175,7 @@ class InsertData(Cog):
           deleted = False
 
           if self.last_msg.get(interaction.user.id):
-            await self.last_msg[interaction.user.id].edit(content=await translate_message.translate_message("Импорт Сообщений...", language))
+            await self.last_msg[interaction.user.id].edit(content=await tm.translate_message("privacy.importing_messages", language))
           last_update_time = time()
 
           for info in infos:
@@ -251,26 +259,26 @@ class InsertData(Cog):
             if time() - last_update_time > 5:
               last_update_time = time()
               if self.last_msg.get(interaction.user.id):
-                await self.last_msg[interaction.user.id].edit(content=await translate_message.translate_message(f"Импорт Сообщений... Всего Обработано:", language)+f" **`{message_count}`**")
+                await self.last_msg[interaction.user.id].edit(content=await tm.translate_message("privacy.importing_progress", language, variables={"count": str(message_count)}))
 
           if self.last_msg.get(interaction.user.id):
-            await self.last_msg[interaction.user.id].edit(content=await translate_message.translate_message(f"Завершение Импорта Сообщений... Всего Обработано:", language)+f" **`{message_count}`**")
+            await self.last_msg[interaction.user.id].edit(content=await tm.translate_message("privacy.import_finalizing", language, variables={"count": str(message_count)}))
           await flush(conn)
 
 
           if not has_messages:
             await interaction.followup.send(
-              await translate_message.translate_message("Этот .zip Файл Не Содержит Папку \"messages\".", language),
+              await tm.translate_message("privacy.zip_missing_structure", language),
               ephemeral=True
             )
             return 0, 0
 
     return real_message_count, message_count
-  
+
   @slash_command(
-    description="Перенос Данных С Дискорда",
-    name_localizations=translate_to_all_languages('вставить_дату', 'name'),
-    description_localizations=translate_to_all_languages('Перенос Данных С Дискорда', 'description'),
+    description="Import messages from Discord archive",
+    name_localizations=translate_to_all_languages('privacy.insert_name', 'name'),
+    description_localizations=translate_to_all_languages('privacy.insert_desc', 'description'),
     integration_types=[
       IntegrationType.user_install,
       IntegrationType.guild_install,
@@ -280,9 +288,9 @@ class InsertData(Cog):
       InteractionContextType.bot_dm,
       InteractionContextType.private_channel,
     ])
-  async def вставить_дату(self,
+  async def insert_data(self,
     interaction:Interaction,
-    файл: Attachment=SlashOption(name="файл", description=".zip Файл С Вашими Данными.",required=True, name_localizations=translate_to_all_languages('файл', 'name'), description_localizations=translate_to_all_languages('.zip Файл С Вашими Данными.', 'description')),
+    file: Attachment=SlashOption(name="file", description="ZIP archive with your Discord data",required=True, name_localizations=translate_to_all_languages('privacy.file_param', 'name'), description_localizations=translate_to_all_languages('privacy.file_desc', 'description')),
   ):
     try:
       await interaction.response.defer(ephemeral=True)
@@ -290,39 +298,42 @@ class InsertData(Cog):
       user_id = interaction.user.id
       current_time = time()
 
-      translate_message = self.bot.get_cog("TranslateMessage")
-      get_data = self.bot.get_cog("GetData")
-      get_invite = self.bot.get_cog("GetInvite")
-      send_embed = self.bot.get_cog("SendEmbed")
+      tm = self.bot.get_cog("TranslateMessage")
+      gd = self.bot.get_cog("GetData")
+      gi = self.bot.get_cog("GetInvite")
+      se = self.bot.get_cog("SendEmbed")
+
+      lang = _get_locale(interaction.locale)
 
       if user_id in slash_command_cooldown:
         last_command_time = slash_command_cooldown[user_id]['time']
         if current_time - last_command_time < 120:
-          await interaction.followup.send(await translate_message.translate_message(f"You write commands so fast,",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv')+f" **<t:{round(last_command_time+120)}:R>** "+await translate_message.translate_message(f"you can write commands.",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv'), ephemeral=True)
+          await interaction.followup.send(await tm.translate_message("error.rate_limit", lang, variables={"time": f"<t:{round(last_command_time+120)}:R>"}), ephemeral=True)
           return
         else:
           slash_command_cooldown[user_id]['time'] = current_time
       else:
         slash_command_cooldown[user_id] = {'time': current_time}
-        
-      user_settings = await get_data.get_data(user_id,['language','variation'],'users','user_id',interaction.guild)
+
+      user_settings = await gd.get_data(user_id,['language','variation'],'users','user_id',interaction.guild)
       language = user_settings['language']
 
       try:
         insert_data, equery = await wait_for(self.give_cooldown(user_id), timeout=5)
       except TimeoutError:
-        await interaction.followup.send("База данных не отвечает (таймаут).", ephemeral=True)
+        await interaction.followup.send(await tm.translate_message("privacy.database_timeout", lang), ephemeral=True)
         return
       if insert_data is None or equery is None:
         return
 
-      if файл.size > 50*1024**2:
-        await interaction.followup.send(await translate_message.translate_message("Размер .zip Файла Превышает `50МБ`!\nЕго размер", language)+f": {файл.size/1024**2}MB.", ephemeral=True)
+      if file.size > 50*1024**2:
+        await interaction.followup.send(await tm.translate_message("privacy.zip_exceeds_50mb", language, variables={"size": f"{file.size/1024**2:.2f}MB"}), ephemeral=True)
         return
 
       time_since_last_usage=time()-insert_data
       if time_since_last_usage<(31*24*60*60):
-        await interaction.followup.send(await translate_message.translate_message(f"Вы Можете Использовать Эту Команду Снова Через:",language)+f" {str(timedelta(seconds=((31*24*60*60)-time_since_last_usage)))[:-4]}.",ephemeral=True)
+        remaining = str(timedelta(seconds=((31*24*60*60)-time_since_last_usage)))[:-4]
+        await interaction.followup.send(await tm.translate_message("privacy.cooldown_active", language, variables={"time": remaining}), ephemeral=True)
         return
       else:
         if hasattr(self.bot, 'db_pool') and self.bot.db_pool:
@@ -331,14 +342,14 @@ class InsertData(Cog):
         else:
           return
 
-      invite = await get_invite.invite(interaction.guild)
+      invite = await gi.invite(interaction.guild)
 
       key = (interaction.guild.id if interaction.guild else 0, interaction.user.id)
-      msg = await translate_message.translate_message("Простите, Вы Попали В Очередь!\nЯ Вас Уведомлю О Следующих Информациях.", language)
+      msg = await tm.translate_message("privacy.queue_wait_message", language)
       followup_sent = None
       attempts = 0
 
-      self.last_msg[user_id] = await interaction.followup.send(await translate_message.translate_message("Начало Извлечения Ваших Данных!", language), wait=True, ephemeral=True)
+      self.last_msg[user_id] = await interaction.followup.send(await tm.translate_message("privacy.extraction_start", language), wait=True, ephemeral=True)
 
       while True:
         semaphore = self.semaphores.get(key)
@@ -354,85 +365,73 @@ class InsertData(Cog):
 
         attempts += 1
         await followup_sent.edit(
-          content=msg+"\n"+await translate_message.translate_message("Попытки:", language)+f" `{attempts}`/`{self.semaphores_limit}`."+"\n"+await translate_message.translate_message("Занято Слотов:", language)+f" `{len(self.semaphores)}`."
+          content=msg+"\n"+await tm.translate_message("privacy.queue_attempt", language, variables={"attempts": str(attempts), "limit": str(self.semaphores_limit), "occupied": str(len(self.semaphores))})
         )
 
         if attempts >= 10:
           await self.give_cooldown(user_id, ts=int(time()-60))
           await interaction.followup.send(
-            await translate_message.translate_message("Слишком Долго В Очереди, Попробуйте Позже.", language),
+            await tm.translate_message("privacy.queue_too_long", language),
             ephemeral=True
           )
           return
         await sleep(5)
-      
+
       try:
         async with semaphore:
-          real_count, total_count = await self.import_zip_streaming(interaction, файл, language)
+          real_count, total_count = await self.import_zip_streaming(interaction, file, language)
           if total_count == 0:
             return
 
           await interaction.followup.send(
-            await translate_message.translate_message("Данные загружены!", language)
-            + f" Всего: **`{total_count}`**, засчитано: **`{real_count}`**.",
+            await tm.translate_message("privacy.import_success", language, variables={"total": str(total_count), "real": str(real_count)}),
             ephemeral=True
           )
       finally:
         self.last_msg.pop(user_id, None)
         if self.semaphores.get(key) is semaphore:
           self.semaphores.pop(key, None)
-              
+
     except Exception as e:
       traceback_msg = ((''.join(format_exception(type(e), e, e.__traceback__)))[:5000])
       fields = [
         {
-          'name':'Пользователь',
+          'name':'User',
           'value':f"{interaction.user.id} | {interaction.user.mention} | {interaction.user.name}",
           'inline':True
         },
         {
-          'name':'Сервер',
-          'value':f"{interaction.guild.id} | {invite} | {interaction.guild.name}" if interaction.guild else "ЛС",
+          'name':'Server',
+          'value':f"{interaction.guild.id} | {invite} | {interaction.guild.name}" if interaction.guild else "DM",
           'inline':True
         },
         {
-          'name':'Канал',
+          'name':'Channel',
           'value':f"<#{interaction.channel.id}>(`{interaction.channel.id}` | `{interaction.channel.name if interaction.guild else f'[<@{interaction.user.id}>({interaction.user.id} | {interaction.user.name}({interaction.user.display_name})]'}`)",
           'inline':True
         },
         {
-          'name':'Ошибка',
+          'name':'Error',
           'value':traceback_msg,
           'inline':False
         }
       ]
-      await send_embed.send_embed(
-        title=f"Произошла ошибка при вводе команды ||**/{interaction.application_command.name}** {' '.join(f'`{option['name']}` **{option['value']}** ' for option in interaction.data.get('options',[]))}||",
+      await se.send_embed(
+        title=f"Error occurred while executing command ||**/{interaction.application_command.name}** {' '.join(f'`{option['name']}` **{option['value']}** ' for option in interaction.data.get('options',[]))}||",
         description=str(e)[:2048],
         color=Color.red(),
         fields=fields,
-        footer_text=f'Ошибка в cogs.commands.🔧other.help',
-        author_text='ЕРРОР',
+        footer_text=f'Error in cogs.commands.🛡️privacy.insert_data',
+        author_text='ERROR',
         author_icon=interaction.user.display_avatar.url,
         channel_id=1159138280651104256
       )
-      await interaction.followup.send(f"Произошла Ошибка, Логи Ошибки Сохранены, В Ближайшее Время Их Будут Рассматривать.", ephemeral=True)
+      lang = _get_locale(interaction.locale)
+      await interaction.followup.send(await tm.translate_message("error.occurred_logs_saved_review", lang), ephemeral=True)
       await self.give_cooldown(user_id, ts=int(time()-60))
 
-  
-  setattr(вставить_дату,"extras",{"description": """**Перенос данных из Discord**
 
-Вы можете перенести свои данные из Discord. Следуйте короткой инструкции:
-
-1. Перейдите в **Настройки Discord**;  
-2. Откройте раздел **Данные и конфиденциальность**;  
-3. Нажмите **Запросить все мои данные**;  
-4. Отметьте нужные пункты и подтвердите.
-
-Через несколько недель (до месяца) вы получите на почту архив `.zip` с вашими данными. Скачайте архив и **загрузите его целиком без изменений** в эту команду. Бот обработает данные и сообщит, когда всё будет готово.
-
-> ⚠️ В настоящее время сохраняются **только ваши сообщения**.  
-> ⚠️ **Большинство текущих данных в боте будет удалено после переноса!**"""})
+  setattr(insert_data,"extras",{"description": "Import your Discord messages from an official Discord data archive."})
 
 def setup(bot:Bot):
   bot.add_cog(InsertData(bot))

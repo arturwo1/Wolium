@@ -28,14 +28,14 @@ class OnMemberUpdate(commands.Cog):
       return
     
     log_member_activity =  self.bot.get_cog("LogMemberActivity")
-    get_data = self.bot.get_cog("GetData")
-    translate_message = self.bot.get_cog("TranslateMessage")
-    send_embed = self.bot.get_cog("SendEmbed")
+    gd = self.bot.get_cog("GetData")
+    tm = self.bot.get_cog("TranslateMessage")
+    se = self.bot.get_cog("SendEmbed")
     tracker = self.bot.get_cog("ActivityTracker")
 
     if guild_id:
-      guild_settings = await get_data.get_data(guild_id,['banned'],'guilds','guild_id',before.guild)
-    user_settings = await get_data.get_data(user_id,['banned'],'users','user_id',before.guild)
+      guild_settings = await gd.get_data(guild_id,['banned'],'guilds','guild_id',before.guild)
+    user_settings = await gd.get_data(user_id,['banned'],'users','user_id',before.guild)
 
     if user_settings['banned'] or (guild_settings['banned'] if before.guild else False):
       servers_with_no_acces_for_bot.append(guild_id)
@@ -53,23 +53,23 @@ class OnMemberUpdate(commands.Cog):
     if changes:
       await log_member_activity.log_member_activity(user_id, guild_id, activity_type, changes)
       
-      guild_config = await get_data.get_data(guild_id,['mod_log_channel'],'guild_settings','guild_id',guild)
+      guild_config = await gd.get_data(guild_id,['mod_log_channel'],'guild_settings','guild_id',guild)
       mod_log_channel = guild_config['mod_log_channel']
       
       if mod_log_channel and guild and guild.get_channel(mod_log_channel):
         mod_lang = guild_locale if guild_locale !='en-US' and guild_locale !='en-GB' and guild_locale !='es-ES' and guild_locale !='sv-SE' else 'en' if guild_locale =='en-US' or guild_locale =='en-GB' and guild_locale !='es-ES' and guild_locale !='sv-SE' else 'es' if guild_locale !='en-US' and guild_locale !='en-GB' and guild_locale =='es-ES' and guild_locale !='sv-SE' else 'sv'
         fields = [{
-            'name':await translate_message.translate_message('Пользователь',mod_lang),
+            'name':await tm.translate_message('general.user',mod_lang),
             'value':f"{user_id} | {before.mention} | {before.name}",
             'inline':False
           }
         ]
-        await send_embed.send_embed(
-          title=await translate_message.translate_message("Изменение Пользователя",mod_lang),
+        await se.send_embed(
+          title=await tm.translate_message("config.change_user",mod_lang),
           description=str("\n".join(f"# **{key}**:\n{format_value(value, 2)}" for key, value in changes.items()))[:4000],
           color=Colour.yellow(),
           fields=fields,
-          footer_text=await translate_message.translate_message("Изменение Пользователя",mod_lang),
+          footer_text=await tm.translate_message("config.change_user",mod_lang),
           author_text=before.name,
           author_icon=before.display_avatar.url,
           guild_id=guild_id,

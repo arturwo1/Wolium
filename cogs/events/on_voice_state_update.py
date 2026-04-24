@@ -23,19 +23,19 @@ class OnVoiceStateUpdate(commands.Cog):
     if not self.bot.get_user(user_id):
       return
     
-    get_data = self.bot.get_cog('GetData')
+    gd = self.bot.get_cog('GetData')
     update_data = self.bot.get_cog('UpdateData')
 
     if guild_id:
-      guild_settings = await get_data.get_data(guild_id,['banned'],'guilds','guild_id',member.guild)
-    user_settings = await get_data.get_data(user_id,['banned'],'users','user_id',member.guild)
+      guild_settings = await gd.get_data(guild_id,['banned'],'guilds','guild_id',member.guild)
+    user_settings = await gd.get_data(user_id,['banned'],'users','user_id',member.guild)
 
     if user_settings['banned'] or (guild_settings['banned'] if member.guild else False):
       servers_with_no_acces_for_bot.append(guild_id)
       users_with_no_acces_for_bot.append(user_id)
       return
     
-    user_privacy = await get_data.get_data(user_id,['save_voice'], 'user_privacy', 'user_id', member.guild)
+    user_privacy = await gd.get_data(user_id,['save_voice'], 'user_privacy', 'user_id', member.guild)
     
     if not user_privacy['save_voice']:
       return
@@ -53,7 +53,7 @@ class OnVoiceStateUpdate(commands.Cog):
     
     time_spent = None
 
-    user_data = await get_data.get_data(user_id,['xp','bank_balance','balance','upgrade'],'user_data','user_id',member.guild)
+    user_data = await gd.get_data(user_id,['xp','bank_balance','balance','upgrade'],'user_data','user_id',member.guild)
     xp = user_data['xp']
     bank_balance = user_data['bank_balance']
     balance = user_data['balance']

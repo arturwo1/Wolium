@@ -13,9 +13,9 @@ class DeleteData(Cog):
     self.bot:Bot=bot
 
   @slash_command(
-    description="Удаление Данных С Бота",
-    name_localizations=translate_to_all_languages('удалить_дату', 'name'),
-    description_localizations=translate_to_all_languages('Удаление Данных С Бота', 'description'),
+    description="Delete your stored data",
+    name_localizations=translate_to_all_languages('privacy.delete_name', 'name'),
+    description_localizations=translate_to_all_languages('privacy.delete_desc', 'description'),
     integration_types=[
       IntegrationType.user_install,
       IntegrationType.guild_install,
@@ -25,7 +25,7 @@ class DeleteData(Cog):
       InteractionContextType.bot_dm,
       InteractionContextType.private_channel,
     ])
-  async def удалить_дату(self,
+  async def delete_data(self,
     interaction:Interaction,
   ):
     try:
@@ -34,24 +34,23 @@ class DeleteData(Cog):
       user_id = interaction.user.id
       current_time = time()
 
-      translate_message = self.bot.get_cog("TranslateMessage")
-      get_data = self.bot.get_cog("GetData")
-      get_invite = self.bot.get_cog("GetInvite")
-      send_embed = self.bot.get_cog("SendEmbed")
-      if not (translate_message and get_data and get_invite and send_embed):
-        return
+      tm = self.bot.get_cog("TranslateMessage")
+      gd = self.bot.get_cog("GetData")
+      gi = self.bot.get_cog("GetInvite")
+      se = self.bot.get_cog("SendEmbed")
+      lang = locale(interaction.locale)
 
       if user_id in slash_command_cooldown:
         last_command_time = slash_command_cooldown[user_id]['time']
         if current_time - last_command_time < 10:
-          await interaction.followup.send(await translate_message.translate_message("You write commands so fast,",locale(interaction.locale)), ephemeral=True)
+          await interaction.followup.send(await tm.translate_message("error.rate_limit", lang, variables={"time": f"<t:{round(last_command_time + 10)}:R>"}), ephemeral=True)
           return
         else:
           slash_command_cooldown[user_id]['time'] = current_time
       else:
         slash_command_cooldown[user_id] = {'time': current_time}
-        
-      user_settings = await get_data.get_data(user_id,['language'],'users','user_id',interaction.guild)
+
+      user_settings = await gd.get_data(user_id,['language'],'users','user_id',interaction.guild)
       language = user_settings['language']
 
       async with self.bot.db_pool.acquire() as conn:
@@ -65,47 +64,49 @@ class DeleteData(Cog):
             user_id
           )
 
-      await interaction.followup.send(await translate_message.translate_message("Все Ваши Сообщения И Вся Ваша Войс Активность Была Удалена С Моей Базы Данных Успешно.", language)+f"\n  Messages: {deleted_messages.split()[-1]}\n  Voice: {deleted_voice.split()[-1]}", ephemeral=True)
-              
+      msg_count = deleted_messages.split()[-1]
+      voice_count = deleted_voice.split()[-1]
+      await interaction.followup.send(await tm.translate_message("privacy.data_deleted_success", language, variables={"messages": msg_count, "voice": voice_count}), ephemeral=True)
+
     except Exception as e:
-      invite = await get_invite.invite(interaction.guild)
+      invite = await gi.invite(interaction.guild)
       traceback_msg = ((''.join(format_exception(type(e), e, e.__traceback__)))[:5000])
       fields = [
         {
-          'name':'Пользователь',
+          'name':'User',
           'value':f"{interaction.user.id} | {interaction.user.mention} | {interaction.user.name}",
           'inline':True
         },
         {
-          'name':'Сервер',
-          'value':f"{interaction.guild.id} | {invite} | {interaction.guild.name}" if interaction.guild else "ЛС",
+          'name':'Server',
+          'value':f"{interaction.guild.id} | {invite} | {interaction.guild.name}" if interaction.guild else "DM",
           'inline':True
         },
         {
-          'name':'Канал',
+          'name':'Channel',
           'value':f"<#{interaction.channel.id}>(`{interaction.channel.id}` | `{interaction.channel.name if interaction.guild else f'[<@{interaction.user.id}>({interaction.user.id} | {interaction.user.name}({interaction.user.display_name})]'}`)",
           'inline':True
         },
         {
-          'name':'Ошибка',
+          'name':'Error',
           'value':traceback_msg,
           'inline':False
         }
       ]
-      await send_embed.send_embed(
-        title=f"Произошла ошибка при вводе команды ||**/{interaction.application_command.name}** {' '.join(f'`{option["name"]}` **{option["value"]}** ' for option in interaction.data.get('options',[]))}||",
+      await se.send_embed(
+        title=f"Error executing /{interaction.application_command.name}",
         description=str(e)[:2048],
         color=Color.red(),
         fields=fields,
-        footer_text=f'Ошибка в cogs.commands.🔧other.help',
-        author_text='ЕРРОР',
+        footer_text=f'Error in cogs.commands.🛡️privacy.delete_data',
+        author_text='ERROR',
         author_icon=interaction.user.display_avatar.url,
         channel_id=1159138280651104256
       )
-      await interaction.followup.send(f"Произошла Ошибка, Логи Ошибки Сохранены, В Ближайшее Время Их Будут Рассматривать.", ephemeral=True)
+      await interaction.followup.send(await tm.translate_message("error.occurred_logs_saved_review", lang), ephemeral=True)
 
-  
-  setattr(удалить_дату,"extras",{"description": "Позволяет Вам Удалить Все Сохраненные Сообщения и Войс-Активность!"})
+
+  setattr(delete_data,"extras",{"description": "Delete all your stored messages and voice activity data."})
 
 def setup(bot:Bot):
   bot.add_cog(DeleteData(bot))

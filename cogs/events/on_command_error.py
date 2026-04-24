@@ -1,6 +1,5 @@
 import nextcord
 from nextcord.ext import commands
-from cogs.utils.translate_message import TranslateMessage
 
 class OnCommandError(commands.Cog):
   def __init__(self, bot):
@@ -8,13 +7,14 @@ class OnCommandError(commands.Cog):
   
   @commands.Cog.listener()
   async def on_command_error(self, ctx: commands.Context,error: commands.CommandError):
+    tm = await self.bot.get_cog("TranslateMessage")
     if isinstance(error, commands.CommandNotFound):
       try:
         if ctx.guild:
           language = ctx.guild.preferred_locale if ctx.guild.preferred_locale!='en-US' and ctx.guild.preferred_locale!='en-GB' and ctx.guild.preferred_locale!='es-ES' and ctx.guild.preferred_locale!='sv-SE' else 'en' if ctx.guild.preferred_locale=='en-US' or ctx.guild.preferred_locale=='en-GB' and ctx.guild.preferred_locale!='es-ES' and ctx.guild.preferred_locale!='sv-SE' else 'es' if ctx.guild.preferred_locale!='en-US' and ctx.guild.preferred_locale!='en-GB' and ctx.guild.preferred_locale=='es-ES' and ctx.guild.preferred_locale!='sv-SE' else 'sv'
         else:
           language = "en"
-        await ctx.reply(await (TranslateMessage(self.bot)).translate_message("Command not found.",language), delete_after=15)
+        await ctx.reply(await tm.translate_message("error.command_not_found",language), delete_after=15)
         await ctx.message.delete(delay=15)
       except nextcord.errors.HTTPException:
         pass
@@ -24,7 +24,8 @@ class OnCommandError(commands.Cog):
           language = ctx.guild.preferred_locale if ctx.guild.preferred_locale!='en-US' and ctx.guild.preferred_locale!='en-GB' and ctx.guild.preferred_locale!='es-ES' and ctx.guild.preferred_locale!='sv-SE' else 'en' if ctx.guild.preferred_locale=='en-US' or ctx.guild.preferred_locale=='en-GB' and ctx.guild.preferred_locale!='es-ES' and ctx.guild.preferred_locale!='sv-SE' else 'es' if ctx.guild.preferred_locale!='en-US' and ctx.guild.preferred_locale!='en-GB' and ctx.guild.preferred_locale=='es-ES' and ctx.guild.preferred_locale!='sv-SE' else 'sv'
         else:
           language = "en"
-        await ctx.reply(await (TranslateMessage(self.bot)).translate_message("Ошибка: отсутствует аргумент",language)+f" **`{error.param.name}`**.", delete_after=15)
+        error_msg = await tm.translate_message("error.missing_argument",language)
+        await ctx.reply(f"{error_msg} **`{error.param.name}`**.", delete_after=15)
         await ctx.message.delete(delay=15)
       except nextcord.errors.HTTPException:
         pass

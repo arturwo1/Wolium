@@ -7,8 +7,8 @@ class SendEmbed(commands.Cog):
   def __init__(self, bot):
     self.bot:commands.Bot = bot
 
-  async def send_embed(self, title:str, description:str, color:nextcord.Color=nextcord.Color.yellow(), fields:list[dict[str,str|bool]]=None, footer_text:str=None, author_text:str=None, author_icon:str=None,guild_id:int=807304463449849938,channel_id:int=1159138280651104256, view:View=None):
-    """### Пример: 
+  async def se(self, title:str, description:str, color:nextcord.Color=nextcord.Color.yellow(), fields:list[dict[str,str|bool]]=None, footer_text:str=None, author_text:str=None, author_icon:str=None,guild_id:int=807304463449849938,channel_id:int=1159138280651104256, view:View=None):
+    """### Example: 
 ```py
 fields: [
   {

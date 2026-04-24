@@ -6,10 +6,6 @@ from Utils.holiday_type_choose import holiday_type_choose
 import Utils.config
 from traceback import format_exception
 from time import time
-from cogs.utils.update_data import UpdateData
-from cogs.utils.add_violation import AddViolation
-from cogs.utils.translate_message import TranslateMessage
-from cogs.utils.get_data import GetData
 
 class UpdateWeeklyMessage(commands.Cog):
   def __init__(self, bot: commands.Bot):
@@ -24,6 +20,10 @@ class UpdateWeeklyMessage(commands.Cog):
     now = datetime.now(timezone.utc)
     is_weekend = now.weekday() in [5, 6]
     holiday = holiday_type_choose("current_holiday")
+
+    ud = self.bot.get_cog("UpdateData")
+    gd = self.bot.get_cog("GetData")
+    tm = self.bot.get_cog("TranslateMessage")
     
     try:
       if hasattr(self.bot, 'db_pool') and self.bot.db_pool:
@@ -34,7 +34,7 @@ class UpdateWeeklyMessage(commands.Cog):
           user_id = row['user_id']
           voted_in = row['voted_in']
           if time()-voted_in>=36*3600:
-            await (UpdateData(self.bot)).update_data(user_id, {'streak': 1}, 'topgg', 'user_id', None)
+            await ud.update_data(user_id, {'streak': 1}, 'topgg', 'user_id', None)
     except Exception:
       pass
 
@@ -77,13 +77,13 @@ class UpdateWeeklyMessage(commands.Cog):
               try:
                 member = await self.bot.fetch_user(user_id)
                 dm = await member.create_dm()
-                user_settings = await (GetData(self.bot)).get_data(user_id,['language'],'users','user_id',guild)
+                user_settings = await gd.get_data(user_id,['language'],'users','user_id',guild)
                 language = user_settings['language']
-                await dm.send(await (TranslateMessage(self.bot)).translate_message(f"Ваш Срок Бана Истёк.", language)+f"\n"+await (TranslateMessage(self.bot)).translate_message(f"На Сервере:", language)+f" `{guild.name}`\n"+await (TranslateMessage(self.bot)).translate_message(f"Время Разбана:", language)+f" <t:{datetime_now}:F>")
+                await dm.send(await tm.translate_message(f"Your Ban Expiration Has Passed.", language)+f"\n"+await tm.translate_message(f"On Server:", language)+f" `{guild.name}`\n"+await tm.translate_message(f"Unban Time:", language)+f" <t:{datetime_now}:F>")
               except Exception:
                 pass
               await guild.unban(Object(id=int(user_id)))
-              await (AddViolation(self.bot)).add_violation(user_id, guild_id, "unban", await (TranslateMessage(self.bot)).translate_message("Срок Бана Истёк",language), None, datetime_now, self.bot.user.id)
+              await (self.bot.get_cog("AddViolation")).add_violation(user_id, guild_id, "unban", await tm.translate_message("punishment.ban_expired",language), None, datetime_now, self.bot.user.id)
     except Exception as e:
       print("update weekly message unban exception:\n",''.join(format_exception(type(e), e, e.__traceback__)))
 

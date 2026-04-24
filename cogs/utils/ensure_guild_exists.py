@@ -4,8 +4,6 @@ from datetime import datetime,timezone
 import traceback
 from asyncio import sleep
 
-from cogs.utils.get_invite import GetInvite
-
 class EnsureGuildExists(commands.Cog):
   def __init__(self, bot):
     self.bot:commands.Bot = bot
@@ -36,24 +34,24 @@ class EnsureGuildExists(commands.Cog):
     except Exception as e:
       traceback_msg = ((''.join(traceback.format_exception(type(e), e, e.__traceback__)))[:5000])
       guild = self.bot.get_guild(guild_id)
-      invite = await (GetInvite(self.bot)).invite(guild)
+      invite = await self.bot.get_cog("GetInvite").invite(guild)
       log = nextcord.Embed(
-        title=f"Postgresql | Ошибка добавления сервера в БД",
+        title="PostgreSQL | Error adding guild to database",
         description=(f"{e}")[:500],
         color=nextcord.Colour.red(),
         timestamp=datetime.now(timezone.utc)
       )
       log.set_author(
-        name=f"ЕРРОР",
+        name=f"ERROR",
       )
       log.add_field(
-        name="Сервер",
-        value=f"{guild_id} | {invite} | {guild.name}" if guild else "ЛС",
+        name="Server",
+        value=f"{guild_id} | {invite} | {guild.name}" if guild else "DM",
         inline=False
       )
       for i in range(0, len(traceback_msg), 1000):
         log.add_field(
-          name="Ошибка",
+          name="Error",
           value=f"```py\n{traceback_msg[i:i+1000]}```",
           inline=False
         )

@@ -479,10 +479,10 @@ class WebRequestsWorker(commands.Cog):
       pass
 
   async def _process_kind(self, conn, kind: str, discord_id: int, payload: dict, job: dict):
-    get_data = self.bot.get_cog("GetData")
-    if not get_data: return {"error": "Failed to get data."}
+    gd = self.bot.get_cog("GetData")
+    if not gd: return {"error": "Failed to get data."}
 
-    user_info = await get_data.get_data(discord_id, ["banned", "auth_user_id", "badges"], "users", "user_id", None)
+    user_info = await gd.get_data(discord_id, ["banned", "auth_user_id", "badges"], "users", "user_id", None)
 
     if user_info.get("banned"):
       return {"error": "You are banned."}
@@ -584,7 +584,7 @@ class WebRequestsWorker(commands.Cog):
       """, discord_id)
       result = dict(row) if row else {}
 
-      user_data = await get_data.get_data(discord_id, ["xp"], "user_data", "user_id", None)
+      user_data = await gd.get_data(discord_id, ["xp"], "user_data", "user_id", None)
       xp = user_data.get("xp") or 0
 
       u = self.bot.get_user(discord_id)
@@ -931,7 +931,7 @@ class WebRequestsWorker(commands.Cog):
   async def _log_error(self, e, raw_payload):
     tb = "".join(format_exception(type(e), e, e.__traceback__))[:5000]
     log = Embed(
-      title="Postgresql/Frontend | Ошибка при обработке запроса клиента",
+      title="PostgreSQL/Frontend | Error processing client request",
       description=(f"{e}")[:500],
       color=Colour.red(),
       timestamp=datetime.now(timezone.utc)

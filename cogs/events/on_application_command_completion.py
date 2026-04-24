@@ -55,16 +55,16 @@ class OnApplicationCommandCompletion(commands.Cog):
     user = interaction.user
     guild = interaction.guild
     channel = interaction.channel
-    get_data = None
-    get_invite = None
-    send_embed = None
-    while not (get_data and get_invite and send_embed):
-      get_data = self.bot.get_cog("GetData")
-      get_invite = self.bot.get_cog("GetInvite")
-      send_embed = self.bot.get_cog("SendEmbed")
+    gd = None
+    gi = None
+    se = None
+    while not (get_data and gi and se):
+      gd = self.bot.get_cog("GetData")
+      gi = self.bot.get_cog("GetInvite")
+      se = self.bot.get_cog("SendEmbed")
       await sleep(1)
 
-    user_privacy = await get_data.get_data(user.id, ['track_activity'], 'user_privacy', 'user_id', guild)
+    user_privacy = await gd.get_data(user.id, ['track_activity'], 'user_privacy', 'user_id', guild)
     if not user_privacy['track_activity']: return
 
     command_name = interaction.application_command.name if interaction.application_command and interaction.application_command.name else "Unknown"
@@ -75,23 +75,23 @@ class OnApplicationCommandCompletion(commands.Cog):
       for name, value in flat:
         options_str += f" `{name}`  **{self._mentionify(guild, value)}**"
 
-    invite = await get_invite.invite(guild)
+    invite = await gi.invite(guild)
     fields = [
       {
-        'name':'Сервер',
-        'value':f"{guild.id} | {invite} | {guild.name}" if guild else "ЛС",
+        'name':'Server',
+        'value':f"{guild.id} | {invite} | {guild.name}" if guild else "DM",
         'inline':True
       },
       {
-        'name':'Канал',
-        'value':f"<#{channel.id}>(`{channel.id}` | `{channel.name if guild else f'[<@{user.id}>({user.id} | {user.name}({user.display_name})]'}`)" if channel else "Не Найден",
+        'name':'Channel',
+        'value':f"<#{channel.id}>(`{channel.id}` | `{channel.name if guild else f'[<@{user.id}>({user.id} | {user.name}({user.display_name})]'}`)" if channel else "Not Found",
         'inline':True
       }
     ]
 
-    await send_embed.send_embed(
-      title="Ввод команды",
-      description=f"Пользователь Ввёл: ||{options_str}||",
+    await se.send_embed(
+      title="Command Input",
+      description=f"User Input: ||{options_str}||",
       color=Colour.yellow(),
       fields=fields,
       footer_text=command_name,

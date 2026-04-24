@@ -1,16 +1,11 @@
 from textwrap import indent
-
 import nextcord
 from nextcord.ext import commands,tasks
 import json
 from collections import Counter
 import aiohttp
 import asyncio
-
-import nextcord.gateway
-from cogs.utils.translate_message import TranslateMessage
 from traceback import format_exception
-from cogs.utils.send_embed import SendEmbed
 
 class SetBotStatus(commands.Cog):
   def __init__(self, bot):
@@ -30,7 +25,7 @@ class SetBotStatus(commands.Cog):
       except FileNotFoundError:
         pass
 
-      expr = status_info.get("название", "")
+      expr = status_info.get("name", "")
 
       while True:
         if hasattr(self.bot, 'db_pool') and self.bot.db_pool:
@@ -48,18 +43,21 @@ class SetBotStatus(commands.Cog):
 
               ns = {}
               exec(code, ctx, ns)
-              название_1 = await ns["__render__"]()
+              name_1 = await ns["__render__"]()
             break
           except Exception as e:
             await asyncio.sleep(10)
             continue
         await asyncio.sleep(10)
-      активность = status_info['активность']
-      ссылка = status_info['ссылка']
-      статус = status_info['статус']
-      название_эмодзи = status_info['название_эмодзи']
-      id_эмодзи = status_info['id_эмодзи']
-      анимировано_эмодзи = status_info['анимировано_эмодзи']
+      activity_type = status_info['activity']
+      url = status_info['url']
+      status = status_info['status']
+      emoji_name = status_info['emoji_name']
+      emoji_id = status_info['emoji_id']
+      emoji_animated = status_info['emoji_animated']
+
+      tm = self.bot.get_cog("TranslateMessage")
+      se = self.bot.get_cog("SendEmbed")
 
       for shard in self.bot.shards:
         shard_guilds = [guild for guild in self.bot.guilds if guild.shard_id==shard]
@@ -69,45 +67,45 @@ class SetBotStatus(commands.Cog):
           locale_count = Counter(locales)
           locale, _ = locale_count.most_common(1)[0]
 
-        название = await (TranslateMessage(self.bot)).translate_message(название_1, locale if locale!='en-US' and locale!='en-GB' and locale!='es-ES' and locale!='sv-SE' else 'en' if locale=='en-US' or locale=='en-GB' and locale!='es-ES' and locale!='sv-SE' else 'es' if locale!='en-US' and locale!='en-GB' and locale=='es-ES' and locale!='sv-SE' else 'sv',save=False)
-        if активность=="play":
-          activity=nextcord.Game(название)
-        elif активность=="stream":
-          activity=nextcord.Streaming(name=название,url=ссылка)
-        elif активность in ["listening","watching","competing"]:
+        name = await tm.translate_message(name_1, locale if locale!='en-US' and locale!='en-GB' and locale!='es-ES' and locale!='sv-SE' else 'en' if locale=='en-US' or locale=='en-GB' and locale!='es-ES' and locale!='sv-SE' else 'es' if locale!='en-US' and locale!='en-GB' and locale=='es-ES' and locale!='sv-SE' else 'sv',save=False)
+        if activity_type=="play":
+          activity=nextcord.Game(name)
+        elif activity_type=="stream":
+          activity=nextcord.Streaming(name=name,url=url)
+        elif activity_type in ["listening","watching","competing"]:
           activity=nextcord.Activity(
-            type=nextcord.ActivityType[активность],
-            name=название,
-            url=(ссылка if ссылка else None),
+            type=nextcord.ActivityType[activity_type],
+            name=name,
+            url=(url if url else None),
             emoji=(
               {
-                'name': название_эмодзи,
-                'id': id_эмодзи,
-                'animated': анимировано_эмодзи
-              } if (название_эмодзи!=None and id_эмодзи!=None and анимировано_эмодзи!=None) else None
+                'name': emoji_name,
+                'id': emoji_id,
+                'animated': emoji_animated
+              } if (emoji_name!=None and emoji_id!=None and emoji_animated!=None) else None
             )
           )
-        if статус:
+        if status:
           while True:
             try:
-              await self.bot.change_presence(status=nextcord.Status[статус], activity=activity, shard_id=shard)
+              await self.bot.change_presence(status=nextcord.Status[status], activity=activity, shard_id=shard)
               break
             except aiohttp.client_exceptions.ClientConnectionResetError as e:
               await asyncio.sleep(15)
               traceback_msg = ((''.join(format_exception(type(e), e, e.__traceback__)))[:5000])
               fields = [
                 {
-                  'name':'Ошибка',
+                  'name':'Error',
                   'value':traceback_msg,
                   'inline':False
                 }
               ]
-              await (SendEmbed(self.bot)).send_embed(
-                title='Ошибка при попытке изменить статус',
+              await se.send_embed(
+                title='Error while changing status',
                 description=str(e)[:2048],
                 color=nextcord.Color.red(),
                 fields=fields,
-                footer_text='Ошибка в set_bot_status',
+                footer_text='Error in set_bot_status',
                 channel_id=1159138280651104256
               )
     except Exception as e:
@@ -115,17 +113,17 @@ class SetBotStatus(commands.Cog):
       traceback_msg = ((''.join(format_exception(type(e), e, e.__traceback__)))[:5000])
       fields = [
         {
-          'name':'Ошибка',
+          'name':'Error',
           'value':traceback_msg,
           'inline':False
         }
       ]
-      await (SendEmbed(self.bot)).send_embed(
-        title='Ошибка где то в коде',
+      await se.send_embed(
+        title='Error in code',
         description=str(e)[:2048],
         color=nextcord.Color.red(),
         fields=fields,
-        footer_text='Ошибка в set_bot_status',
+        footer_text='Error in set_bot_status',
         channel_id=1159138280651104256
       )
 

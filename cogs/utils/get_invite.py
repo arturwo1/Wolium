@@ -16,38 +16,38 @@ class GetInvite(commands.Cog):
 
   async def invite(self, guild: Guild = None, *args):
     if not guild:
-      return "ЛС"
+      return "DM"
 
     gid = str(guild.id)
     now = time()
 
     if gid in self.invites and self.invites[gid][1] + 60 > now:
       url = self.invites[gid][0]
-      return f'[**`инвайт`**]({url})' if not args else url
+      return f'[**`invite`**]({url})' if not args else url
 
     async with self._get_lock(gid):
       now = time()
       if gid in self.invites and self.invites[gid][1] + 60 > now:
         url = self.invites[gid][0]
-        return f'[**`инвайт`**]({url})' if not args else url
+        return f'[**`invite`**]({url})' if not args else url
 
       try:
         if not (guild.me and guild.me.guild_permissions.manage_guild):
-          return "Нет прав для просмотра инвайтов"
+          return "No permissions to view invites"
 
         invites = await guild.invites()
         if not invites:
-          return "Нет инвайтов"
+          return "No invites"
 
         best = next(
           (i for i in invites if i.max_age == 0 and i.max_uses == 0),
           invites[0]
         )
         self.invites[gid] = (best.url, time())
-        return f'[**`инвайт`**]({best.url})' if not args else best.url
+        return f'[**`invite`**]({best.url})' if not args else best.url
 
       except Exception as e:
-        return f"Ошибка {e} при просмотре инвайтов"
+        return f"Error {e} while viewing invites"
 
 def setup(bot: commands.Bot):
   bot.add_cog(GetInvite(bot))

@@ -1,11 +1,7 @@
 from nextcord import message_command, InteractionContextType, IntegrationType, Interaction, Message, Embed, Color
 from nextcord.ext import commands
 from datetime import datetime, timezone
-from cogs.utils.get_invite import GetInvite
-from cogs.utils.translate_message import TranslateMessage
 import Utils.translate_to_all_languages
-from Utils.config import servers_with_no_acces_for_bot, users_with_no_acces_for_bot
-from cogs.utils.get_data import GetData
 
 translate_to_all_languages = Utils.translate_to_all_languages.translate_to_all_languages
 
@@ -13,7 +9,7 @@ class Translate(commands.Cog):
   def __init__(self, bot):
     self.bot: commands.Bot = bot
 
-  @message_command(name_localizations=translate_to_all_languages('перевести', 'name'),
+  @message_command(name_localizations=translate_to_all_languages('command.transfer', 'name'),
     integration_types=[
       IntegrationType.user_install,
       IntegrationType.guild_install,
@@ -23,36 +19,41 @@ class Translate(commands.Cog):
       InteractionContextType.bot_dm,
       InteractionContextType.private_channel,
     ])
-  async def перевести(self, interaction: Interaction, message: Message):
-    user_id = interaction.user.id
+  async def translate(self, interaction: Interaction, message: Message):
+    try:
+      user_id = interaction.user.id
+      tm = self.bot.get_cog("TranslateMessage")
+      gd = self.bot.get_cog("GetData")
 
-    user_settings = await (GetData(self.bot)).get_data(user_id,['language','variation'],'users','user_id',interaction.guild)
-    language = user_settings['language']
+      user_settings = await gd.get_data(user_id,['language','variation'],'users','user_id',interaction.guild)
+      language = user_settings['language']
 
-    await interaction.response.defer(ephemeral=True)
-    
-    translate = Embed(
-      title=await (TranslateMessage(self.bot)).translate_message(f"Перевод текста на",language)+f" {language}",
-      description=message.content,
-      color=Color.green(),
-      timestamp=datetime.now(timezone.utc)
-    )
-    translate.set_author(
-      name=interaction.user.name,
-      icon_url=interaction.user.display_avatar.url
-    )
-    translate.add_field(
-      name=await (TranslateMessage(self.bot)).translate_message(f"Перевод",language),
-      value=await (TranslateMessage(self.bot)).translate_message(message.content,language,save=False),
-      inline=True
-    )
-    translate.set_footer(
-      text=await (TranslateMessage(self.bot)).translate_message(f"Переведено На",language)+f' {language}',
-      icon_url="https://imgur.com/mvlC8XC"
-    )
-    await interaction.followup.send(embed=translate,ephemeral=True)
+      await interaction.response.defer(ephemeral=True)
+      
+      translate_embed = Embed(
+        title=await tm.translate_message(f"Text translation to",language)+f" {language}",
+        description=message.content,
+        color=Color.green(),
+        timestamp=datetime.now(timezone.utc)
+      )
+      translate_embed.set_author(
+        name=interaction.user.name,
+        icon_url=interaction.user.display_avatar.url
+      )
+      translate_embed.add_field(
+        name=await tm.translate_message(f"Translation",language),
+        value=await tm.translate_message(message.content,language,save=False),
+        inline=True
+      )
+      translate_embed.set_footer(
+        text=await tm.translate_message(f"Translated to",language)+f' {language}',
+        icon_url="https://imgur.com/mvlC8XC"
+      )
+      await interaction.followup.send(embed=translate_embed,ephemeral=True)
+    except Exception as e:
+      await interaction.followup.send(f"Error: {str(e)}", ephemeral=True)
 
-  setattr(перевести,"extras",{"description": "Позволяет перевести **абсолютно** любое сообщение на **ваш язык** с любого языка!"})
+  setattr(translate,"extras",{"description": "Translate any message to your language from any language!"})
 
 def setup(bot: commands.Bot):
   bot.add_cog(Translate(bot))

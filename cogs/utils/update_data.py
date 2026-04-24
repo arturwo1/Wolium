@@ -4,7 +4,6 @@ from datetime import datetime,timezone
 from Utils.config import users
 import traceback
 from asyncio import sleep
-from cogs.utils.get_invite import GetInvite
 from json import dumps
 
 class UpdateData(commands.Cog):
@@ -68,35 +67,35 @@ class UpdateData(commands.Cog):
 		except Exception as e:
 			traceback_msg = ((''.join(traceback.format_exception(type(e), e, e.__traceback__)))[:5000])
 			log = nextcord.Embed(
-				title=f"Postgresql | Ошибка при изменении данных пользователя",
+				title=f"PostgreSQL | Error updating user data",
 				description=(f"{e}")[:500],
 				color=nextcord.Colour.red(),
 				timestamp=datetime.now(timezone.utc)
 			)
 			if guild:
-				invite = await (GetInvite(self.bot)).invite(guild)
+				invite = await self.bot.get_cog("GetInvite").invite(guild)
 				log.add_field(
-					name="Сервер",
-					value=f"{guild.id} | {invite} | {guild.name}" if guild else "ЛС",
+					name="Server",
+					value=f"{guild.id} | {invite} | {guild.name}" if guild else "DM",
 					inline=False
 				)
 			if user:
 				log.add_field(
-					name="Пользователь",
+					name="User",
 					value=f"{user_id} | {user.mention} | {user.name}",
 					inline=True
 				)
 			log.add_field(
-				name="Данные",
-				value=f"Изначально: ```json\n{data}```\nСделано: ```json\n{edit_data}```и```json\n{values}```\nТаблица: `{table}`\nЧекер: `{checker}`",
+				name="Data",
+				value=f"Expected: ```json\n{data}```\nDone: ```json\n{edit_data}```and```json\n{values}```\nTable: `{table}`\nChecker: `{checker}`",
 				inline=True
 			)
 			log.set_author(
-				name=f"ЕРРОР",
+				name=f"ERROR",
 			)
 			for i in range(0, len(traceback_msg), 1000):
 				log.add_field(
-					name="Ошибка",
+					name="Error",
 					value=f"```py\n{traceback_msg[i:i+1000]}```",
 					inline=False
 				)
