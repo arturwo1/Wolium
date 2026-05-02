@@ -9,6 +9,7 @@ from nextcord.ext import commands, tasks
 from nextcord import Embed, Colour, CategoryChannel
 from Utils.calculate_LvL import calculate_LvL
 from asyncpg import ConnectionDoesNotExistError, InterfaceError, PostgresConnectionError
+from Utils.privacy_flags import VALID_FLAGS
 
 QUEUE_TABLE = "public.web_requests"
 
@@ -132,7 +133,7 @@ class WebRequestsWorker(commands.Cog):
 
     guild_id_raw = payload.get("guild_id")
     channel_id_raw = payload.get("channel_id")
-    context_raw = payload.get("context")
+    context_raw = payload.get("context") or payload.get("command_name") or payload.get("activity_name")
 
     guild_id = int(guild_id_raw) if guild_id_raw not in (None, "") else None
     channel_id = int(channel_id_raw) if channel_id_raw not in (None, "") else None
@@ -232,9 +233,7 @@ class WebRequestsWorker(commands.Cog):
       "artist": def_payload.get("artist"),
       "twitch": def_payload.get("twitch") or def_payload.get("url"),
       "large_image": assets.get("large_image"),
-      "large_text": assets.get("large_text"),
       "small_image": assets.get("small_image"),
-      "small_text": assets.get("small_text"),
       "party_current": party_current,
       "party_max": party_max,
       "raw_payload": def_payload,
@@ -300,7 +299,7 @@ class WebRequestsWorker(commands.Cog):
     }
 
   def _activities_series_params(self, payload: dict):
-    frm_ms, to_ms, _, limit_n, _, _, context = self._series_params(payload)
+    frm_ms, to_ms, bucket_ms, limit_n, limit_n, _, context = self._series_params(payload)
     min_sec, max_sec = self._duration_range_seconds(payload)
 
     return {
@@ -313,7 +312,9 @@ class WebRequestsWorker(commands.Cog):
       "artist": self._clean_text(payload.get("artist")),
       "status": self._clean_text(payload.get("status"), max_len=32),
       "min_duration_seconds": min_sec,
-      "max_duration_seconds": max_sec
+      "max_duration_seconds": max_sec,
+      "bucket_ms": bucket_ms,
+      "limit": limit_n
     }
 
   def _extract_presence_status(self, status_code_raw, snapshot_payload_raw):
@@ -390,25 +391,25 @@ class WebRequestsWorker(commands.Cog):
     """, auth_user_id)
     return row["discord_id"] if row and row["discord_id"] else None
 
-  async def _set_done(self, conn, req_id, result_obj):
-    result_json = dumps(result_obj, ensure_ascii=False)
+  async def _set_done(self, conn, req_id, result_obj, err=None):
+    result_json = dumps(result_obj or {}, ensure_ascii=False)
     await conn.execute(f"""
       update {QUEUE_TABLE}
-      set status='done',
-          result=$2::jsonb,
-          error=null,
-          updated_at=now(),
-          expires_at=now() + interval '{ROW_TTL_AFTER_DONE_SECONDS} seconds'
-      where id=$1
-    """, req_id, result_json)
+      set status=$1::text,
+        result=$2::jsonb,
+        error=$3,
+        updated_at=now(),
+        expires_at=now() + interval '{ROW_TTL_AFTER_DONE_SECONDS} seconds'
+      where id=$4
+    """, "error" if err else "done", result_json, err, req_id)
 
   async def _set_error(self, conn, req_id, msg: str):
     await conn.execute(f"""
       update {QUEUE_TABLE}
       set status='error',
-          error=$2,
-          updated_at=now(),
-          expires_at=now() + interval '{ROW_TTL_AFTER_DONE_SECONDS} seconds'
+        error=$2,
+        updated_at=now(),
+        expires_at=now() + interval '{ROW_TTL_AFTER_DONE_SECONDS} seconds'
       where id=$1
     """, req_id, (msg or "error")[:1000])
 
@@ -436,11 +437,11 @@ class WebRequestsWorker(commands.Cog):
                 await self._set_done(conn, job["id"], cached)
                 return
 
-              result = await self._process_kind(conn, kind, discord_id, payload, job)
+              result, err = await self._process_kind(conn, kind, discord_id, payload, job)
               result = self._convert_decimals(result)
 
               await self.cache.set(ck, result)
-              await self._set_done(conn, job["id"], result)
+              await self._set_done(conn, job["id"], result, err)
               return
 
             except (
@@ -480,22 +481,22 @@ class WebRequestsWorker(commands.Cog):
 
   async def _process_kind(self, conn, kind: str, discord_id: int, payload: dict, job: dict):
     gd = self.bot.get_cog("GetData")
-    if not gd: return {"error": "Failed to get data."}
+    ud = self.bot.get_cog("UpdateData")
+    if not gd: return None, "Failed to get data."
 
     user_info = await gd.get_data(discord_id, ["banned", "auth_user_id", "badges"], "users", "user_id", None)
 
     if user_info.get("banned"):
-      return {"error": "You are banned."}
+      return None, "You are banned."
     
     current_auth_user_id = user_info.get("auth_user_id")
     new_auth_user_id = job["user_id"]
 
     if not current_auth_user_id:
-      update_data = self.bot.get_cog("UpdateData")
-      if not update_data:
-        return {"error": "Failed to update data."}
+      if not ud:
+        return None, "Failed to update data."
 
-      await update_data.update_data(
+      await ud.update_data(
         discord_id,
         {"auth_user_id": new_auth_user_id},
         "users",
@@ -504,10 +505,10 @@ class WebRequestsWorker(commands.Cog):
       )
 
     elif current_auth_user_id != new_auth_user_id:
-      return {"error": "You already logged in another account."}
+      return None, "You already logged in another account."
 
     if kind == "profile_stats":
-      row = await conn.fetchrow("""
+      req = """
         with
           msg as (
             select count(*)::bigint as messages
@@ -527,24 +528,33 @@ class WebRequestsWorker(commands.Cog):
             where user_id = $1::bigint
             limit 1
           ),
+          
+          acts_dedup as (
+            select 
+              a.started_at,
+              a.ended_at,
+              row_number() over (
+                partition by d.name, (extract(epoch from a.started_at)::bigint / 60)
+                order by a.started_at asc, a.id asc
+              ) as rn
+            from activity_segments a
+            join activity_defs d on d.id = a.def_id
+            where a.user_id = $1::bigint
+          ),
+          
           act_sec as (
-            with acts as (
-              select
-                s.def_id,
-                coalesce(s.activity_started_at, s.started_at) as grp_started_at,
-                min(coalesce(s.activity_started_at, s.started_at)) as started_at,
-                max(coalesce(s.activity_ended_at, s.ended_at, s.started_at)) as ended_at
-              from activity_segments s
-              where s.user_id = $1::bigint
-              group by
-                s.def_id,
-                coalesce(s.activity_started_at, s.started_at)
-            )
             select coalesce(
-              sum(greatest(0, extract(epoch from (ended_at - started_at)))::bigint),
+              sum(greatest(0, extract(epoch from (coalesce(ended_at, CURRENT_TIMESTAMP) - started_at)))::bigint),
               0::bigint
             ) as sec
-            from acts
+            from acts_dedup
+            where rn = 1
+          ),
+          
+          cmd as (
+            select count(*)::bigint as user_commands
+            from user_commands
+            where user_id = $1::bigint
           )
         select
           (select messages from msg) as messages,
@@ -578,17 +588,49 @@ class WebRequestsWorker(commands.Cog):
             from act_sec
           ) as activity_seconds,
 
+          (select user_commands from cmd) as user_commands,
+
           coalesce((select bank_balance + balance from bal), 0) as total_balance,
           coalesce((select bank_balance from bal), 0) as bank_balance,
           coalesce((select balance from bal), 0) as balance;
-      """, discord_id)
-      result = dict(row) if row else {}
+        """
+      user_id_raw = payload.get("user_id")
+      user_id = None
+
+      if user_id_raw:
+        if str(user_id_raw).isdigit():
+          user = await conn.fetchrow("""
+            SELECT user_id
+            FROM users
+            WHERE user_id = $1
+          """, int(user_id_raw))
+          if user:
+            user_id = int(user["user_id"])
+        user = await conn.fetchrow("""
+          SELECT user_id
+          FROM users
+          WHERE username ILIKE $1
+          LIMIT 1
+        """, str(user_id_raw))
+        if user:
+          user_id = int(user["user_id"])
+          
+      if user_id:
+        user1_publicity = (await gd.get_data(discord_id, ["publicity"], "user_privacy", "user_id", None))["publicity"]
+        if not user1_publicity:
+          return None, "Make your profile public to view other users profiles."
+        user2_publicity = (await gd.get_data(user_id, ["publicity"], "user_privacy", "user_id", None))["publicity"]
+        if not user2_publicity:
+          return None, "The user has a private profile."
+        discord_id = user_id if user_id else discord_id
 
       user_data = await gd.get_data(discord_id, ["xp"], "user_data", "user_id", None)
       xp = user_data.get("xp") or 0
 
       u = self.bot.get_user(discord_id)
-      username = u.display_name if u else "Unknown Name"
+      username = u.name if u else f"Unknown username"
+      display_name = u.display_name if u else "Unknown name"
+      user_avatar = str(u.display_avatar.url)
       member = next((m for m in self.bot.get_all_members() if m.id == discord_id), None)
 
       mutual_guilds = member and member.mutual_guilds or []
@@ -610,11 +652,16 @@ class WebRequestsWorker(commands.Cog):
           mutual_guilds_row[mutual_guild.id]["voice_channels"][channel.id] = {"name": channel.name, "type": channel.__class__.__name__}
 
       lvl, xp_need, xp_now = calculate_LvL(xp)
+
+      row = await conn.fetchrow(req, user_id or discord_id)
+      result = dict(row) if row else {}
       result["xp"] = xp
       result["lvl"] = lvl
       result["xp_need"] = xp_need
       result["xp_now"] = xp_now
       result["user_name"] = username
+      result["display_name"] = display_name
+      result["user_avatar"] = user_avatar
       result["badges"] = user_info["badges"]
       result["status"] = member and str(member.status) or None
       result["client_status"] = {
@@ -623,7 +670,7 @@ class WebRequestsWorker(commands.Cog):
         "web": str(getattr(member, "web_status", "offline")) if member else "offline"
       }
       result["guilds"] = mutual_guilds_row
-      return result
+      return result, None
 
     if kind == "messages_series":
       frm_ms, to_ms, bucket_ms, limit_n, guild_id, channel_id, context = self._series_params(payload)
@@ -700,7 +747,7 @@ class WebRequestsWorker(commands.Cog):
         }
         out.append(d)
 
-      return out
+      return out, None
 
     if kind == "voice_series":
       p = self._voice_series_params(payload)
@@ -772,82 +819,110 @@ class WebRequestsWorker(commands.Cog):
         else:
           item["y"] += seconds
 
-      return [buckets[k] for k in sorted(buckets.keys())[:p["limit"]]]
+      return [buckets[k] for k in sorted(buckets.keys())[:p["limit"]]], None
 
     if kind == "activities_series":
       p = self._activities_series_params(payload)
 
       rows = await conn.fetch("""
-        with acts as (
+        with raw_acts as (
           select
-            min(s.id)::bigint as id,
+            s.id::bigint as id,
             s.def_id::bigint as def_id,
-            min(s.snapshot_id)::bigint as snapshot_id,
-            min(s.started_at) as started_at,
-            max(s.ended_at) as ended_at,
-            min(s.activity_started_at) as activity_started_at,
-            max(s.activity_ended_at) as activity_ended_at
+            s.snapshot_id::bigint as snapshot_id,
+            (extract(epoch from s.started_at) * 1000)::bigint as act_start_ms,
+            (extract(epoch from least(coalesce(s.ended_at, CURRENT_TIMESTAMP), to_timestamp($3::bigint / 1000.0))) * 1000)::bigint as act_end_ms
           from activity_segments s
           where s.user_id = $1::bigint
-            and coalesce(s.activity_ended_at, s.ended_at, s.started_at) >= to_timestamp($2::bigint / 1000.0)
-            and coalesce(s.activity_started_at, s.started_at) <= to_timestamp($3::bigint / 1000.0)
-          group by s.def_id, s.activity_started_at
+            and coalesce(s.ended_at, s.started_at) >= to_timestamp($2::bigint / 1000.0)
+            and s.started_at <= to_timestamp($3::bigint / 1000.0)
+        ),
+        acts as (
+          select 
+            a.*,
+            d.source_kind, d.activity_type, d.name, d.payload as activity_def_payload,
+            ps.status_code, ps.payload as presence_payload,
+            ps.fingerprint, ps.guild_id, ps.user_id as ps_user_id,
+            ps.desktop_status_code, ps.mobile_status_code, ps.web_status_code,
+            row_number() over (
+              partition by d.name, (a.act_start_ms / 60000)
+              order by a.act_start_ms asc, a.id asc
+            ) as rn
+          from raw_acts a
+          join activity_defs d on d.id = a.def_id
+          left join presence_snapshots ps on ps.id = a.snapshot_id
+        ),
+        filtered_acts as (
+          select * from acts a
+          where a.rn = 1
+            and ($4::text is null or a.name ilike ('%' || $4::text || '%'))
+            and ($5::text is null or coalesce(a.activity_def_payload->>'track', a.activity_def_payload->>'song', '') ilike ('%' || $5::text || '%'))
+            and ($6::text is null or coalesce(a.activity_def_payload->>'album', '') ilike ('%' || $6::text || '%'))
+            and ($7::text is null or coalesce(a.activity_def_payload->>'artist', '') ilike ('%' || $7::text || '%'))
+            and ($8::bigint is null or (a.act_end_ms - a.act_start_ms)/1000 >= $8::bigint)
+            and ($9::bigint is null or (a.act_end_ms - a.act_start_ms)/1000 <= $9::bigint)
+            and (
+              $10::text is null 
+              or $10::text = '' 
+              or a.status_code = case lower($10::text)
+                when 'offline' then 0
+                when 'online' then 1
+                when 'idle' then 2
+                when 'dnd' then 3
+                when 'invisible' then 4
+              end::smallint
+            )
+        ),
+        buckets as (
+          select 
+            generate_series as bucket_start_ms,
+            (generate_series + $11::bigint) as bucket_end_ms
+          from generate_series(
+            ($2::bigint / $11::bigint) * $11::bigint, 
+            ($3::bigint / $11::bigint) * $11::bigint, 
+            $11::bigint
+          )
+        ),
+        bucketed_acts as (
+          select 
+            b.bucket_start_ms,
+            b.bucket_end_ms,
+            f.*,
+            (least(f.act_end_ms, b.bucket_end_ms) - greatest(f.act_start_ms, b.bucket_start_ms)) as overlap_ms
+          from buckets b
+          join filtered_acts f 
+            on f.act_start_ms < b.bucket_end_ms 
+           and f.act_end_ms > b.bucket_start_ms
+        ),
+        ranked_buckets as (
+          select
+            bucket_start_ms as bucket_start,
+            bucket_end_ms as bucket_end,
+            count(*) over (partition by bucket_start_ms) as total_count,
+            sum(overlap_ms) over (partition by bucket_start_ms) / 1000 as total_duration,
+            min(act_start_ms) over (partition by bucket_start_ms) as min_ts,
+            row_number() over (partition by bucket_start_ms order by overlap_ms desc) as bucket_rn,
+            *
+          from bucketed_acts
         )
         select
-          a.id,
-          a.def_id,
-
-          (extract(epoch from a.started_at) * 1000)::bigint as started_at_ms,
-          (extract(epoch from a.ended_at) * 1000)::bigint as ended_at_ms,
-          (extract(epoch from coalesce(a.activity_started_at, a.started_at)) * 1000)::bigint as activity_started_at_ms,
-          (extract(epoch from coalesce(a.activity_ended_at, a.ended_at)) * 1000)::bigint as activity_ended_at_ms,
-
-          greatest(
-            0,
-            extract(epoch from (
-              coalesce(a.activity_ended_at, a.ended_at) - coalesce(a.activity_started_at, a.started_at)
-            ))
-          )::bigint as duration_seconds,
-
-          d.source_kind,
-          d.activity_type,
-          d.name,
-          d.payload as activity_def_payload,
-
-          ps.id as presence_snapshot_id,
-          ps.fingerprint as presence_snapshot_fingerprint,
-          ps.guild_id as presence_snapshot_guild_id,
-          ps.user_id as presence_snapshot_user_id,
-          ps.status_code,
-          ps.desktop_status_code,
-          ps.mobile_status_code,
-          ps.web_status_code,
-          ps.payload as presence_snapshot_payload
-
-        from acts a
-        join activity_defs d
-          on d.id = a.def_id
-        left join presence_snapshots ps
-          on ps.id = a.snapshot_id
-        where
-          ($4::text is null or d.name ilike ('%' || $4::text || '%'))
-          and ($5::text is null or coalesce(d.payload->>'track', d.payload->>'song', '') ilike ('%' || $5::text || '%'))
-          and ($6::text is null or coalesce(d.payload->>'album', '') ilike ('%' || $6::text || '%'))
-          and ($7::text is null or coalesce(d.payload->>'artist', '') ilike ('%' || $7::text || '%'))
-          and ($8::bigint is null or greatest(
-            0,
-            extract(epoch from (
-              coalesce(a.activity_ended_at, a.ended_at) - coalesce(a.activity_started_at, a.started_at)
-            ))
-          )::bigint >= $8::bigint)
-          and ($9::bigint is null or greatest(
-            0,
-            extract(epoch from (
-              coalesce(a.activity_ended_at, a.ended_at) - coalesce(a.activity_started_at, a.started_at)
-            ))
-          )::bigint <= $9::bigint)
-        order by coalesce(a.activity_started_at, a.started_at) asc
-        limit $10;
+          (case when rb.total_count = 1 then rb.min_ts else (rb.bucket_start + ($11::bigint / 2)) end)::bigint as ts,
+          rb.total_count::bigint as y_count,
+          rb.total_duration::bigint as y_duration,
+          rb.bucket_start::bigint as bucket_start,
+          rb.bucket_end::bigint as bucket_end,
+          
+          rb.id, rb.def_id, rb.act_start_ms as started_at_ms, rb.act_end_ms as ended_at_ms,
+          ((rb.act_end_ms - rb.act_start_ms)/1000)::bigint as duration_seconds, 
+          rb.source_kind, rb.activity_type, rb.name, rb.activity_def_payload,
+          rb.snapshot_id as presence_snapshot_id, rb.fingerprint as presence_snapshot_fingerprint,
+          rb.guild_id as presence_snapshot_guild_id, rb.ps_user_id as presence_snapshot_user_id,
+          rb.status_code, rb.desktop_status_code, rb.mobile_status_code, rb.web_status_code,
+          rb.presence_payload as presence_snapshot_payload
+        from ranked_buckets rb
+        where rb.bucket_rn = 1
+        order by rb.bucket_start asc
+        limit $12;
       """,
         discord_id,
         p["from_ms"],
@@ -858,6 +933,8 @@ class WebRequestsWorker(commands.Cog):
         p["artist"],
         p["min_duration_seconds"],
         p["max_duration_seconds"],
+        p["status"],
+        p["bucket_ms"],
         p["limit"]
       )
 
@@ -871,37 +948,26 @@ class WebRequestsWorker(commands.Cog):
           d.get("presence_snapshot_payload")
         )
 
-        if p["status"] and presence_status != p["status"].casefold():
-          continue
-
         activity_payload = self._parse_payload(d.get("activity_def_payload"))
 
-        started_at_ms = int(d["activity_started_at_ms"])
-        ended_at_ms = int(d["activity_ended_at_ms"])
-        duration_seconds = int(d["duration_seconds"])
-
         out.append({
-          "ts": started_at_ms,
-          "y": duration_seconds,
-          "bucket_start": started_at_ms,
-          "bucket_end": ended_at_ms,
+          "ts": int(d["ts"]),
+          "y": int(d["y_duration"]),
+          "count": int(d["y_count"]),
+          "bucket_start": int(d["bucket_start"]),
+          "bucket_end": int(d["bucket_end"]),
+          
           "meta": {
             "id": int(d["id"]),
-            "def_id": int(d["def_id"]),
-            "source_kind": d.get("source_kind"),
-            "activity_type": d.get("activity_type"),
-            "activity_type_label": self._activity_type_label(d.get("activity_type")),
             "name": d.get("name"),
             "status": presence_status,
-
+            "duration_seconds": int(d["duration_seconds"]),
+            "total_bucket_duration": int(d["y_duration"]),
+            "total_bucket_count": int(d["y_count"]),
+            
             "track": activity_payload.get("track") or activity_payload.get("song"),
             "album": activity_payload.get("album"),
             "artist": activity_payload.get("artist"),
-
-            "started_at": int(d["started_at_ms"]),
-            "ended_at": int(d["ended_at_ms"]),
-            "activity_started_at": int(d["activity_started_at_ms"]),
-            "activity_ended_at": int(d["activity_ended_at_ms"]),
 
             "activity_def": {
               "name": d.get("name"),
@@ -924,9 +990,143 @@ class WebRequestsWorker(commands.Cog):
           }
         })
 
-      return out
+      return out, None
 
-    return {"error": f"Unknown kind: {kind}"}
+    if kind == "commands_series":
+      frm_ms, to_ms, bucket_ms, limit_n, guild_id, channel_id, command_name = self._series_params(payload)
+
+      rows = await conn.fetch("""
+        with base as (
+          select
+            (extract(epoch from uc.timestamp) * 1000)::bigint as ts_ms,
+            uc.guild_id,
+            uc.channel_id,
+            c.name as command_name,
+            uc.args
+          from user_commands uc
+          left join commands c on c.id = uc.command_id
+          where uc.user_id = $1::bigint
+            and uc.timestamp >= to_timestamp($2::bigint / 1000.0)
+            and uc.timestamp <= to_timestamp($3::bigint / 1000.0)
+            and ($6::bigint is null or uc.guild_id = $6::bigint)
+            and ($7::bigint is null or uc.channel_id = $7::bigint)
+            and ($8::text is null or (
+              c.name ilike ($8::text || '%')        -- префикс: "le" → leaders, language
+              or c.name ilike ('%' || $8::text || '%')  -- подстрока: "le" → reload
+              or (length($8::text) >= 3 and similarity(c.name, $8::text) > 0.3)  -- fuzzy только от 3+ символов
+            ))
+        ),
+        buck as (
+          select
+            ((ts_ms / $4::bigint) * $4::bigint) as bucket_start,
+            count(*)::bigint as y,
+            min(ts_ms) as min_ts
+          from base
+          group by 1
+        ),
+        sample as (
+          select distinct on (((ts_ms / $4::bigint) * $4::bigint))
+            ((ts_ms / $4::bigint) * $4::bigint) as bucket_start,
+            ts_ms as sample_ts,
+            command_name as sample_command_name,
+            args as sample_args,
+            guild_id as sample_guild_id,
+            channel_id as sample_channel_id
+          from base
+          order by ((ts_ms / $4::bigint) * $4::bigint), ts_ms asc
+        )
+        select
+          (case when b.y = 1 then b.min_ts else (b.bucket_start + ($4::bigint / 2)) end)::bigint as ts,
+          b.y::bigint as y,
+          b.bucket_start::bigint as bucket_start,
+          (b.bucket_start + $4::bigint)::bigint as bucket_end,
+          s.sample_ts::bigint as sample_ts,
+          s.sample_command_name,
+          s.sample_args,
+          s.sample_guild_id,
+          s.sample_channel_id
+        from buck b
+        left join sample s using (bucket_start)
+        order by b.bucket_start asc
+        limit $5;
+      """, discord_id, frm_ms, to_ms, bucket_ms, limit_n, guild_id, channel_id, command_name)
+
+      out = []
+      for r in rows:
+        d = dict(r)
+
+        gid_raw = d.get("sample_guild_id")
+        cid_raw = d.get("sample_channel_id")
+
+        guild_name, channel_name = self._resolve_guild_channel_names(gid_raw, cid_raw)
+
+        d["meta"] = {
+          "guild_name": guild_name,
+          "channel_name": channel_name
+        }
+
+        out.append(d)
+      return out, None
+    
+    if kind == "user_privacy":
+      user_privacy = await gd.get_data(discord_id, list(VALID_FLAGS), "user_privacy", "user_id", None)
+      return user_privacy, None
+
+    if kind == "set_privacy":
+      try:
+        filtered = {
+          k: bool(v)
+          for k, v in payload.items()
+          if k in VALID_FLAGS
+        }
+        if not filtered:
+          return None, "No valid flags provided"
+        await ud.update_data(discord_id, filtered, "user_privacy", "user_id", None)
+      except Exception as e:
+        return None, f"Failed to update privacy settings: {e}"
+      return None, None
+
+    if kind == "delete_user_data":
+      action = payload.get("action")
+
+      try:
+
+        if action == "messages":
+          await conn.execute("DELETE FROM messages WHERE user_id = $1", discord_id)
+          return None, None
+        
+        if action == "voice":
+          await conn.execute("DELETE FROM voice WHERE user_id = $1", discord_id)
+          return None, None
+        
+        if action == "activities":
+          await conn.execute("DELETE FROM activity_segments WHERE user_id = $1", discord_id)
+          await conn.execute("DELETE FROM presence_snapshots WHERE user_id = $1", discord_id)
+          return None, None
+        
+        if action == "economy":
+          await conn.execute("DELETE FROM inventory WHERE user_id = $1", discord_id)
+          await conn.execute("DELETE FROM equipment WHERE user_id = $1", discord_id)
+          await conn.execute("DELETE FROM user_data WHERE user_id = $1", discord_id)
+          return None, None
+        
+        if action == "analytics":
+          await conn.execute("DELETE FROM user_commands WHERE user_id = $1", discord_id)
+          await conn.execute("DELETE FROM topgg WHERE user_id = $1", discord_id)
+          return None, None
+
+      except Exception as e:
+        return None, f"Failed to delete data: {e}"
+
+      return None, f"Unknown action: {action}"
+
+    if kind == "delete_all_user_data":
+      try:
+        await conn.execute("DELETE FROM users WHERE user_id = $1", discord_id)
+      except Exception as e:
+        return None, f"Failed to delete all data: {e}"
+
+    return None, f"Unknown kind: {kind}"
 
   async def _log_error(self, e, raw_payload):
     tb = "".join(format_exception(type(e), e, e.__traceback__))[:5000]
