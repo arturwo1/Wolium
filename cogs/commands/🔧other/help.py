@@ -492,14 +492,7 @@ class Help(commands.Cog):
         ephemeral=True,
       )
 
-  setattr(
-    help,
-    "extras",
-    {
-      "description": "Эта команда покажет вам всю информацию обо мне, а также список всех моих команд."
-    },
-  )
-
+  setattr(help,"extras",{"description":"commands.help.description"})
 
 def setup(bot: commands.Bot):
   bot.add_cog(Help(bot))

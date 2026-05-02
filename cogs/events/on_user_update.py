@@ -24,6 +24,7 @@ class OnUserUpdate(commands.Cog):
       return
     
     gd = self.bot.get_cog("GetData")
+    ud = self.bot.get_cog("UpdateData")
     tracker = self.bot.get_cog("ActivityTracker")
 
     user_settings = await gd.get_data(user_id,['banned'],'users','user_id',None)
@@ -31,6 +32,9 @@ class OnUserUpdate(commands.Cog):
     if user_settings['banned']:
       users_with_no_acces_for_bot.append(user_id)
       return
+    
+    if before.name!=after.name:
+      await ud.update_data(user_id, {"username": after.name}, "users", "user_id")
     
     if tracker is None:
       return

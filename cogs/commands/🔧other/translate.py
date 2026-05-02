@@ -9,7 +9,7 @@ class Translate(commands.Cog):
   def __init__(self, bot):
     self.bot: commands.Bot = bot
 
-  @message_command(name_localizations=translate_to_all_languages('command.transfer', 'name'),
+  @message_command(name_localizations=translate_to_all_languages('other.translate_name', 'description'),
     integration_types=[
       IntegrationType.user_install,
       IntegrationType.guild_install,
@@ -31,7 +31,7 @@ class Translate(commands.Cog):
       await interaction.response.defer(ephemeral=True)
       
       translate_embed = Embed(
-        title=await tm.translate_message(f"Text translation to",language)+f" {language}",
+        title=await tm.translate_message(f"command.translate.title",language)+f" {language}",
         description=message.content,
         color=Color.green(),
         timestamp=datetime.now(timezone.utc)
@@ -41,19 +41,19 @@ class Translate(commands.Cog):
         icon_url=interaction.user.display_avatar.url
       )
       translate_embed.add_field(
-        name=await tm.translate_message(f"Translation",language),
+        name=await tm.translate_message(f"command.translate.name",language),
         value=await tm.translate_message(message.content,language,save=False),
         inline=True
       )
       translate_embed.set_footer(
-        text=await tm.translate_message(f"Translated to",language)+f' {language}',
+        text=await tm.translate_message(f"command.translate.result",language)+f' {language}',
         icon_url="https://imgur.com/mvlC8XC"
       )
       await interaction.followup.send(embed=translate_embed,ephemeral=True)
     except Exception as e:
       await interaction.followup.send(f"Error: {str(e)}", ephemeral=True)
 
-  setattr(translate,"extras",{"description": "Translate any message to your language from any language!"})
+  setattr(translate,"extras",{"description": "commands.translate.description"})
 
 def setup(bot: commands.Bot):
   bot.add_cog(Translate(bot))

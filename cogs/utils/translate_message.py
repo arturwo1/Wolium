@@ -1,61 +1,91 @@
 from asyncio import Lock, to_thread
+from threading import Lock as ThreadLock
 from nextcord import Colour
 from nextcord.ext import commands
 from deep_translator import GoogleTranslator
 from traceback import format_exception
 from json import load, dump, loads
 from os import replace, path, makedirs, listdir
-from time import time
+from time import time, sleep
 from google import genai
 from google.genai import types
-from Utils.config import gemini_api_keys, system_instruction, gemini_model, g_temperature, g_top_p, g_top_k
+from Utils.config import gemini_api_keys, system_instruction, gemini_models, g_temperature, g_top_p, g_top_k
 
 json_lock = Lock()
+stats_lock = ThreadLock()
 gemini_idx = 0
 gemini_cooldown = 0
+gemini_usage_stats = {}
 
 def get_gemini_model():
-  global gemini_idx, gemini_cooldown
-  if time() < gemini_cooldown:
-    return None
-    
-  client = genai.Client(api_key=gemini_api_keys[gemini_idx])
+  global gemini_idx, gemini_cooldown, gemini_usage_stats
+  with stats_lock:
+    current_time = time()
+    if current_time < gemini_cooldown:
+      return None, None, None
 
-  config = types.GenerateContentConfig(
-    system_instruction=system_instruction,
-    response_mime_type="application/json",
-    temperature=g_temperature,
-    top_p=g_top_p,
-    top_k=g_top_k,
-    safety_settings=[
-      types.SafetySetting(
-        category=types.HarmCategory.HARM_CATEGORY_HARASSMENT,
-        threshold=types.HarmBlockThreshold.BLOCK_NONE
-      ),
-      types.SafetySetting(
-        category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-        threshold=types.HarmBlockThreshold.BLOCK_NONE
-      ),
-      types.SafetySetting(
-        category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-        threshold=types.HarmBlockThreshold.BLOCK_NONE
-      ),
-      types.SafetySetting(
-        category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-        threshold=types.HarmBlockThreshold.BLOCK_NONE
-      )
-    ]
-  )
+    if not gemini_usage_stats:
+      for key in gemini_api_keys:
+        gemini_usage_stats[key] = {
+          m: {"rpm": 0, "rpd": 0, "last_reset": current_time} 
+          for m in gemini_models
+        }
 
-  return client, config
+    start_idx = gemini_idx
+    while True:
+      current_key = gemini_api_keys[gemini_idx]
+      key_stats = gemini_usage_stats[current_key]
+      
+      for model_name, limits in gemini_models.items():
+        stats = key_stats[model_name]
+        
+        if current_time - stats["last_reset"] >= 60:
+          stats["rpm"] = 0
+          stats["last_reset"] = current_time
+          
+        rpd_ok = limits["rpd"] == -1 or stats["rpd"] < limits["rpd"]
+        rpm_ok = limits["rpm"] == -1 or stats["rpm"] < limits["rpm"]
+        
+        if rpd_ok and rpm_ok:
+          stats["rpm"] += 1
+          stats["rpd"] += 1
+          
+          client = genai.Client(api_key=current_key)
+          config = types.GenerateContentConfig(
+            system_instruction=system_instruction,
+            response_mime_type="application/json",
+            temperature=g_temperature,
+            top_p=g_top_p,
+            top_k=g_top_k,
+            safety_settings=[
+              types.SafetySetting(category=types.HarmCategory.HARM_CATEGORY_HARASSMENT, threshold=types.HarmBlockThreshold.BLOCK_NONE),
+              types.SafetySetting(category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold=types.HarmBlockThreshold.BLOCK_NONE),
+              types.SafetySetting(category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold=types.HarmBlockThreshold.BLOCK_NONE),
+              types.SafetySetting(category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold=types.HarmBlockThreshold.BLOCK_NONE)
+            ]
+          )
+          return client, config, model_name
+      
+      gemini_idx += 1
+      if gemini_idx >= len(gemini_api_keys):
+        gemini_idx = 0
+      
+      if gemini_idx == start_idx:
+        gemini_cooldown = current_time + 60
+        print("[LOCALIZATION] All Gemini API keys exhausted. Cooldown 60 seconds.")
+        return None, None, None
 
 def switch_gemini_key():
   global gemini_idx, gemini_cooldown
-  gemini_idx += 1
-  if gemini_idx >= len(gemini_api_keys):
-    gemini_idx = 0
-    gemini_cooldown = time.time() + 60
-    print("[LOCALIZATION] All Gemini API keys exhausted. Cooldown 60 seconds.")
+  with stats_lock:
+    if time() < gemini_cooldown: 
+      return 
+
+    gemini_idx += 1
+    if gemini_idx >= len(gemini_api_keys):
+      gemini_idx = 0
+      gemini_cooldown = time() + 60
+      print("[LOCALIZATION] All Gemini API keys exhausted. Cooldown 60 seconds.")
 
 def parse_gemini_json(text: str) -> dict:
   text = text.strip()
@@ -67,26 +97,30 @@ def parse_gemini_json(text: str) -> dict:
 
 def _gemini_translate_sync(source_text: str, source_lang: str, target_lang: str) -> str:
   prompt = f'Translate "{source_text}" from {source_lang} to {target_lang}. Keep formatting and variables intact. Return ONLY a JSON object: {{"translation": "text"}}'
-  for _ in range(len(gemini_api_keys)):
-    client, config = get_gemini_model()
+  
+  max_attempts = len(gemini_api_keys) * len(gemini_models)
+  for _ in range(max_attempts):
+    client, config, selected_model = get_gemini_model()
     if not client:
-      raise Exception("Gemini on cooldown")
+      sleep(1)
+      continue
     
     try:
       response = client.models.generate_content(
-        model=gemini_model,
+        model=selected_model,
         contents=prompt,
         config=config
       )
       data = parse_gemini_json(response.text)
+      sleep(0.5)
       return data["translation"]
     except Exception as e:
       err = str(e).lower()
-      if "429" in err or "quota" in err or "exhausted" in err:
+      if "429" in err or "quota" in err or "exhausted" in err or "504" in err:
         switch_gemini_key()
       else:
         raise e
-  raise Exception("All Gemini keys failed")
+  raise Exception("All Gemini keys and models failed")
 
 def format_text(text: str, variables: dict | None) -> str:
   if not variables:
@@ -148,7 +182,7 @@ class TranslateMessage(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
 
-  async def tm(self, text: str, message_language: str | None = None, message_language_for_now: str | None = None, save: bool = True, variables: dict | None = None):
+  async def translate_message(self, text: str, message_language: str | None = None, message_language_for_now: str | None = None, save: bool = True, variables: dict | None = None):
     if not text: return "<None>"
     
     lang = message_language_for_now if message_language_for_now else message_language

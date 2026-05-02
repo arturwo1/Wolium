@@ -1,65 +1,87 @@
+import asyncio
+from functools import partial
 from string import ascii_letters, digits
+from time import time
+from datetime import datetime, timedelta, timezone
+from traceback import format_exception
+from random import choices
+from os import getenv, path, listdir
+from io import BytesIO
+from copy import deepcopy
 from nextcord.ext import commands
 from nextcord import File, IntegrationType, InteractionContextType, SlashOption, ButtonStyle, SelectOption, Interaction, slash_command, User, Embed, Color
 from nextcord.ui import View, Button, Select, Modal, TextInput
 from nextcord.errors import InteractionResponded
 from nextcord.utils import find
-from time import time
-from datetime import datetime, timedelta, timezone
-from traceback import format_exception
+from PIL import Image, ImageDraw, ImageFont, ImageOps, ImageChops
+from aiohttp import ClientSession
+from babel.dates import format_datetime
 import Utils.translate_to_all_languages
 from Utils.config import slash_command_cooldown
 from Utils.suffics import suffics
-from random import choices
-from PIL import Image, ImageDraw, ImageFont, ImageOps, ImageChops
-from os import getenv, path, listdir
-from concurrent.futures import ThreadPoolExecutor
-from io import BytesIO
-from aiohttp import ClientSession
-from copy import deepcopy
-from babel.dates import format_datetime
 from Utils.calculate_LvL import calculate_LvL
-from cogs.utils import get_invite
 
 translate_to_all_languages = Utils.translate_to_all_languages.translate_to_all_languages
-executor = ThreadPoolExecutor()
 
-class создать_дату_модал(Modal):
-  def __init__(self, bot:commands.Bot):
+def _get_locale(locale: str) -> str:
+  if locale in ('en-US', 'en-GB'):
+    return 'en'
+  if locale == 'es-ES':
+    return 'es'
+  if locale == 'sv-SE':
+    return 'sv'
+  return locale
+
+class CreateDateModal(Modal):
+  def __init__(self, bot: commands.Bot):
     self.bot = bot
-    super().__init__(title=translate_to_all_languages("ID Вашего Телеграм Аккаунта", 'message', 'en'))
+    super().__init__(
+      title=translate_to_all_languages("profile.telegram_modal_title", 'message', 'en')
+    )
     self.user_telegram_id = TextInput(
-      label=translate_to_all_languages("Телеграм ID:", 'message', 'en'),
+      label=translate_to_all_languages("profile.telegram_id_label", 'message', 'en'),
       min_length=2,
       max_length=int(str(datetime.now().year)[2:]),
       required=True,
-      placeholder=translate_to_all_languages("Введите Здесь Ваш Телеграм ID.", 'message', 'en'))
-    
+      placeholder=translate_to_all_languages("profile.enter_telegram_id", 'message', 'en'),
+    )
     self.add_item(self.user_telegram_id)
-      
+
   async def callback(self, interaction: Interaction):
-    translate_message = self.bot.get_cog("TranslateMessage")
-    get_data = self.bot.get_cog("GetData")
+    tm = self.bot.get_cog("TranslateMessage")
+    gd = self.bot.get_cog("GetData")
+    lang = _get_locale(interaction.locale)
 
-    user_telegram_id = self.user_telegram_id.value
-    if user_telegram_id==0:
-      return await interaction.send(await translate_message.translate_message(f"Телеграм ID:",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv')+f" **`{user_telegram_id}`** "+await translate_message.translate_message(f"Не Правильный!", interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv'),ephemeral=True)
-    user_settings = await get_data.get_data(self.user_telegram_id.value,['language'],'users','user_id',interaction.guild)
+    tid = self.user_telegram_id.value
+    if tid == 0:
+      return await interaction.send(
+        await tm.translate_message("profile.invalid_telegram_id", lang, variables={"id": tid}),ephemeral=True)
+
+    user_settings = await gd.get_data(tid, ['language'], 'users', 'user_id', interaction.guild)
     language = user_settings['language']
-    if hasattr(self.bot, 'db_pool') and self.bot.db_pool:
-      async with self.bot.db_pool.acquire() as conn:
-        try:
-          await conn.execute(
-            "UPDATE users SET discord_id = $1 WHERE telegram_id = $2",
-            interaction.user.id, self.user_telegram_id.value
-          )
-        except Exception:
-          return await interaction.send(await translate_message.translate_message(f"Телеграм ID:",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv')+f" **`{user_telegram_id}`** "+await translate_message.translate_message(f"Не Правильный!", interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv'),ephemeral=True)
-        return await interaction.send(translate_to_all_languages(f"Теперь Вы Можете Спокойно Использовать Бота Одновременно В Телеграм И Дискорд Одновременно!\nА Также У Вас Теперь Есть Значок Дискорда В Профиле Бота. :D\nВам Нужно Ввести Команду Заново.", 'message', language),ephemeral=True)
-    return await interaction.send('PostgreSQL not loaded in profile', ephemeral=True)
 
-class привязать_телеграм(View):
-  def __init__(self, user_id:int, language:str, update_callback, voted:bool, bot:commands.Bot, timeout=60*5):
+    if not (hasattr(self.bot, 'db_pool') and self.bot.db_pool):
+      return await interaction.send('PostgreSQL not loaded in profile', ephemeral=True)
+
+    async with self.bot.db_pool.acquire() as conn:
+      try:
+        await conn.execute("UPDATE users SET discord_id = $1 WHERE telegram_id = $2",interaction.user.id, tid)
+      except Exception:
+        return await interaction.send(
+          await tm.translate_message("profile.invalid_telegram_id", lang, variables={"id": tid}), ephemeral=True)
+
+    return await interaction.send(await tm.translate_message("profile.telegram_linked_success", language), ephemeral=True)
+
+class ProfileView(View):
+  def __init__(
+    self,
+    user_id: int,
+    language: str,
+    update_callback,
+    voted: bool,
+    bot: commands.Bot,
+    timeout: int = 60 * 5,
+  ):
     super().__init__(timeout=timeout)
     self.language = language
     self.user_id = user_id
@@ -67,754 +89,689 @@ class привязать_телеграм(View):
     self.bot = bot
     self.voted = voted
 
-    if not self.voted:
-      vote = Button(
-        row=1,
-        label=translate_to_all_languages("Голосовать Для +50% Зарплаты", 'message', self.language),
-        style=ButtonStyle.url,
-        url="https://top.gg/bot/1051105900116574250/vote"
-      )
-      self.add_item(vote)
-    
-    custom_button = Button(
-      row=1,
-      label=translate_to_all_languages("Привязать Телеграм Аккаунт", 'message', language),
-      style=ButtonStyle.primary,
-      custom_id=''.join(choices(ascii_letters + digits, k=100))
-    )
-    custom_button.callback = self.custom_button_callback
-    self.add_item(custom_button)
-
     options = [
-      {
-        "label": '🔵'+translate_to_all_languages("Дискорд", 'message', language),
-        "value": "discord",
-        "description": translate_to_all_languages("Показывает Твою Информацию В Дискорде.", 'message', language)
-      },
-      {
-        "label": '📘'+translate_to_all_languages("Сервер", 'message', language),
-        "value": "server",
-        "description": translate_to_all_languages("Показывает Твою Информацию На Сервере.", 'message', language)
-      },
-      {
-        "label": '💹'+translate_to_all_languages("Экономика", 'message', language),
-        "value": "economy",
-        "description": translate_to_all_languages("Показывает Твою Экономическую Информацию.", 'message', language)
-      },
-      {
-        "label": '🚨'+translate_to_all_languages("Нарушения", 'message', language),
-        "value": "moderation",
-        "description": translate_to_all_languages("Показывает Твои Нарушения.", 'message', language)
-      },
-      {
-        "label": '🔄'+translate_to_all_languages("Перезарядки", 'message', language),
-        "value": "cooldowns",
-        "description": str(translate_to_all_languages("Показывает Когда Ты Сможешь Использовать Снова Команду У Которой Длинная Перезарядка.", 'message', language))[:100]
-      },
-      {
-        "label": '🛒'+translate_to_all_languages("Другое", 'message', language),
-        "value": "other",
-        "description": translate_to_all_languages("Другое.", 'message', language)
-      },
+      SelectOption(
+        label='🔵 ' + translate_to_all_languages("profile.section_discord", 'message', language),
+        description=translate_to_all_languages("profile.section_discord_desc", 'message', language),
+        value="discord",
+      ),
+      SelectOption(
+        label='📘 ' + translate_to_all_languages("profile.section_server", 'message', language),
+        description=translate_to_all_languages("profile.section_server_desc", 'message', language),
+        value="server",
+      ),
+      SelectOption(
+        label='💹 ' + translate_to_all_languages("profile.section_economy", 'message', language),
+        description=translate_to_all_languages("profile.section_economy_desc", 'message', language),
+        value="economy",
+      ),
+      SelectOption(
+        label='🚨 ' + translate_to_all_languages("profile.section_moderation", 'message', language),
+        description=translate_to_all_languages("profile.section_moderation_desc", 'message', language),
+        value="moderation",
+      ),
+      SelectOption(
+        label='🔄 ' + translate_to_all_languages("profile.section_cooldowns", 'message', language),
+        description=str(translate_to_all_languages("profile.section_cooldowns_desc", 'message', language))[:100], value="cooldowns"),
+      SelectOption(
+        label='🛒 ' + translate_to_all_languages("profile.section_other", 'message', language),
+        description=translate_to_all_languages("profile.section_other_desc", 'message', language),
+        value="other",
+      )
     ]
-
     select_menu = Select(
       row=0,
-      placeholder='❓'+translate_to_all_languages("Выберите:", 'message', language),
-      options=[
-        SelectOption(label=opt['label'], description=opt.get('description', ''), value=opt['value'])
-        for opt in options
-      ]
+      placeholder='❓ ' + translate_to_all_languages("profile.choose_section", 'message', language),
+      options=options,
     )
     select_menu.callback = self.select_callback
     self.add_item(select_menu)
 
-  async def select_callback(self, interaction: Interaction):
-    if interaction.user.id!=self.user_id:
-      return
-    if interaction.response.is_done():
-      return
-    await interaction.response.defer()
-    selected_value = interaction.data['values'][0]
-    await self.update_callback(selected_value)
-    
-  async def custom_button_callback(self, interaction: Interaction):
-    translate_message = self.bot.get_cog("TranslateMessage")
+    if not self.voted:
+      self.add_item(Button(
+        row=1,
+        label=translate_to_all_languages("economy.vote_for_salary_boost", 'message', language),
+        style=ButtonStyle.url,
+        url="https://top.gg/bot/1051105900116574250/vote"
+      ))
 
-    if interaction.user.id!=self.user_id:
+    tg_btn = Button(
+      row=1,
+      label=translate_to_all_languages("profile.link_telegram_button", 'message', language),
+      style=ButtonStyle.primary,
+      custom_id=''.join(choices(ascii_letters + digits, k=100))
+    )
+    tg_btn.callback = self.telegram_button_callback
+    self.add_item(tg_btn)
+
+    leaders_btn = Button(
+      row=1,
+      label='🏆 ' + translate_to_all_languages("economy.leaders_name", 'message', language),
+      style=ButtonStyle.secondary,
+      custom_id='leaders_' + ''.join(choices(ascii_letters + digits, k=20))
+    )
+    leaders_btn.callback = self.leaders_button_callback
+    self.add_item(leaders_btn)
+
+  async def select_callback(self, interaction: Interaction):
+    if interaction.user.id != self.user_id:
       return
     if interaction.response.is_done():
       return
     await interaction.response.defer()
-    await interaction.followup.send(await translate_message.translate_message(f"Пока Эта Функция Недоступна.", self.language), ephemeral=True)
+    await self.update_callback(interaction.data['values'][0])
+
+  async def telegram_button_callback(self, interaction: Interaction):
+    tm = self.bot.get_cog("TranslateMessage")
+    if interaction.user.id != self.user_id:
+      return
+    if interaction.response.is_done():
+      return
+    await interaction.response.defer()
+    await interaction.followup.send(await tm.translate_message("profile.feature_unavailable", self.language), ephemeral=True)
     self.stop()
 
+  async def leaders_button_callback(self, interaction: Interaction):
+    if interaction.response.is_done():
+      return
+    await interaction.response.defer()
+    tm = self.bot.get_cog("TranslateMessage")
+    await interaction.followup.send(
+      await tm.translate_message("profile.use_leaders_command", self.language), ephemeral=True)
 
 class Profile(commands.Cog):
   def __init__(self, bot):
     self.bot: commands.Bot = bot
 
-  def draw_xp_bar(self, draw: ImageDraw, current_xp: int, need_xp: int, total_xp: int, LvL: int, pos: tuple[int, int], size: tuple[int, int], font: ImageFont, upscale: float = 1.0):
-    x, y = pos[0], pos[1]
-    width, height = size[0], size[1]
-    bar_bg = (41, 48, 54)
-    bar_fill = (83, 198, 226)
-    text_color = (128, 224, 245)
-
-    draw.rounded_rectangle([x, y, x + width, y + height], radius=8 * upscale, fill=bar_bg)
-    progress = min((current_xp / need_xp) if need_xp > 0 else 0, 1.0)
-    fill_width = int(width * progress)
-    draw.rounded_rectangle([x, y, x + fill_width, y + height], radius=8 * upscale, fill=bar_fill)
-
-    xp_text = f"{current_xp}/{need_xp} ({total_xp}) XP"
-    xp_bbox = draw.textbbox((0, 0), xp_text, font=font)
-    xp_text_x = x + width - xp_bbox[2]
-    xp_text_y = y + height - xp_bbox[1] + 5 * upscale
-    draw.text((xp_text_x, xp_text_y), xp_text, fill=text_color, font=font, stroke_width=0.4 * upscale)
-
-    lvl_text = f"{LvL} LvL"
-    lvl_bbox = draw.textbbox((0, 0), lvl_text, font=font)
-    lvl_text_x = x + width - lvl_bbox[2]
-    lvl_text_y = y - height + lvl_bbox[1] - 15 * upscale
-    draw.text((lvl_text_x, lvl_text_y), lvl_text, fill=text_color, font=font, stroke_width=0.4)
-
-  def mask_circle(self,im:Image, size:tuple[int,int]):
+  def _mask_circle(self, im: Image.Image, size: tuple[int, int]) -> Image.Image:
     if im.mode != "RGBA":
       im = im.convert("RGBA")
-
-    # Маска круга
     mask = Image.new("L", size, 0)
-    draw = ImageDraw.Draw(mask)
-    draw.ellipse((0, 0, size[0], size[1]), fill=255)
-
-    # Обрезаем изображение
+    ImageDraw.Draw(mask).ellipse((0, 0, size[0], size[1]), fill=255)
     im = ImageOps.fit(im, size, method=Image.Resampling.LANCZOS, centering=(0.5, 0.5))
-    
-    # Объединяем альфа-канал изображения и круглую маску
     r, g, b, a = im.split()
-    a = ImageChops.multiply(a, mask)
-    im.putalpha(a)
-
+    im.putalpha(ImageChops.multiply(a, mask))
     return im
 
-  async def _draw_user_profile(
+  def _draw_xp_bar(
+    self,
+    draw: ImageDraw.ImageDraw,
+    current_xp: int,
+    need_xp: int,
+    total_xp: int,
+    lvl: int,
+    pos: tuple[int, int],
+    size: tuple[int, int],
+    font: ImageFont.FreeTypeFont,
+    upscale: float = 1.0,
+  ) -> None:
+    x, y = pos
+    w, h = size
+    draw.rounded_rectangle([x, y, x + w, y + h], radius=int(8 * upscale), fill=(41, 48, 54))
+    progress = min((current_xp / need_xp) if need_xp > 0 else 0, 1.0)
+    fill_w = int(w * progress)
+    if fill_w > 0:
+      draw.rounded_rectangle([x, y, x + fill_w, y + h], radius=int(8 * upscale), fill=(83, 198, 226))
+
+    text_color = (128, 224, 245)
+    xp_text = f"{current_xp}/{need_xp} ({total_xp}) XP"
+    xp_bb = draw.textbbox((0, 0), xp_text, font=font)
+    draw.text((x + w - (xp_bb[2] - xp_bb[0]), y + h - xp_bb[1] + int(5 * upscale)), xp_text, fill=text_color, font=font, stroke_width=int(0.4 * upscale))
+    lvl_text = f"{lvl} LvL"
+    lvl_bb = draw.textbbox((0, 0), lvl_text, font=font)
+    draw.text((x + w - (lvl_bb[2] - lvl_bb[0]), y - h + lvl_bb[1] - int(15 * upscale)), lvl_text, fill=text_color, font=font, stroke_width=int(0.4 * upscale))
+
+  def _draw_profile_sync(
     self,
     type_: str,
     real_username: str,
     status: str,
-    language: str,
-    bot: commands.Bot,
     username: str,
     display_name: str,
-    avatar: Image,
-    badges: list[dict[str, bool]],
+    avatar: Image.Image,
+    badges: list,
     member_in_guild: bool,
     voted: bool,
-    **kwargs
-  ):
-    translate_message = self.bot.get_cog("TranslateMessage")
-    
+    strings: dict,
+    rank: int | None,
+    total_users: int | None,
+    **kwargs,
+  ) -> Image.Image:
     upscale = 2.0
     xp = kwargs.get("xp", 0)
     LvL, XP_need, XP_now = calculate_LvL(xp)
 
-    if type_ in ['discord', 'server']:
-      width, height = int(380 * upscale), int(290 * upscale)
+    if type_ in ('discord', 'server'):
+      width, height = int(380 * upscale), int(300 * upscale)
     elif type_ == 'economy':
       width, height = int(380 * upscale), int(380 * upscale)
     elif type_ == 'moderation':
       height = int(185 * upscale)
-      violation: dict[str, list[str | int]] = kwargs.get('violation', None)
-      if violation:
-        for v_name, v_value in violation.items():
-          if v_name in ['ban','mute']:
-            if isinstance(v_value, list):
-              for _ in v_value:
-                height += int(115 * upscale)
-          else:
-            if isinstance(v_value, list):
-              for _ in v_value:
-                height += int(90 * upscale)
-          height += int(40 * upscale)
+      violation = kwargs.get('violation') or {}
+      for v_name, v_list in violation.items():
+        for _ in (v_list or []):
+          height += int(115 * upscale) if v_name in ('ban', 'mute') else int(90 * upscale)
+        height += int(40 * upscale)
       width, height = int(380 * upscale), min(int(4000 * upscale), height)
-    elif type_=='cooldowns':
+    elif type_ == 'cooldowns':
       height = int(185 * upscale)
-      cooldowns:dict[str,dict[str,str]]=kwargs.get('cooldowns',None)
-      if cooldowns:
-        for _ in cooldowns:
-          height+=int(105*upscale)
-      width, height = int(380*upscale), height
+      cooldowns = kwargs.get('cooldowns') or {}
+      height += int(105 * upscale) * len(cooldowns)
+      width, height = int(380 * upscale), height
     else:
-      width, height = int(380 * upscale), int(290 * upscale)
+      width, height = int(380 * upscale), int(300 * upscale)
+
     bg_color = (35, 39, 42)
     text_color = (128, 224, 245)
+    muted_color = (173, 176, 179)
 
     img = Image.new("RGBA", (width, height), (0, 0, 0, 0))
     rounded_bg = Image.new("RGBA", (width, height), bg_color)
-    mask = Image.new("L", (width, height), 0)
-    draw_mask = ImageDraw.Draw(mask)
-    draw_mask.rounded_rectangle([0, 0, width, height], radius=int(20 * upscale), fill=255)
-    img.paste(rounded_bg, (0, 0), mask)
+    mask_bg = Image.new("L", (width, height), 0)
+    ImageDraw.Draw(mask_bg).rounded_rectangle([0, 0, width, height], radius=int(20 * upscale), fill=255)
+    img.paste(rounded_bg, (0, 0), mask_bg)
     draw = ImageDraw.Draw(img)
 
     font_path = "NotoSans-Regular.ttf" if path.exists("NotoSans-Regular.ttf") else None
     font_large = ImageFont.truetype(font_path, int(24 * upscale)) if font_path else ImageFont.load_default()
     font_small = ImageFont.truetype(font_path, int(16 * upscale)) if font_path else ImageFont.load_default()
-    font_verysmall = ImageFont.truetype(font_path, int(10 * upscale)) if font_path else ImageFont.load_default()
+    font_tiny  = ImageFont.truetype(font_path, int(10 * upscale)) if font_path else ImageFont.load_default()
 
-    avatar_size = int(96 * upscale)
-    avatar = self.mask_circle(avatar, (avatar_size, avatar_size))
+    av_size = int(96 * upscale)
+    avatar = self._mask_circle(avatar, (av_size, av_size))
     img.paste(avatar, (int(20 * upscale), int(20 * upscale)), avatar)
 
     badge_size = int(32 * upscale)
+    status_ico = (Image.open(path.join('images', f'{status}.png')).resize((badge_size, badge_size), resample=Image.Resampling.LANCZOS).convert("RGBA"))
+    img.paste(status_ico, (av_size - badge_size + int(20 * upscale), av_size - badge_size + int(20 * upscale)), status_ico)
 
-    status_ico = Image.open(path.join('images', f'{status}.png')).resize((badge_size, badge_size), resample=Image.Resampling.LANCZOS).convert("RGBA")
-    img.paste(status_ico, (avatar_size-badge_size+int(20 * upscale), avatar_size-badge_size+int(20 * upscale)), status_ico)
+    draw.text((int(130 * upscale), int(25 * upscale)), display_name, font=font_large, fill=text_color, stroke_width=int(0.4 * upscale))
+    draw.text((int(130 * upscale), int(55 * upscale)), f"@{username}", font=font_small, fill=muted_color, stroke_width=int(0.4 * upscale))
 
-    draw.text((int(130 * upscale), int(25 * upscale)), display_name, font=font_large, fill=text_color, stroke_width=0.4 * upscale)
-    draw.text((int(130 * upscale), int(55 * upscale)), f"@{username}", font=font_small, fill=(173, 176, 179), stroke_width=0.4 * upscale)
+    if rank is not None:
+      rank_str = f"#{rank}"
+      rank_bb = draw.textbbox((0, 0), rank_str, font=font_large)
+      rank_w = rank_bb[2] - rank_bb[0]
+      draw.text((width - int(20 * upscale) - rank_w, int(25 * upscale)), rank_str, font=font_large, fill=text_color, stroke_width=int(0.4 * upscale))
+      if total_users and total_users > 0:
+        pct = rank / total_users * 100
+        pct_str = strings.get('top_label', 'Top') + f" {max(pct, 0.1):.1f}%"
+        pct_bb = draw.textbbox((0, 0), pct_str, font=font_small)
+        draw.text((width - int(20 * upscale) - (pct_bb[2] - pct_bb[0]), int(55 * upscale)), pct_str, font=font_small, fill=muted_color, stroke_width=int(0.4 * upscale))
 
-    self.draw_xp_bar(draw, XP_now, XP_need, xp, LvL, (int(130 * upscale), int(90 * upscale)), (int(230 * upscale), int(10 * upscale)), font_small, upscale)
+    self._draw_xp_bar(draw, XP_now, XP_need, xp, LvL, (int(130 * upscale), int(90 * upscale)), (int(210 * upscale), int(10 * upscale)), font_small, upscale)
 
     badge_y = int(125 * upscale)
     badge_x = int(25 * upscale)
+    position = 0
     if path.exists('badges'):
-      position = 0
       for badge_file in listdir('badges')[:8]:
         if badge_file.endswith((".png", ".gif")) and badge_file[:-4] in badges:
-          badge_path = path.join('badges', badge_file)
-          badge = Image.open(badge_path).resize((badge_size, badge_size), resample=Image.Resampling.LANCZOS).convert("RGBA")
-          img.paste(badge, (badge_x + position * (badge_size + int(5 * upscale)), badge_y), badge)
+          badge_img = (Image.open(path.join('badges', badge_file)).resize((badge_size, badge_size), resample=Image.Resampling.LANCZOS).convert("RGBA"))
+          img.paste(badge_img, (badge_x + position * (badge_size + int(5 * upscale)), badge_y), badge_img)
           position += 1
     if member_in_guild and position <= 9:
-      badge = Image.open(path.join('images', 'guild.png')).resize((badge_size, badge_size), resample=Image.Resampling.LANCZOS).convert("RGBA")
-      img.paste(badge, (badge_x + position * (badge_size + int(5 * upscale)), badge_y), badge)
+      b = (Image.open(path.join('images', 'guild.png')).resize((badge_size, badge_size), resample=Image.Resampling.LANCZOS).convert("RGBA"))
+      img.paste(b, (badge_x + position * (badge_size + int(5 * upscale)), badge_y), b)
       position += 1
     if voted and position <= 9:
-      badge = Image.open(path.join('badges', 'voted.png')).resize((badge_size, badge_size), resample=Image.Resampling.LANCZOS).convert("RGBA")
-      img.paste(badge, (badge_x + position * (badge_size + int(5 * upscale)), badge_y), badge)
+      b = (Image.open(path.join('badges', 'voted.png')).resize((badge_size, badge_size), resample=Image.Resampling.LANCZOS).convert("RGBA"))
+      img.paste(b, (badge_x + position * (badge_size + int(5 * upscale)), badge_y), b)
       position += 1
 
-    draw.line((int(20 * upscale), int(160 * upscale), int(360 * upscale), int(160 * upscale)), fill=(43, 49, 55), width=int(3 * upscale))
+    draw.line((int(20 * upscale), int(163 * upscale), int(360 * upscale), int(163 * upscale)),fill=(43, 49, 55), width=int(3 * upscale))
 
-    if type_ in ['discord', 'server']:
-      badge1 = Image.open(path.join('images', 'messages.png')).resize((int(24 * upscale), int(32 * upscale)), resample=Image.Resampling.LANCZOS).convert("RGBA")
-      badge2 = Image.open(path.join('images', 'voice.png')).resize((int(24 * upscale), int(32 * upscale)), resample=Image.Resampling.LANCZOS).convert("RGBA")
-      badge3 = Image.open(path.join('images', 'calendar.png')).resize((int(24 * upscale), int(32 * upscale)), resample=Image.Resampling.LANCZOS).convert("RGBA")
+    def paste_icon(name: str, w_px: int, h_px: int, y_px: int):
+      ico = (Image.open(path.join('images', f'{name}.png')).resize((int(w_px * upscale), int(h_px * upscale)), resample=Image.Resampling.LANCZOS).convert("RGBA"))
+      img.paste(ico, (int(24 * upscale), int(y_px * upscale)), ico)
 
-      img.paste(badge1, (int(24 * upscale), int(170 * upscale)), badge1)
-      img.paste(badge2, (int(24 * upscale), int(200 * upscale)), badge2)
-      img.paste(badge3, (int(24 * upscale), int(230 * upscale)), badge3)
+    if type_ in ('discord', 'server'):
+      paste_icon('messages', 24, 32, 172)
+      paste_icon('voice',    24, 32, 202)
+      paste_icon('calendar', 24, 32, 232)
 
-      draw.text((int(50 * upscale), int(175 * upscale)), await translate_message.translate_message("Сообщения:", language) + f" {kwargs.get('messages', 0)}", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
-      draw.text((int(50 * upscale), int(205 * upscale)), await translate_message.translate_message("Время В Голосовом Канале:", language) + f" {kwargs.get('voice', 0)}.", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
-      draw.text((int(50 * upscale), int(235 * upscale)), await translate_message.translate_message("Дата Регистрации:", language) + f" {kwargs.get('reg_data', 0)}.", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
+      draw.text((int(54 * upscale), int(177 * upscale)), strings['messages_label'] + f" {kwargs.get('messages', 0)}", font=font_small, fill=text_color, stroke_width=int(0.4 * upscale))
+      draw.text((int(54 * upscale), int(207 * upscale)), strings['voice_label'] + f" {kwargs.get('voice', '0d 0h 0m')}", font=font_small, fill=text_color, stroke_width=int(0.4 * upscale))
+      draw.text((int(54 * upscale), int(237 * upscale)), strings['reg_label'] + f" {kwargs.get('reg_data', '—')}", font=font_small, fill=text_color, stroke_width=int(0.4 * upscale))
+
     elif type_ == 'economy':
-      badge1 = Image.open(path.join('images', 'economy.png')).resize((int(24 * upscale), int(24 * upscale)), resample=Image.Resampling.LANCZOS).convert("RGBA")
-      badge2 = Image.open(path.join('images', 'bank_balance.png')).resize((int(24 * upscale), int(24 * upscale)), resample=Image.Resampling.LANCZOS).convert("RGBA")
-      badge3 = Image.open(path.join('images', 'balance.png')).resize((int(24 * upscale), int(24 * upscale)), resample=Image.Resampling.LANCZOS).convert("RGBA")
-      badge4 = Image.open(path.join('images', 'upgrade.png')).resize((int(24 * upscale), int(24 * upscale)), resample=Image.Resampling.LANCZOS).convert("RGBA")
-      badge5 = Image.open(path.join('images', 'x2workamount.png')).resize((int(24 * upscale), int(24 * upscale)), resample=Image.Resampling.LANCZOS).convert("RGBA")
-      badge6 = Image.open(path.join('images', 'x2buyamount.png')).resize((int(24 * upscale), int(24 * upscale)), resample=Image.Resampling.LANCZOS).convert("RGBA")
+      icons = ['economy','bank_balance','balance','upgrade','x2workamount','x2buyamount']
+      ys = [170, 200, 230, 260, 290, 320]
+      for ico_name, y_px in zip(icons, ys):
+        paste_icon(ico_name, 24, 24, y_px)
 
-      img.paste(badge1, (int(24 * upscale), int(170 * upscale)), badge1)
-      img.paste(badge2, (int(24 * upscale), int(200 * upscale)), badge2)
-      img.paste(badge3, (int(24 * upscale), int(230 * upscale)), badge3)
-      img.paste(badge4, (int(24 * upscale), int(260 * upscale)), badge4)
-      img.paste(badge5, (int(24 * upscale), int(290 * upscale)), badge5)
-      img.paste(badge6, (int(24 * upscale), int(320 * upscale)), badge6)
+      rows = [
+        (strings['total_label'], f" €{kwargs.get('total_balance', 0)}"),
+        (strings['bank_label'], f" €{kwargs.get('bank_balance', 0)}"),
+        (strings['balance_label'], f" €{kwargs.get('balance', 0)}"),
+        (strings['upgrade_label'], f" {kwargs.get('upgrade', 0)}"),
+        (strings['x2work_label'], f" {kwargs.get('x2workamount', 0)}"),
+        (strings['x2buy_label'], f" {kwargs.get('x2buyamount', 0)}"),
+      ]
+      for (label, value), y_px in zip(rows, ys):
+        draw.text((int(54 * upscale), int((y_px + 5) * upscale)), label + value, font=font_small, fill=text_color, stroke_width=int(0.4 * upscale))
 
-      draw.text((int(50 * upscale), int(175 * upscale)), await translate_message.translate_message("Всего Денег:", language) + f" €{kwargs.get('total_balance', 0)}", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
-      draw.text((int(50 * upscale), int(205 * upscale)), await translate_message.translate_message("В Банке Денег:", language) + f" €{kwargs.get('bank_balance', 0)}", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
-      draw.text((int(50 * upscale), int(235 * upscale)), await translate_message.translate_message("В Руках Денег:", language) + f" €{kwargs.get('balance', 0)}", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
-      draw.text((int(50 * upscale), int(265 * upscale)), await translate_message.translate_message("Улучшение:", language) + f" {kwargs.get('upgrade', 0)}", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
-      draw.text((int(50 * upscale), int(295 * upscale)), await translate_message.translate_message("x2 Заработок Количество:", language) + f" {kwargs.get('x2workamount', 0)}", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
-      draw.text((int(50 * upscale), int(325 * upscale)), await translate_message.translate_message("х2 Покупок Количество:", language) + f" {kwargs.get('x2buyamount', 0)}", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
     elif type_ == 'moderation':
-      str_reason = await translate_message.translate_message(f"Причина", language)
-      str_mod = await translate_message.translate_message(f"Модератор", language)
-      str_data = await translate_message.translate_message(f"Дата", language)
-      str_time = await translate_message.translate_message(f"Длительность", language)
-      if violation:
-        text_height = int(165 * upscale)
+      violation = kwargs.get('violation') or {}
+      text_h = int(168 * upscale)
+      type_order = ['warn','mute','kick','ban','unwarn','unmute','unban']
+      violation_sorted = {k: violation[k] for k in type_order if k in violation}
+      violation_sorted.update({k: v for k, v in violation.items() if k not in type_order})
 
-        type_titles = {
-          "warn": "Предупреждения",
-          "mute": "Тайм-Ауты",
-          "kick": "Изгнания",
-          "ban": "Баны",
-          "unwarn": "Снятие Предупреждений",
-          "unmute": "Снятие Тайм-Аутов",
-          "unban": "Снятие Банов"
-        }
-        extra_fields = {
-          "ban": ["duration"],
-          "mute": ["duration"]
-        }
-        for v_name, v_list in violation.items():
+      if violation_sorted:
+        for v_name, v_list in violation_sorted.items():
           if not v_list:
             continue
-
-          # Заголовок
-          translated_title = await translate_message.translate_message(type_titles.get(v_name, v_name), language)
-          text_bbox = draw.textbbox((0, 0), translated_title, font=font_large)
-          text_width = text_bbox[2] - text_bbox[0]
-          center_x = (width - text_width) // 2
-          draw.text((center_x, text_height), translated_title, font=font_large, fill=text_color, stroke_width=0.6 * upscale)
-          text_height += int(40 * upscale)
+          title = strings.get(f'vtype_{v_name}', v_name)
+          tb = draw.textbbox((0, 0), title, font=font_large)
+          draw.text(((width - (tb[2] - tb[0])) // 2, text_h), title, font=font_large, fill=text_color, stroke_width=int(0.6 * upscale))
+          text_h += int(40 * upscale)
 
           for entry in v_list:
-            # Основная информация
-            draw.text((int(24 * upscale), text_height), f"{str_reason}: {entry.get('reason', '-')}", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
-            text_height += int(25 * upscale)
-
-            draw.text((int(24 * upscale), text_height), f"{str_mod}: {entry.get('mod', '-')}", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
-            text_height += int(25 * upscale)
-
-            draw.text((int(24 * upscale), text_height), f"{str_data}: {entry.get('timestamp', '-')}", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
-            text_height += int(25 * upscale)
-
-            # доп поля
-            for extra in extra_fields.get(v_name, []):
-              draw.text((int(24 * upscale), text_height), f"{str_time}: {entry.get(extra, '-')}", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
-              text_height += int(25 * upscale)
-
-            text_height += int(15 * upscale)
+            lines = [
+              (strings['reason_label'], entry.get('reason', '—')),
+              (strings['mod_label'],    entry.get('mod', '—')),
+              (strings['date_label'],   entry.get('timestamp', '—')),
+            ]
+            if v_name in ('ban', 'mute'):
+              lines.append((strings['duration_label'], str(entry.get('duration', '—'))))
+            for label, val in lines:
+              draw.text((int(24 * upscale), text_h), f"{label}: {val}", font=font_small, fill=text_color, stroke_width=int(0.4 * upscale))
+              text_h += int(25 * upscale)
+            text_h += int(15 * upscale)
       else:
-        text = await translate_message.translate_message("Нет Данных", language)
-        text_bbox = draw.textbbox((0, 0), text, font=font_large)
-        text_width = text_bbox[2] - text_bbox[0]
-        center_x = (width - text_width) // 2
-        draw.text((center_x, int(165 * upscale)), text, font=font_large, fill=text_color, stroke_width=0.6 * upscale)
-    elif type_=='cooldowns':
-      text_height = int(165 * upscale)
-      str_in = await translate_message.translate_message(f"Через", language)
-      str_used = await translate_message.translate_message(f"Использовал", language)
-      for cd_name, cd_value in cooldowns.items():
-        str_cd_name = await translate_message.translate_message(cd_name, language)
-        _in = cd_value.get('in',await translate_message.translate_message("Сейчас!", language))
-        used = cd_value.get('used',await translate_message.translate_message("Никогда!", language))
+        no_data = strings.get('no_data', 'No Data')
+        tb = draw.textbbox((0, 0), no_data, font=font_large)
+        draw.text(((width - (tb[2] - tb[0])) // 2, int(168 * upscale)), no_data, font=font_large, fill=text_color, stroke_width=int(0.6 * upscale))
 
-        text_bbox = draw.textbbox((0, 0), str_cd_name, font=font_large)
-        text_width = text_bbox[2] - text_bbox[0]
-        center_x = (width - text_width) // 2
-        draw.text((center_x, text_height), str_cd_name, font=font_large, fill=text_color, stroke_width=0.6 * upscale)
-        text_height += int(40 * upscale)
+    elif type_ == 'cooldowns':
+      cooldowns = kwargs.get('cooldowns') or {}
+      text_h = int(168 * upscale)
+      for cd_name, cd_val in cooldowns.items():
+        tb = draw.textbbox((0, 0), cd_name, font=font_large)
+        draw.text(((width - (tb[2] - tb[0])) // 2, text_h), cd_name, font=font_large, fill=text_color, stroke_width=int(0.6 * upscale))
+        text_h += int(40 * upscale)
 
-        draw.text((int(24 * upscale), text_height), f"{str_used} {used}.", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
-        text_height += int(25 * upscale)
+        _in = cd_val.get('in', strings.get('now', 'Now!'))
+        _used = cd_val.get('used', strings.get('never', 'Never!'))
+        draw.text((int(24 * upscale), text_h), strings['used_label'] + f" {_used}.", font=font_small, fill=text_color, stroke_width=int(0.4 * upscale))
+        text_h += int(25 * upscale)
+        draw.text((int(24 * upscale), text_h), strings['in_label'] + f": {_in if _in != '0:00:00' else strings.get('now', 'Now!')}",font=font_small, fill=text_color, stroke_width=int(0.4 * upscale))
+        text_h += int(40 * upscale)
 
-        draw.text((int(24 * upscale), text_height), f"{str_in}: {_in if _in!="0:00:00" else await translate_message.translate_message("Сейчас!", language)}", font=font_small, fill=text_color, stroke_width=0.4 * upscale)
-        text_height += int(40 * upscale)
+    clock = (Image.open(path.join('images', 'clock.png')).resize((int(15 * upscale), int(20 * upscale)), resample=Image.Resampling.LANCZOS).convert("RGBA"))
+    img.paste(clock, (int(25 * upscale), height - int(22 * upscale)), clock)
+    draw.text((int(41 * upscale), height - int(20 * upscale)), f"{strings['called_label']} {real_username} | {datetime.now(timezone.utc).strftime('%d.%m.%y %H:%M:%S.%f')[:-3]}", font=font_tiny, fill=muted_color, stroke_width=int(0.1 * upscale))
 
-    timeimage = Image.open(path.join('images', 'clock.png')).resize((int(15 * upscale), int(20 * upscale)), resample=Image.Resampling.LANCZOS).convert("RGBA")
-    img.paste(timeimage, (int(25 * upscale), height - int(22 * upscale)), timeimage)
-    draw.text((int(41.25 * upscale), height - int(20 * upscale)), f"{await translate_message.translate_message('Вызвал Команду:', language)} {real_username} | {datetime.now(timezone.utc).strftime('%d.%m.%y %H:%M:%S.%f')[:-3]}", font=font_verysmall, fill=(173, 176, 179), stroke_width=0.1 * upscale)
+    return img
 
-    return img 
-  
+  async def _build_profile_image(
+    self,
+    type_: str,
+    real_username: str,
+    status: str,
+    language: str,
+    username: str,
+    display_name: str,
+    avatar: Image.Image,
+    badges: list,
+    member_in_guild: bool,
+    voted: bool,
+    rank: int | None,
+    total_users: int | None,
+    **kwargs,
+  ) -> Image.Image:
+    tm = self.bot.get_cog("TranslateMessage")
+
+    async def t(s: str) -> str:
+      return await tm.translate_message(s, language)
+
+    strings: dict = {
+      'top_label': await t("profile.leaderboard_top"),
+      'messages_label': await t("profile.messages_count"),
+      'voice_label': await t("profile.voice_time"),
+      'reg_label': await t("profile.register_date"),
+      'total_label': await t("profile.total_money"),
+      'bank_label': await t("profile.bank_money"),
+      'balance_label': await t("profile.hand_money"),
+      'upgrade_label': await t("economy.upgrade_label"),
+      'x2work_label': await t("profile.x2_work_boosts"),
+      'x2buy_label': await t("profile.x2_buy_boosts"),
+      'reason_label': await t("profile.violation_reason"),
+      'mod_label': await t("profile.moderator"),
+      'date_label': await t("profile.violation_date"),
+      'duration_label': await t("profile.violation_duration"),
+      'no_data': await t("profile.no_violations"),
+      'used_label': await t("profile.last_used"),
+      'in_label': await t("profile.available_in"),
+      'now': await t("profile.now"),
+      'never': await t("profile.never_used"),
+      'called_label': await t("profile.called_at"),
+      'vtype_warn': await t("profile.warnings"),
+      'vtype_mute': await t("profile.timeouts"),
+      'vtype_kick': await t("profile.kicks"),
+      'vtype_ban': await t("profile.bans"),
+      'vtype_unwarn': await t("profile.remove_warns"),
+      'vtype_unmute': await t("profile.remove_timeouts"),
+      'vtype_unban': await t("profile.remove_bans"),
+    }
+
+    draw_fn = partial(
+      self._draw_profile_sync,
+      type_=type_,
+      real_username=real_username,
+      status=status,
+      username=username,
+      display_name=display_name,
+      avatar=avatar,
+      badges=badges,
+      member_in_guild=member_in_guild,
+      voted=voted,
+      strings=strings,
+      rank=rank,
+      total_users=total_users,
+      **kwargs,
+    )
+    return await asyncio.get_event_loop().run_in_executor(None, draw_fn)
+
   @slash_command(
-    description="Просмотр Профиля",
-    name_localizations=translate_to_all_languages('профиль', 'name'),
-    description_localizations=translate_to_all_languages('Просмотр Профиля.', 'description'),
-    integration_types=[
-      IntegrationType.user_install,
-      IntegrationType.guild_install,
-    ],
+    description="View user profile",
+    name_localizations=translate_to_all_languages('social.profile_name', 'name'),
+    description_localizations=translate_to_all_languages('social.profile_desc', 'description'),
+    integration_types=[IntegrationType.user_install, IntegrationType.guild_install],
     contexts=[
       InteractionContextType.guild,
       InteractionContextType.bot_dm,
       InteractionContextType.private_channel,
-    ],)
-  async def профиль(self,
+    ],
+  )
+  async def profile(
+    self,
     interaction: Interaction,
-    пользователь: User=SlashOption(name="пользователь", description="Ник Пользователя Для Просмотра/Создания Его Профиля.",required=False, name_localizations=translate_to_all_languages('пользователь', 'name'), description_localizations=translate_to_all_languages('Ник Пользователя Для Просмотра/Создания Его Профиля.', 'description')),
-    лично: bool=SlashOption(name="лично", description="Будут Ли Другие Пользователи Видеть Это Сообщение?.",required=False, default=False, name_localizations=translate_to_all_languages('лично', 'name'), description_localizations=translate_to_all_languages('Будут Ли Другие Пользователи Видеть Это Сообщение?', 'description')),
+    user: User = SlashOption(
+      name="user",
+      description="User profile to view",
+      required=False,
+      name_localizations=translate_to_all_languages('social.user_param', 'name'),
+      description_localizations=translate_to_all_languages('social.user_param_desc', 'description'),
+    ),
+    ephemeral: bool = SlashOption(
+      name="ephemeral",
+      description="Should others see this message?",
+      required=False,
+      default=False,
+      name_localizations=translate_to_all_languages('social.ephemeral_param', 'name'),
+      description_localizations=translate_to_all_languages('social.ephemeral_param_desc', 'description'),
+    ),
   ):
     try:
-      user_id = interaction.user.id
+      caller_id = interaction.user.id
       current_time = time()
 
-      translate_message = self.bot.get_cog("TranslateMessage")
-      get_data = self.bot.get_cog("GetData")
-      get_invite = self.bot.get_cog("GetInvite")
+      tm = self.bot.get_cog("TranslateMessage")
+      gd = self.bot.get_cog("GetData")
+      gi = self.bot.get_cog("GetInvite")
+      lang_for_cooldown = _get_locale(interaction.locale)
 
-      if user_id in slash_command_cooldown:
-        last_command_time = slash_command_cooldown[user_id]['time']
-        if current_time - last_command_time < 10:
-          await interaction.response.send_message(await translate_message.translate_message(f"You write commands so fast,",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv')+f" **<t:{round(last_command_time+10)}:R>** "+await translate_message.translate_message(f"you can write commands.",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv'), ephemeral=True)
-          return
-        else:
-          slash_command_cooldown[user_id]['time'] = current_time
+      if caller_id in slash_command_cooldown:
+        last_time = slash_command_cooldown[caller_id]['time']
+        if current_time - last_time < 10:
+          return await interaction.response.send_message(await tm.translate_message("error.rate_limit", lang_for_cooldown, variables={"time": f"<t:{round(last_time + 10)}:R>"}),ephemeral=True)
+        slash_command_cooldown[caller_id]['time'] = current_time
       else:
-        slash_command_cooldown[user_id] = {'time': current_time}
-      
-      if пользователь!=None:
+        slash_command_cooldown[caller_id] = {'time': current_time}
+
+      target_id: int | None = None
+      if user is not None:
         try:
-          member_id = пользователь.id
+          target_id = user.id
         except Exception:
-          await interaction.response.send_message(await translate_message.translate_message('Пользователь Не Найден.',interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv'),ephemeral=True)
-          return
-      else:
-        member_id = None
+          return await interaction.response.send_message(await tm.translate_message('error.user_not_found', lang_for_cooldown),ephemeral=True)
 
-      user_settings = await get_data.get_data(user_id,['language','variation','discord_id','telegram_id','reg_data','badges'],'users','user_id',interaction.guild)
-      language = user_settings['language']
-      variation = user_settings['variation']
-      discord = user_settings['discord_id']
-      telegram = user_settings['telegram_id']
-      reg_data = user_settings['reg_data']
-      badges = user_settings['badges']
-      
+      viewing_own = (target_id is None or target_id == caller_id)
+      effective_target_id = target_id if target_id else caller_id
+
+      caller_settings = await gd.get_data(caller_id, ['language', 'variation', 'discord_id', 'telegram_id', 'reg_data', 'badges'],'users', 'user_id', interaction.guild)
+      caller_privacy = await gd.get_data(caller_id, ['publicity'], 'user_privacy', 'user_id', interaction.guild)
+      language = caller_settings['language']
+      variation = caller_settings['variation']
+      caller_public = caller_privacy['publicity']
+
+      if not viewing_own:
+        if not caller_public:
+          try:
+            await interaction.response.send_message(
+              await tm.translate_message("error.your_profile_hidden",language,),ephemeral=True)
+          except InteractionResponded:
+            await interaction.followup.send(
+              await tm.translate_message("error.your_profile_hidden",language,),ephemeral=True)
+          return
+
+        target_privacy = await gd.get_data(effective_target_id, ['publicity'], 'user_privacy', 'user_id', interaction.guild)
+        if not target_privacy['publicity']:
+          try:
+            await interaction.response.send_message(await tm.translate_message("profile.target_profile_hidden", language),ephemeral=True)
+          except InteractionResponded:
+            await interaction.followup.send(
+              await tm.translate_message("profile.target_profile_hidden", language),ephemeral=True)
+          return
+
       try:
-        send_bank_message = await interaction.response.send_message(translate_to_all_languages("Загрузка Данных", 'message', language),ephemeral=лично)
+        loading_msg = await interaction.response.send_message(await tm.translate_message("profile.loading", language), ephemeral=ephemeral)
       except InteractionResponded:
-        send_bank_message = await interaction.followup.send(translate_to_all_languages("Загрузка Данных", 'message', language),ephemeral=лично)
+        loading_msg = await interaction.followup.send(await tm.translate_message("profile.loading", language), ephemeral=ephemeral)
 
-      invite = await get_invite.invite(interaction.guild)
+      invite = await gi.invite(interaction.guild)
 
-      if member_id:
-        member_settings = await get_data.get_data(member_id,['variation','discord_id','telegram_id','reg_data','badges'],'users','user_id',interaction.guild)
-        variation = member_settings['variation']
-        reg_data = member_settings['reg_data']
-        badges = member_settings['badges']
-        member_data = await get_data.get_data(member_id,['bank_balance','balance','xp','x2workamount','x2buyamount','upgrade'],'user_data','user_id',interaction.guild)
-        xp = member_data['xp']
-        bank_balance = member_data['bank_balance']
-        balance = member_data['balance']
-        x2workamount = member_data['x2workamount']
-        x2buyamount = member_data['x2buyamount']
-        upgrade = member_data['upgrade']
+      if not viewing_own:
+        tgt_settings = await gd.get_data(effective_target_id,['variation', 'discord_id', 'telegram_id', 'reg_data', 'badges'],'users', 'user_id', interaction.guild)
+        variation = tgt_settings['variation']
+        reg_data = tgt_settings['reg_data']
+        badges = tgt_settings['badges']
       else:
-        user_data = await get_data.get_data(user_id,['bank_balance','balance','xp','x2workamount','x2buyamount','upgrade'],'user_data','user_id',interaction.guild)
-        xp = user_data['xp']
-        bank_balance = user_data['bank_balance']
-        balance = user_data['balance']
-        x2workamount = user_data['x2workamount']
-        x2buyamount = user_data['x2buyamount']
-        upgrade = user_data['upgrade']
+        reg_data = caller_settings['reg_data']
+        badges = caller_settings['badges']
 
-      worka = 0
-      rob = 0
-      insert_data = 0
-      
-      if hasattr(self.bot, 'db_pool') and self.bot.db_pool:
-        async with self.bot.db_pool.acquire() as conn:
-          query = f"SELECT command,timestamp FROM cooldowns where user_id = $1"
-          data = await conn.fetch(query,member_id if member_id else user_id)
-      else:
-        await send_bank_message.edit('postgresql not loaded in profile')
+      if not (hasattr(self.bot, 'db_pool') and self.bot.db_pool):
+        await loading_msg.edit('postgresql not loaded in profile')
         return
-      for row in data:
-        if row['command']=="work":
-          worka = row['timestamp']
-        if row['command']=="rob":
-          rob = row['timestamp']
-        if row['command']=="insert_data":
-          insert_data=row['timestamp']
-          
-      violation = {}
+
+      async with self.bot.db_pool.acquire() as conn:
+        row = await conn.fetchrow("SELECT bank_balance, balance, xp, x2workamount, x2buyamount, upgrade FROM user_data WHERE user_id = $1",effective_target_id)
+        xp = row['xp'] if row else 0
+        bank_balance = row['bank_balance'] if row else 0
+        balance = row['balance'] if row else 0
+        x2workamount = row['x2workamount'] if row else 0
+        x2buyamount = row['x2buyamount'] if row else 0
+        upgrade = row['upgrade'] if row else 0
+
+        rank_row = await conn.fetchrow(
+          """
+          SELECT
+            (SELECT COUNT(*) FROM user_data WHERE xp > $1) + 1 AS rank,
+            (SELECT COUNT(*) FROM user_data) AS total
+          """,
+          xp
+        )
+        global_rank  = rank_row['rank']  if rank_row else None
+        total_users  = rank_row['total'] if rank_row else None
+
+        cd_rows = await conn.fetch("SELECT command, timestamp FROM cooldowns WHERE user_id = $1",effective_target_id)
+      worka = rob = insert_data = 0
+      for r in cd_rows:
+        if r['command'] == 'work': worka = r['timestamp']
+        elif r['command'] == 'rob': rob = r['timestamp']
+        elif r['command'] == 'insert_data': insert_data = r['timestamp']
+
+      violation: dict = {}
       if interaction.guild:
-        if hasattr(self.bot, 'db_pool') and self.bot.db_pool:
-          async with self.bot.db_pool.acquire() as conn:
-            query = f"SELECT type,reason,duration,timestamp,mod_id FROM violations where user_id = $1 AND guild_id = $2"
-            violations = await conn.fetch(query,member_id if member_id else user_id,interaction.guild.id)
-        else:
-          await send_bank_message.edit('postgresql not loaded in profile')
-          return
-        for row in violations:
-          if row['type']=="warn":
-            if 'warn' not in violation:
-              violation['warn'] = []
-            violation['warn'].append({
-              "reason": row['reason'],
-              "mod": f"{self.bot.get_user(int(row['mod_id'])).name if self.bot.get_user(int(row['mod_id'])) else 'Not Found'}({row['mod_id']})",
-              "timestamp": datetime.fromtimestamp(row['timestamp']).strftime('%d.%m.%y %H:%M:%S')
-            })
-          elif row['type']=="mute":
-            if 'mute' not in violation:
-              violation['mute'] = []
-            violation['mute'].append({
-              "reason": row['reason'],
-              "mod": f"{self.bot.get_user(int(row['mod_id'])).name if self.bot.get_user(int(row['mod_id'])) else 'Not Found'}({row['mod_id']})",
-              "timestamp": datetime.fromtimestamp(row['timestamp']).strftime('%d.%m.%y %H:%M:%S'),
-              "duration": timedelta(seconds=row['duration']) if row['duration'] else '∞'
-            })
-          elif row['type']=="kick":
-            if 'kick' not in violation:
-              violation['kick'] = []
-            violation['kick'].append({
-              "reason": row['reason'],
-              "mod": f"{self.bot.get_user(int(row['mod_id'])).name if self.bot.get_user(int(row['mod_id'])) else 'Not Found'}({row['mod_id']})",
-              "timestamp": datetime.fromtimestamp(row['timestamp']).strftime('%d.%m.%y %H:%M:%S')
-            })
-          elif row['type']=="ban":
-            if 'ban' not in violation:
-              violation['ban'] = []
-            violation['ban'].append({
-              "reason": row['reason'],
-              "mod": f"{self.bot.get_user(int(row['mod_id'])).name if self.bot.get_user(int(row['mod_id'])) else 'Not Found'}({row['mod_id']})",
-              "timestamp": datetime.fromtimestamp(row['timestamp']).strftime('%d.%m.%y %H:%M:%S'),
-              "duration": timedelta(seconds=row['duration']) if row['duration'] else '∞'
-            })
-          elif row['type']=="unwarn":
-            if 'unwarn' not in violation:
-              violation['unwarn'] = []
-            violation['unwarn'].append({
-              "reason": row['reason'],
-              "mod": f"{self.bot.get_user(int(row['mod_id'])).name if self.bot.get_user(int(row['mod_id'])) else 'Not Found'}({row['mod_id']})",
-              "timestamp": datetime.fromtimestamp(row['timestamp']).strftime('%d.%m.%y %H:%M:%S')
-            })
-          elif row['type']=="unmute":
-            if 'unmute' not in violation:
-              violation['unmute'] = []
-            violation['unmute'].append({
-              "reason": row['reason'],
-              "mod": f"{self.bot.get_user(int(row['mod_id'])).name if self.bot.get_user(int(row['mod_id'])) else 'Not Found'}({row['mod_id']})",
-              "timestamp": datetime.fromtimestamp(row['timestamp']).strftime('%d.%m.%y %H:%M:%S'),
-            })
-          elif row['type']=="unban":
-            if 'unban' not in violation:
-              violation['unban'] = []
-            violation['unban'].append({
-              "reason": row['reason'],
-              "mod": f"{self.bot.get_user(int(row['mod_id'])).name if self.bot.get_user(int(row['mod_id'])) else 'Not Found'}({row['mod_id']})",
-              "timestamp": datetime.fromtimestamp(row['timestamp']).strftime('%d.%m.%y %H:%M:%S'),
-            })
-          else:
-            if row['type'] not in violation:
-              violation[row['type']] = []
-            violation[row['type']].append({
-              "reason": row['reason'],
-              "mod": f"{self.bot.get_user(int(row['mod_id'])).name if self.bot.get_user(int(row['mod_id'])) else 'Not Found'}({row['mod_id']})",
-              "timestamp": datetime.fromtimestamp(row['timestamp']).strftime('%d.%m.%y %H:%M:%S'),
-            })
+        async with self.bot.db_pool.acquire() as conn:
+          v_rows = await conn.fetch("SELECT type, reason, duration, timestamp, mod_id FROM violations WHERE user_id = $1 AND guild_id = $2", effective_target_id, interaction.guild.id)
+        for r in v_rows:
+          vtype = r['type']
+          entry = {
+            "reason": r['reason'],
+            "mod": f"{self.bot.get_user(int(r['mod_id'])).name if self.bot.get_user(int(r['mod_id'])) else 'Not Found'}({r['mod_id']})",
+            "timestamp": datetime.fromtimestamp(r['timestamp']).strftime('%d.%m.%y %H:%M:%S'),
+          }
+          if vtype in ('ban', 'mute', 'unmute'):
+            entry['duration'] = timedelta(seconds=r['duration']) if r['duration'] else '∞'
+          violation.setdefault(vtype, []).append(entry)
 
       sbank_balance = await suffics(number=bank_balance, variation=variation)
-      sbalance = await suffics(number=balance, variation=variation)
-      stotal_balance = await suffics(number=bank_balance+balance, variation=variation)
-        
+      sbalance = await suffics(number=balance,      variation=variation)
+      stotal = await suffics(number=bank_balance + balance, variation=variation)
+
       headers = {
         "Authorization": getenv("TOPGG_DISCORDBOT_TOKEN_API"),
-        'Content-Type': 'application/json'
+        "Content-Type": "application/json",
       }
       async with ClientSession() as session:
-        async with session.get(f"https://top.gg/api/bots/{self.bot.user.id}/check?userId={member_id if member_id else user_id}", headers=headers) as resp:
-          if resp.status == 200:
-            data = await resp.json()
-            vote = data.get("voted") == 1
-          else:
-            vote = False
+        async with session.get(f"https://top.gg/api/bots/{self.bot.user.id}/check?userId={effective_target_id}",headers=headers) as resp:
+          vote = (await resp.json()).get("voted") == 1 if resp.status == 200 else False
 
-      async def update_callback(tipe:str=None):
+      def _get_status():
+        member = find(
+          lambda m: m == (user if not viewing_own else interaction.user),
+          (mb for g in self.bot.guilds for mb in g.members),
+        )
+        return str(getattr(member or interaction.user, 'status', 'offline'))
+
+      def _member_in_guild():
+        return interaction.guild.get_member(effective_target_id) is not None if interaction.guild else False
+
+      site_promo = ("## " + await tm.translate_message("profile.site_info",language) + "\n**https://wolium.netlify.app/**")
+
+      async def update_callback(tipe: str):
+        nonlocal loading_msg
+
         async with ClientSession() as session:
-          async with session.get(getattr(пользователь, 'display_avatar', interaction.user.display_avatar).url) as response:
-            image_data = await response.read()
-        avatar = Image.open(BytesIO(image_data))
-        file = None
-        if tipe=="server":
-          if hasattr(self.bot, 'db_pool') and self.bot.db_pool:
-            async with self.bot.db_pool.acquire() as conn:
-              messages:int = await conn.fetchval("SELECT COUNT(*) FROM messages where user_id = $1 and guild_id = $2",member_id if member_id else user_id, interaction.guild.id if interaction.guild else 0)
-              voicequery = f"SELECT COALESCE(SUM(time_spent), '0 seconds'::interval) AS total_time FROM voice WHERE user_id = $1 and guild_id = $2"
-              voice = await conn.fetchrow(voicequery,member_id if member_id else user_id, interaction.guild.id if interaction.guild else 0)
-          else:
-            await send_bank_message.edit('postgresql not loaded in profile')
-            return
+          av_url = getattr(user, 'display_avatar', interaction.user.display_avatar).url
+          async with session.get(av_url) as r:
+            avatar = Image.open(BytesIO(await r.read()))
 
-          voice: timedelta = voice['total_time']
+        common = dict(
+          type_=tipe,
+          real_username=interaction.user.name,
+          status=_get_status(),
+          language=language,
+          username=getattr(user, 'name', interaction.user.name),
+          display_name=getattr(user, 'display_name', interaction.user.display_name),
+          avatar=avatar,
+          badges=badges,
+          member_in_guild=_member_in_guild(),
+          voted=vote,
+          rank=global_rank,
+          total_users=total_users,
+          xp=xp,
+        )
 
-          img = await self._draw_user_profile(
-            type_=tipe,
-            real_username=interaction.user.name,
-            status=getattr((find(lambda member:member==пользователь if member_id else interaction.user,(member for guild in self.bot.guilds for member in guild.members))or interaction.user),'status','offline'),
-            language=language,
-            bot=self.bot,
-            username=getattr(пользователь, 'name', interaction.user.name),
-            display_name=getattr(пользователь, 'display_name', interaction.user.display_name),
-            avatar=avatar,
-            badges=badges,
-            member_in_guild=interaction.guild.get_member(member_id if member_id else user_id) if interaction.guild else False,
-            voted=vote,
+        if tipe in ('discord', 'server'):
+          async with self.bot.db_pool.acquire() as conn:
+            if tipe == 'discord':
+              messages = await conn.fetchval("SELECT COUNT(*) FROM messages WHERE user_id = $1", effective_target_id)
+              voice_row = await conn.fetchrow("SELECT COALESCE(SUM(time_spent), '0 seconds'::interval) AS t FROM voice WHERE user_id = $1",effective_target_id)
+            else:
+              messages = await conn.fetchval("SELECT COUNT(*) FROM messages WHERE user_id = $1 AND guild_id = $2",effective_target_id, interaction.guild.id if interaction.guild else 0)
+              voice_row = await conn.fetchrow("SELECT COALESCE(SUM(time_spent), '0 seconds'::interval) AS t FROM voice WHERE user_id = $1 AND guild_id = $2",effective_target_id, interaction.guild.id if interaction.guild else 0)
+          v: timedelta = voice_row['t']
+          common.update(
             reg_data=datetime.fromtimestamp(reg_data).strftime('%d.%m.%y'),
-            xp=xp,
             messages=messages,
-            voice=f"{voice.days}d {voice.seconds // 3600}h {(voice.seconds % 3600) // 60}m",
+            voice=f"{v.days}d {v.seconds // 3600}h {(v.seconds % 3600) // 60}m",
           )
-          buffer = BytesIO()
-          img.save(buffer, format="png")
-          buffer.seek(0)
-          file = File(buffer, filename="image.png")
-        elif tipe=="discord":
-          if hasattr(self.bot, 'db_pool') and self.bot.db_pool:
-            async with self.bot.db_pool.acquire() as conn:
-              messages:int = await conn.fetchval("SELECT COUNT(*) FROM messages where user_id = $1",member_id if member_id else user_id)
-              voicequery = f"SELECT COALESCE(SUM(time_spent), '0 seconds'::interval) AS total_time FROM voice WHERE user_id = $1"
-              voice = await conn.fetchrow(voicequery,member_id if member_id else user_id)
-          else:
-            await send_bank_message.edit('postgresql not loaded in profile')
-            return
 
-          voice: timedelta = voice['total_time']
-          
-          img = await self._draw_user_profile(
-            type_=tipe,
-            real_username=interaction.user.name,
-            status=getattr((find(lambda member:member==пользователь if member_id else interaction.user,(member for guild in self.bot.guilds for member in guild.members))or interaction.user),'status','offline'),
-            language=language,
-            bot=self.bot,
-            username=getattr(пользователь, 'name', interaction.user.name),
-            display_name=getattr(пользователь, 'display_name', interaction.user.display_name),
-            avatar=avatar,
-            badges=badges,
-            member_in_guild=interaction.guild.get_member(member_id if member_id else user_id) if interaction.guild else False,
-            voted=vote,
-            reg_data=datetime.fromtimestamp(reg_data).strftime('%d.%m.%y'),
-            xp=xp,
-            messages=messages,
-            voice=f"{voice.days}d {voice.seconds // 3600}h {(voice.seconds % 3600) // 60}m",
-          )
-          buffer = BytesIO()
-          img.save(buffer, format="png")
-          buffer.seek(0)
-          file = File(buffer, filename="image.png")
-        elif tipe=="economy":
-          img = await self._draw_user_profile(
-            type_=tipe,
-            real_username=interaction.user.name,
-            status=getattr((find(lambda member:member==пользователь if member_id else interaction.user,(member for guild in self.bot.guilds for member in guild.members))or interaction.user),'status','offline'),
-            language=language,
-            bot=self.bot,
-            username=getattr(пользователь, 'name', interaction.user.name),
-            display_name=getattr(пользователь, 'display_name', interaction.user.display_name),
-            avatar=avatar,
-            badges=badges,
-            member_in_guild=interaction.guild.get_member(member_id if member_id else user_id) if interaction.guild else False,
-            voted=vote,
-            xp=xp,
-            total_balance=stotal_balance,
+        elif tipe == 'economy':
+          common.update(
+            total_balance=stotal,
             bank_balance=sbank_balance,
             balance=sbalance,
             upgrade=upgrade,
             x2workamount=x2workamount,
-            x2buyamount=x2buyamount
+            x2buyamount=x2buyamount,
           )
-          buffer = BytesIO()
-          img.save(buffer, format="png")
-          buffer.seek(0)
-          file = File(buffer, filename="image.png")
-        elif tipe=="moderation":
-          img = await self._draw_user_profile(
-            type_=tipe,
-            real_username=interaction.user.name,
-            status=getattr((find(lambda member:member==пользователь if member_id else interaction.user,(member for guild in self.bot.guilds for member in guild.members))or interaction.user),'status','offline'),
-            language=language,
-            bot=self.bot,
-            username=getattr(пользователь, 'name', interaction.user.name),
-            display_name=getattr(пользователь, 'display_name', interaction.user.display_name),
-            avatar=avatar,
-            badges=badges,
-            member_in_guild=interaction.guild.get_member(member_id if member_id else user_id) if interaction.guild else False,
-            voted=vote,
-            xp=xp,
-            violation=deepcopy(violation) if violation else {}
-          )
-          buffer = BytesIO()
-          img.save(buffer, format="png")
-          buffer.seek(0)
-          file = File(buffer, filename="image.png")
-        elif tipe=='cooldowns':
-          cooldowns={
-            "Work": {
-              "in":str(timedelta(seconds=max(0,(worka+60*39)-time()))).split('.')[0],
-              "used":format_datetime(datetime.fromtimestamp(worka), "d MMMM, HH:mm:ss", locale=language)
+
+        elif tipe == 'moderation':
+          common['violation'] = deepcopy(violation)
+
+        elif tipe == 'cooldowns':
+          common['cooldowns'] = {
+            await tm.translate_message("profile.command_work", language): {
+              "in": str(timedelta(seconds=max(0, (worka + 60 * 39) - time()))).split('.')[0],
+              "used": format_datetime(datetime.fromtimestamp(worka), "d MMMM, HH:mm:ss", locale=language),
             },
-            "Rob": {
-              "in":str(timedelta(seconds=max(0,(rob+60*60*6)-time()))).split('.')[0],
-              "used":format_datetime(datetime.fromtimestamp(rob), "d MMMM, HH:mm:ss", locale=language)
+            await tm.translate_message("profile.command_rob", language): {
+              "in": str(timedelta(seconds=max(0, (rob + 60 * 60 * 6) - time()))).split('.')[0],
+              "used": format_datetime(datetime.fromtimestamp(rob), "d MMMM, HH:mm:ss", locale=language),
             },
-            "Вставить Дату": {
-              "in":str(timedelta(seconds=max(0,(insert_data+31*24*60*60)-time()))).split('.')[0],
-              "used":format_datetime(datetime.fromtimestamp(insert_data), "d MMMM, HH:mm:ss", locale=language)
-            }
+            await tm.translate_message("profile.command_insert", language): {
+              "in": str(timedelta(seconds=max(0, (insert_data + 31 * 24 * 60 * 60) - time()))).split('.')[0],
+              "used": format_datetime(datetime.fromtimestamp(insert_data), "d MMMM, HH:mm:ss", locale=language),
+            },
           }
 
-          img = await self._draw_user_profile(
-            type_=tipe,
-            real_username=interaction.user.name,
-            status=getattr((find(lambda member:member==пользователь if member_id else interaction.user,(member for guild in self.bot.guilds for member in guild.members))or interaction.user),'status','offline'),
-            language=language,
-            bot=self.bot,
-            username=getattr(пользователь, 'name', interaction.user.name),
-            display_name=getattr(пользователь, 'display_name', interaction.user.display_name),
-            avatar=avatar,
-            badges=badges,
-            member_in_guild=interaction.guild.get_member(member_id if member_id else user_id) if interaction.guild else False,
-            voted=vote,
-            xp=xp,
-            cooldowns=cooldowns
-          )
-          buffer = BytesIO()
-          img.save(buffer, format="png")
-          buffer.seek(0)
-          file = File(buffer, filename="image.png")
-        elif tipe=='other':
-          file=None
-        if file:
+        elif tipe == 'other':
           try:
-            await send_bank_message.edit("## "+await translate_message.translate_message("На моём сайте вы уже можете посмотреть всё, что вас интересует, более подробно!", language)+"\n**https://wolium.netlify.app/**",file=file)
+            await loading_msg.edit(await tm.translate_message("profile.section_other_content", language) + site_promo)
           except Exception:
-            await interaction.followup.send("## "+await translate_message.translate_message("На моём сайте вы уже можете посмотреть всё, что вас интересует, более подробно!", language)+"\n**https://wolium.netlify.app/**",file=file,ephemeral=True)
-        else:
-          try:
-            await send_bank_message.edit("Еще Не Обновил С Эмбеда На Картинки"+"\n\n## "+await translate_message.translate_message("На моём сайте вы уже можете посмотреть всё, что вас интересует, более подробно!", language)+"\n**https://wolium.netlify.app/**")
-          except Exception:
-            await interaction.followup.send("Еще Не Обновил С Эмбеда На Картинки"+"\n\n## "+await translate_message.translate_message("На моём сайте вы уже можете посмотреть всё, что вас интересует, более подробно!", language)+"\n**https://wolium.netlify.app/**",ephemeral=True)
-            
-      view = привязать_телеграм(interaction.user.id, language, update_callback, vote, self.bot)
+            await interaction.followup.send(await tm.translate_message("profile.section_other_content", language) + site_promo, ephemeral=True,)
+          return
+
+        img = await self._build_profile_image(**common)
+        buf = BytesIO()
+        img.save(buf, format="PNG")
+        buf.seek(0)
+        file = File(buf, filename="profile.png")
+
+        try:
+          await loading_msg.edit(site_promo, file=file)
+        except Exception:
+          await interaction.followup.send(site_promo, file=file, ephemeral=True)
+
+      view = ProfileView(caller_id, language, update_callback, vote, self.bot)
       try:
-        await send_bank_message.edit(await translate_message.translate_message("Второй Этап Загрузки Данных.", language),view=view)
+        await loading_msg.edit(await tm.translate_message("profile.loading_step2", language), view=view)
       except Exception:
-        await interaction.followup.send(await translate_message.translate_message("Второй Этап Загрузки Данных.", language),ephemeral=True,view=view)
+        await interaction.followup.send(await tm.translate_message("profile.loading_step2", language),ephemeral=True, view=view)
+
       await update_callback("discord")
 
     except Exception as e:
-      traceback_msg = ((''.join(format_exception(type(e), e, e.__traceback__)))[:5000])
+      tb = ''.join(format_exception(type(e), e, e.__traceback__))[:5000]
       log = Embed(
-        title=f"ник: {interaction.user.name}#{interaction.user.discriminator}, ID: {interaction.user.id}",
-        description=f"Пользователь Вписал Команду: ||**/профиль**  `пользователь`  **{пользователь}**||",
+        title=f"User: {interaction.user.name}#{interaction.user.discriminator}, ID: {interaction.user.id}",
+        description=f"Command: ||**/profile** `user` **{user}**||",
         color=Color.red(),
-        timestamp=datetime.now(timezone.utc)
+        timestamp=datetime.now(timezone.utc),
       )
       log.set_author(
-        name=f"Сервер ID: {interaction.guild_id if interaction.guild else self.bot.user.name}",
-        icon_url=f"{interaction.user.display_avatar.url}"
+        name=f"Server ID: {interaction.guild_id if interaction.guild else self.bot.user.name}",
+        icon_url=interaction.user.display_avatar.url,
       )
       if interaction.guild:
+        invite = await self.bot.get_cog("GetInvite").invite(interaction.guild)
         log.add_field(
-          name="Сервер",
-          value=f"{interaction.guild.id} | {invite} | {interaction.guild.name}" if interaction.guild else "ЛС" if interaction.guild else "ЛС",
-          inline=False
+          name="Server",
+          value=f"{interaction.guild.id} | {invite} | {interaction.guild.name}",
+          inline=False,
         )
       log.add_field(
-        name="Канал",
+        name="Channel",
         value=f"<#{interaction.channel.id}>(`{interaction.channel.id}` | `{interaction.channel.name if interaction.guild else 'None'}`)",
-        inline=False
+        inline=False,
       )
-      for i in range(0, len(traceback_msg), 1000):
-        log.add_field(
-          name="Ошибка",
-          value=f"```py\n{traceback_msg[i:i+1000]}```",
-          inline=False
-        )
+      for i in range(0, len(tb), 1000):
+        log.add_field(name="Error", value=f"```py\n{tb[i:i+1000]}```", inline=False)
       log.set_footer(
-        text=f"{str(datetime.now())}",
-        icon_url="https://cdn.discordapp.com/attachments/886241481118068906/1145385898637271060/2088617.png"
+        text=str(datetime.now()),
+        icon_url="https://cdn.discordapp.com/attachments/886241481118068906/1145385898637271060/2088617.png",
       )
-      await interaction.followup.send(f"Произошла Ошибка, Логи Ошибки Сохранены, В Ближайшее Время Их Будут Рассматривать.", ephemeral=True)
+      lang = _get_locale(interaction.locale)
+      await interaction.followup.send(await tm.translate_message("error.occurred_logs_saved_review", lang), ephemeral=True)
       await self.bot.get_guild(807304463449849938).get_channel(1159138280651104256).send(embed=log)
 
-  setattr(профиль,"extras",{"description": "Показывает **Абсолютно** всю информацию о пользователе которую он *не скрывает*."},)
+  setattr(profile, "extras", {"description": "Shows comprehensive profile information for any user."})
+
 
 def setup(bot: commands.Bot):
   bot.add_cog(Profile(bot))

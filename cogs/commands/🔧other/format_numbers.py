@@ -126,7 +126,7 @@ class FormatNumbers(commands.Cog):
         await interaction.followup.send(await tm.translate_message("error.occurred_logs_saved_review", lang), ephemeral=True)
       await self.bot.get_guild(807304463449849938).get_channel(1159138280651104256).send(embed=log)
 
-  setattr(format_numbers, "extras", {"description": "Format numbers for better display: scientific notation, normal, or none."})
+  setattr(format_numbers, "extras", {"description": "commands.format_numbers.description"})
 
 def setup(bot:commands.Bot):
   bot.add_cog(FormatNumbers(bot))

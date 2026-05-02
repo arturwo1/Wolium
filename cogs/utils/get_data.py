@@ -31,7 +31,7 @@ class GetData(commands.Cog):
 
     await sleep(SLEEP/len(self.temp_cache))
 
-  async def gd(self,user_id:str,data:list,table:str,checker:str,guild:nextcord.Guild=None):
+  async def get_data(self,user_id:str,data:list,table:str,checker:str,guild:nextcord.Guild=None):
     ensure_guild = self.bot.get_cog("EnsureGuildExists")
     ensure_user = self.bot.get_cog("EnsureUserExists")
     try:

@@ -355,8 +355,7 @@ class MessageReport(commands.Cog):
   def __init__(self, bot):
     self.bot:commands.Bot = bot
 
-  @message_command(default_member_permissions=8,
-  name_localizations=translate_to_all_languages('moderation.report_message_name', 'description'))
+  @message_command(name_localizations=translate_to_all_languages('moderation.report_message_name', 'description'))
   async def message_report(self, interaction: Interaction, message: Message):
     try:
       tm = self.bot.get_cog("TranslateMessage")

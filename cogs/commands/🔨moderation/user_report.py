@@ -345,8 +345,7 @@ class UserReport(commands.Cog):
   def __init__(self, bot):
     self.bot:commands.Bot = bot
 
-  @user_command(default_member_permissions=8,
-  name_localizations=translate_to_all_languages('report.user_title', 'description'))
+  @user_command(name_localizations=translate_to_all_languages('report.user_title', 'description'))
   async def user_report(self, interaction: Interaction, user: User):
     try:
       tm = self.bot.get_cog("TranslateMessage")

@@ -8,7 +8,7 @@ class ResetMemory(commands.Cog):
   
   @commands.command(name="reset_memory",
     hidden=True,
-    aliases=["ресет_памяти","memory_reset","break_memory","reset_memory","memory_break"])
+    aliases=["ресет_памяти","memory_reset","break_memory","memory_break"])
   async def reset_memory(self,ctx: commands.Context,):
     if not await self.bot.is_owner(ctx.author):
       return

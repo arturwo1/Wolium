@@ -116,7 +116,7 @@ class Language(commands.Cog):
     filtered_language = filtered_language[:25]
     await interaction.response.send_autocomplete(filtered_language)
 
-  setattr(language, "extras",{"description": "With this command you can choose the language I will respond in!"})
+  setattr(language, "extras",{"description": "commands.language.description"})
 
 def setup(bot: commands.Bot):
   bot.add_cog(Language(bot))

@@ -12,21 +12,30 @@ from json import dumps, loads
 
 translate_to_all_languages = Utils.translate_to_all_languages.translate_to_all_languages
 
-class rulesmodal(Modal):
+def _get_locale(locale_str: str) -> str:
+  if locale_str in ('en-US', 'en-GB'):
+    return 'en'
+  if locale_str == 'es-ES':
+    return 'es'
+  if locale_str == 'sv-SE':
+    return 'sv'
+  return locale_str
+
+class RulesModal(Modal):
   def __init__(self, user_id: int, language: str, update_callback, guild_config: dict, bot: commands.Bot, timeout=60*5):
-    super().__init__(title=translate_to_all_languages("Введите Правила", 'message', language), timeout=timeout)
+    super().__init__(title=translate_to_all_languages("automod.enter_rules", 'message', language), timeout=timeout)
     self.bot = bot
     self.user_id = user_id
     self.language = language
     self.update_callback = update_callback
     self.guild_config = guild_config
     self.rules = TextInput(
-      label=translate_to_all_languages("Правила:", 'message', language),
+      label=translate_to_all_languages("general.rules_label", 'message', language),
       style=TextInputStyle.paragraph,
       max_length=4000,
       required=True,
       default_value=guild_config.get('rules') or '',
-      placeholder=translate_to_all_languages("Правила Которые Нейросеть Будет Использовать При Сканировании Сообщений Пользователей.", 'message', language)
+      placeholder=translate_to_all_languages("automod.ai_scanning_rules", 'message', language)
     )
     self.add_item(self.rules)
 
@@ -38,7 +47,7 @@ class rulesmodal(Modal):
     if not interaction.user.guild_permissions.administrator:
       tm = self.bot.get_cog("TranslateMessage")
       if tm:
-        await interaction.response.send_message(await tm.translate_message("Ты Не Администратор.", self.language), ephemeral=True)
+        await interaction.response.send_message(await tm.translate_message("error.not_admin", self.language), ephemeral=True)
       return
     if interaction.response.is_done():
       return
@@ -48,7 +57,7 @@ class rulesmodal(Modal):
     if not rules:
       tm = self.bot.get_cog("TranslateMessage")
       if tm:
-        await interaction.followup.send(await tm.translate_message("Вы Ничего Не Вписали.", self.language), ephemeral=True)
+        await interaction.followup.send(await tm.translate_message("error.nothing_entered", self.language), ephemeral=True)
       return
 
     ud = self.bot.get_cog("UpdateData")
@@ -62,22 +71,22 @@ class rulesmodal(Modal):
       if tm and se:
         gl = locale(interaction.guild_locale)
         await se.send_embed(
-          title=await tm.translate_message("Изменение Конфига Бота", gl),
-          description="### " + await tm.translate_message("Изменение Правил Для Автомодерации\nТак Как Правила Могут Превышать Лимит Максимального Размера Файла В Дискорде, То Показать Изменения Я Не Смогу.", gl),
+          title=await tm.translate_message("config.change_title", gl),
+          description="### " + await tm.translate_message("automod.rules_changed_hidden", gl),
           color=Colour.yellow(),
           fields=None,
-          footer_text=await tm.translate_message("Изменение Правил Для Автомодерации", gl),
+          footer_text=await tm.translate_message("config.change_automod_rules", gl),
           author_text=interaction.user.name,
           author_icon=interaction.user.display_avatar.url,
           guild_id=interaction.guild.id,
           channel_id=mod_log_channel
         )
 
-    await self.update_callback("automoderation", translate_to_all_languages("Rules saved", "message", self.language))
+    await self.update_callback("automoderation", translate_to_all_languages("success.rules_saved", "message", self.language))
 
-class ttlmodal(Modal):
+class TtlModal(Modal):
   def __init__(self, user_id: int, language: str, update_callback, guild_config: dict, ttl_channel_id: int, bot: commands.Bot, timeout=60*5):
-    super().__init__(title=translate_to_all_languages("Введите Время", 'message', language), timeout=timeout)
+    super().__init__(title=translate_to_all_languages("general.enter_time", 'message', language), timeout=timeout)
     self.bot = bot
     self.user_id = user_id
     self.language = language
@@ -85,12 +94,12 @@ class ttlmodal(Modal):
     self.guild_config = guild_config
     self.ttl_channel_id = ttl_channel_id
     self.time = TextInput(
-      label=translate_to_all_languages("Время:", 'message', language),
+      label=translate_to_all_languages("general.time_label", 'message', language),
       style=TextInputStyle.short,
       max_length=50,
       required=True,
       default_value=loads(guild_config.get('ttl_channel', {})).get(ttl_channel_id) if isinstance(loads(guild_config.get('ttl_channel', {})), dict) else '',
-      placeholder=translate_to_all_languages("Пример", 'message', language)+": 10s 20m "+translate_to_all_languages("Напишите", 'message', language)+" 0s "+translate_to_all_languages("Чтобы Отменить.", 'message', language)
+      placeholder=translate_to_all_languages("general.example", 'message', language)+": 10s 20m "+translate_to_all_languages("general.write", 'message', language)+" 0s "+translate_to_all_languages("general.to_cancel", 'message', language)
     )
     self.add_item(self.time)
 
@@ -106,13 +115,13 @@ class ttlmodal(Modal):
     
     if not interaction.user.guild_permissions.administrator:
       if tm:
-        await interaction.followup.send(await tm.translate_message("Ты Не Администратор.", self.language), ephemeral=True)
+        await interaction.followup.send(await tm.translate_message("error.not_admin", self.language), ephemeral=True)
       return
 
     time = (self.time.value or '').strip()
     if not time:
       if tm:
-        await interaction.followup.send(await tm.translate_message("Вы Ничего Не Вписали.", self.language), ephemeral=True)
+        await interaction.followup.send(await tm.translate_message("error.nothing_entered", self.language), ephemeral=True)
       return
 
     ud = self.bot.get_cog("UpdateData")
@@ -125,7 +134,7 @@ class ttlmodal(Modal):
     time = int(parse_time(time))
 
     if tm:
-      await interaction.followup.send(await tm.translate_message("Для Канала", self.language)+f" <#{self.ttl_channel_id}> "+await tm.translate_message("Было Выбрано Время:", self.language)+f" {timedelta(seconds=time)}", ephemeral=True)
+      await interaction.followup.send(await tm.translate_message("general.for_channel", self.language)+f" <#{self.ttl_channel_id}> "+await tm.translate_message("general.time_selected", self.language)+f" {timedelta(seconds=time)}", ephemeral=True)
 
     mod_log_channel = self.guild_config.get('mod_log_channel')
     if mod_log_channel and interaction.guild.get_channel(mod_log_channel):
@@ -133,20 +142,20 @@ class ttlmodal(Modal):
       if tm and se:
         gl = locale(interaction.guild_locale)
         await se.send_embed(
-          title=await tm.translate_message("Изменение Конфига Бота", gl),
-          description="### " + await tm.translate_message("Изменение Канала Авто-Удаления Сообщений.", gl)+"\n"+await tm.translate_message("До", gl)+f":  **<#{self.ttl_channel_id}>**: {timedelta(seconds=parse_time(self.guild_config.get('ttl_channel', {}).get(self.ttl_channel_id, '0s')))}\n"+await tm.translate_message("После", gl)+f": {timedelta(seconds=time)}",
+          title=await tm.translate_message("config.change_title", gl),
+          description="### " + await tm.translate_message("config.change_autodelete_channel_dot", gl)+"\n"+await tm.translate_message("general.until", gl)+f":  **<#{self.ttl_channel_id}>**: {timedelta(seconds=parse_time(self.guild_config.get('ttl_channel', {}).get(self.ttl_channel_id, '0s')))}\n"+await tm.translate_message("general.after", gl)+f": {timedelta(seconds=time)}",
           color=Colour.yellow(),
           fields=None,
-          footer_text=await tm.translate_message("Изменение Канала Авто-Удаления Сообщений", gl),
+          footer_text=await tm.translate_message("config.change_autodelete_channel", gl),
           author_text=interaction.user.name,
           author_icon=interaction.user.display_avatar.url,
           guild_id=interaction.guild.id,
           channel_id=mod_log_channel
         )
 
-    await self.update_callback("autodelete", await tm.translate_message("Channel saved", self.language))
+    await self.update_callback("autodelete", await tm.translate_message("success.channel_saved", self.language))
 
-class конфиг(View):
+class ConfigView(View):
   def __init__(self, user_id: int, language: str, update_callback, value: str, guild_config: dict, bot: commands.Bot, timeout=60*30):
     super().__init__(timeout=timeout)
     self.language = language
@@ -186,39 +195,39 @@ class конфиг(View):
   def add_select(self):
     options = [
       {
-        "label": '📘' + translate_to_all_languages("Канал Логов", 'message', self.language),
+        "label": '📘' + translate_to_all_languages("settings.log_channel", 'message', self.language),
         "value": "logs",
-        "description": translate_to_all_languages("Можете Изменить Текущий Канал Логов.", 'message', self.language)
+        "description": translate_to_all_languages("settings.change_log_channel_desc", 'message', self.language)
       },
       {
-        "label": '👮‍♂️' + translate_to_all_languages("Автомодерация", 'message', self.language),
+        "label": '👮‍♂️' + translate_to_all_languages("category.automod", 'message', self.language),
         "value": "automoderation",
-        "description": translate_to_all_languages("Можешь Выключить/Изменить Тип Автомодерации.", 'message', self.language)
+        "description": translate_to_all_languages("settings.automod_change", 'message', self.language)
       },
       {
-        "label": '🤖' + translate_to_all_languages("AI", 'message', self.language),
+        "label": '🤖' + translate_to_all_languages("settings.ai", 'message', self.language),
         "value": "AI",
-        "description": translate_to_all_languages("Если Включить, То Я Смогу Общаться С Вами!", 'message', self.language)
+        "description": translate_to_all_languages("settings.ai_enable_desc", 'message', self.language)
       },
       {
-        "label": '🎮' + translate_to_all_languages("Настройки Игр", 'message', self.language),
+        "label": '🎮' + translate_to_all_languages("settings.games", 'message', self.language),
         "value": "games",
-        "description": translate_to_all_languages("Вы Сможете Настроить Здесь Игры.", 'message', self.language)
+        "description": translate_to_all_languages("settings.games_desc", 'message', self.language)
       },
       {
-        "label": '📰' + translate_to_all_languages("Уведомления", 'message', self.language),
+        "label": '📰' + translate_to_all_languages("settings.notifications", 'message', self.language),
         "value": "updates",
-        "description": translate_to_all_languages("Настройка News/Important/Critical уведомлений.", 'message', self.language)
+        "description": translate_to_all_languages("settings.notifications_setup", 'message', self.language)
       },
       {
-        "label": '⏳' + translate_to_all_languages("Auto-Delete", 'message', self.language),
+        "label": '⏳' + translate_to_all_languages("settings.autodelete", 'message', self.language),
         "value": "autodelete",
-        "description": translate_to_all_languages("Автоудаление сообщений по каналам.", 'message', self.language)
+        "description": translate_to_all_languages("settings.autodelete_desc", 'message', self.language)
       }
     ]
 
     select_menu = Select(
-      placeholder='❓' + translate_to_all_languages("Выберите Категорию!", 'message', self.language),
+      placeholder='❓' + translate_to_all_languages("general.select_category_exclamation", 'message', self.language),
       options=[
         SelectOption(label=opt['label'], description=opt.get('description', ''), value=opt['value'])
         for opt in options
@@ -235,14 +244,14 @@ class конфиг(View):
     if not interaction.user.guild_permissions.administrator:
       tm = self.bot.get_cog("TranslateMessage")
       if tm and not interaction.response.is_done():
-        await interaction.response.send_message(await tm.translate_message("Ты Не Администратор.", self.language), ephemeral=True)
+        await interaction.response.send_message(await tm.translate_message("error.not_admin", self.language), ephemeral=True)
       return False
     return True
 
   def add_logs(self):
     self.clear_items()
     channel_id = ChannelSelect(
-      placeholder=translate_to_all_languages("Выберите Канал Для Логов", 'message', self.language),
+      placeholder=translate_to_all_languages("settings.select_log_channel", 'message', self.language),
       channel_types=[ChannelType.text]
     )
     channel_id.callback = self.modlogchannel_callback
@@ -253,7 +262,7 @@ class конфиг(View):
     automoderation_button = Button(
       style=ButtonStyle.success if self.automoderation == False else ButtonStyle.danger,
       emoji="✔" if self.automoderation == False else "❌",
-      label=translate_to_all_languages("Enable", 'message', self.language) if self.automoderation == False else translate_to_all_languages("Disable", 'message', self.language)
+      label=translate_to_all_languages("general.enable", 'message', self.language) if self.automoderation == False else translate_to_all_languages("general.disable", 'message', self.language)
     )
     automoderation_button.callback = self.automoderationbuttonenable_callback
     self.add_item(automoderation_button)
@@ -261,7 +270,7 @@ class конфиг(View):
     automoderationchangemod_button = Button(
       style=ButtonStyle.primary,
       emoji='👮‍♂️',
-      label=translate_to_all_languages("AI", 'message', self.language) if self.moderation_type == 'AI' else translate_to_all_languages("Algorithm", 'message', self.language)
+      label=translate_to_all_languages("settings.ai", 'message', self.language) if self.moderation_type == 'AI' else translate_to_all_languages("general.algorithm", 'message', self.language)
     )
     automoderationchangemod_button.callback = self.automoderationbuttonchangemod_callback
     self.add_item(automoderationchangemod_button)
@@ -269,7 +278,7 @@ class конфиг(View):
     automoderationaddrules_button = Button(
       style=ButtonStyle.primary,
       emoji='📘',
-      label=translate_to_all_languages("Rules", 'message', self.language)
+      label=translate_to_all_languages("general.rules_en", 'message', self.language)
     )
     automoderationaddrules_button.callback = self.automoderationbuttonaddrules_callback
     self.add_item(automoderationaddrules_button)
@@ -279,7 +288,7 @@ class конфиг(View):
     AI_button = Button(
       style=ButtonStyle.success if self.aibot == False else ButtonStyle.danger,
       emoji="✔" if self.aibot == False else "❌",
-      label=translate_to_all_languages("Enable", 'message', self.language) if self.aibot == False else translate_to_all_languages("Disable", 'message', self.language)
+      label=translate_to_all_languages("general.enable", 'message', self.language) if self.aibot == False else translate_to_all_languages("general.disable", 'message', self.language)
     )
     AI_button.callback = self.AIbuttonenable_callback
     self.add_item(AI_button)
@@ -288,7 +297,7 @@ class конфиг(View):
     self.clear_items()
     word_channel_button = ChannelSelect(
       row=0,
-      placeholder='🔤' + translate_to_all_languages("Канал Для Игры В Слова", 'message', self.language),
+      placeholder='🔤' + translate_to_all_languages("games.words_channel", 'message', self.language),
       channel_types=[ChannelType.text]
     )
     word_channel_button.callback = self.wordchannel_callback
@@ -298,26 +307,26 @@ class конфиг(View):
       row=1,
       style=ButtonStyle.danger,
       emoji="❌",
-      label=translate_to_all_languages("Сбросить словарь", 'message', self.language)
+      label=translate_to_all_languages("game.reset_dictionary", 'message', self.language)
     )
     words_reset_button.callback = self.wordsreset_callback
     self.add_item(words_reset_button)
 
     options = [
       {
-        "label": '✅' + translate_to_all_languages("Нормально", 'message', self.language),
+        "label": '✅' + translate_to_all_languages("general.normal", 'message', self.language),
         "value": "normal",
-        "description": translate_to_all_languages("Легкий Фильтр Который Проверяет Только Базовые Моменты.", 'message', self.language)
+        "description": translate_to_all_languages("automod.light_filter_desc", 'message', self.language)
       },
       {
-        "label": '📛' + translate_to_all_languages("Экстрим", 'message', self.language),
+        "label": '📛' + translate_to_all_languages("music.filter_extreme", 'message', self.language),
         "value": "extreme",
-        "description": translate_to_all_languages("Очень Строгий Фильтр, Большинство Языков Могут Не Поддерживаться.", 'message', self.language)
+        "description": translate_to_all_languages("automod.strict_filter_desc", 'message', self.language)
       }
     ]
     filter_selection = Select(
       row=2,
-      placeholder='⛔' + translate_to_all_languages("Выберите Фильтр!", 'message', self.language),
+      placeholder='⛔' + translate_to_all_languages("music.select_filter", 'message', self.language),
       options=[
         SelectOption(label=opt['label'], description=opt.get('description', ''), value=opt['value'])
         for opt in options
@@ -328,7 +337,7 @@ class конфиг(View):
 
     number_channel_button = ChannelSelect(
       row=3,
-      placeholder='🧮' + translate_to_all_languages("Канал Для Игры В Счет", 'message', self.language),
+      placeholder='🧮' + translate_to_all_languages("games.counting_channel", 'message', self.language),
       channel_types=[ChannelType.text]
     )
     number_channel_button.callback = self.numberchannel_callback
@@ -341,7 +350,7 @@ class конфиг(View):
       row=0,
       style=ButtonStyle.danger if self.news else ButtonStyle.success,
       emoji="❌" if self.news else "✔",
-      label=translate_to_all_languages("Disable News", 'message', self.language) if self.news else translate_to_all_languages("Enable News", 'message', self.language)
+      label=translate_to_all_languages("notifications.disable_news", 'message', self.language) if self.news else translate_to_all_languages("notifications.enable_news", 'message', self.language)
     )
     news_toggle.callback = self.newstoggle_callback
     self.add_item(news_toggle)
@@ -350,7 +359,7 @@ class конфиг(View):
       row=0,
       style=ButtonStyle.danger if self.important else ButtonStyle.success,
       emoji="❌" if self.important else "✔",
-      label=translate_to_all_languages("Disable Important", 'message', self.language) if self.important else translate_to_all_languages("Enable Important", 'message', self.language)
+      label=translate_to_all_languages("notifications.disable_important", 'message', self.language) if self.important else translate_to_all_languages("notifications.enable_important", 'message', self.language)
     )
     important_toggle.callback = self.importanttoggle_callback
     self.add_item(important_toggle)
@@ -359,14 +368,14 @@ class конфиг(View):
       row=0,
       style=ButtonStyle.secondary,
       emoji="🚨",
-      label=translate_to_all_languages("Critical всегда включен", 'message', self.language),
+      label=translate_to_all_languages("notifications.critical_always_on", 'message', self.language),
       disabled=True
     )
     self.add_item(critical_label)
 
     news_channel_select = ChannelSelect(
       row=1,
-      placeholder='📰 ' + translate_to_all_languages("Канал News", 'message', self.language),
+      placeholder='📰 ' + translate_to_all_languages("notifications.news_channel", 'message', self.language),
       channel_types=[ChannelType.text, ChannelType.forum, ChannelType.news, ChannelType.news_thread]
     )
     news_channel_select.callback = self.newschannel_callback
@@ -374,7 +383,7 @@ class конфиг(View):
 
     important_channel_select = ChannelSelect(
       row=2,
-      placeholder='⭐ ' + translate_to_all_languages("Канал Important", 'message', self.language),
+      placeholder='⭐ ' + translate_to_all_languages("notifications.important_channel", 'message', self.language),
       channel_types=[ChannelType.text, ChannelType.forum, ChannelType.news, ChannelType.news_thread]
     )
     important_channel_select.callback = self.importantchannel_callback
@@ -382,7 +391,7 @@ class конфиг(View):
 
     critical_channel_select = ChannelSelect(
       row=3,
-      placeholder='🚨 ' + translate_to_all_languages("Канал Critical", 'message', self.language),
+      placeholder='🚨 ' + translate_to_all_languages("notifications.critical_channel", 'message', self.language),
       channel_types=[ChannelType.text, ChannelType.forum, ChannelType.news, ChannelType.news_thread]
     )
     critical_channel_select.callback = self.criticalchannel_callback
@@ -393,7 +402,7 @@ class конфиг(View):
 
     ttlchannel_select = ChannelSelect(
       row=1,
-      placeholder=translate_to_all_languages("Выберите канал", 'message', self.language),
+      placeholder=translate_to_all_languages("general.select_channel", 'message', self.language),
       channel_types=[ChannelType.text, ChannelType.forum, ChannelType.news, ChannelType.news_thread]
     )
     ttlchannel_select.callback = self.ttlchannel_callback
@@ -402,7 +411,7 @@ class конфиг(View):
     choosetime_button = Button(
       style=ButtonStyle.primary,
       emoji='⏳',
-      label=translate_to_all_languages("Время до удаления", 'message', self.language)
+      label=translate_to_all_languages("settings.time_until_deletion", 'message', self.language)
     )
     choosetime_button.callback = self.choosetime_callback
     self.add_item(choosetime_button)
@@ -441,20 +450,20 @@ class конфиг(View):
     if old and interaction.guild.get_channel(old) and tm and se:
       gl = locale(interaction.guild_locale)
       fields = [{
-        'name': await tm.translate_message("Значение До", gl),
+        'name': await tm.translate_message("general.value_before", gl),
         'value': f"{old} | <#{old}>",
         'inline': True
       }, {
-        'name': await tm.translate_message("Значение После", gl),
+        'name': await tm.translate_message("general.value_after", gl),
         'value': f"{channel_id} | <#{channel_id}>",
         'inline': True
       }]
       await se.send_embed(
-        title=await tm.translate_message("Изменение Конфига Бота", gl),
-        description="### " + await tm.translate_message("Изменение Канала Логов", gl),
+        title=await tm.translate_message("config.change_title", gl),
+        description="### " + await tm.translate_message("config.change_log_channel", gl),
         color=Colour.yellow(),
         fields=fields,
-        footer_text=await tm.translate_message("Изменение Канала Логов", gl),
+        footer_text=await tm.translate_message("config.change_log_channel", gl),
         author_text=interaction.user.name,
         author_icon=interaction.user.display_avatar.url,
         guild_id=interaction.guild.id,
@@ -488,27 +497,27 @@ class конфиг(View):
     if mod_log and interaction.guild.get_channel(mod_log) and tm and se:
       gl = locale(interaction.guild_locale)
       fields = [{
-        'name': await tm.translate_message("Значение До", gl),
+        'name': await tm.translate_message("general.value_before", gl),
         'value': str(old_val),
         'inline': True
       }, {
-        'name': await tm.translate_message("Значение После", gl),
+        'name': await tm.translate_message("general.value_after", gl),
         'value': str(new_val),
         'inline': True
       }]
       await se.send_embed(
-        title=await tm.translate_message("Изменение Конфига Бота", gl),
-        description="### " + await tm.translate_message("Изменение Авто-модерации", gl),
+        title=await tm.translate_message("config.change_title", gl),
+        description="### " + await tm.translate_message("config.change_automod", gl),
         color=Colour.yellow(),
         fields=fields,
-        footer_text=await tm.translate_message("Изменение Авто-модерации", gl),
+        footer_text=await tm.translate_message("config.change_automod", gl),
         author_text=interaction.user.name,
         author_icon=interaction.user.display_avatar.url,
         guild_id=interaction.guild.id,
         channel_id=mod_log
       )
 
-    await self.update_callback("automoderation", translate_to_all_languages("Toggled", "message", self.language))
+    await self.update_callback("automoderation", translate_to_all_languages("general.toggled", "message", self.language))
 
   async def automoderationbuttonchangemod_callback(self, interaction: Interaction):
     if not await self.guard(interaction):
@@ -535,34 +544,34 @@ class конфиг(View):
     if mod_log and interaction.guild.get_channel(mod_log) and tm and se:
       gl = locale(interaction.guild_locale)
       fields = [{
-        'name': await tm.translate_message("Значение До", gl),
+        'name': await tm.translate_message("general.value_before", gl),
         'value': str(old_type),
         'inline': True
       }, {
-        'name': await tm.translate_message("Значение После", gl),
+        'name': await tm.translate_message("general.value_after", gl),
         'value': str(new_type),
         'inline': True
       }]
       await se.send_embed(
-        title=await tm.translate_message("Изменение Конфига Бота", gl),
-        description="### " + await tm.translate_message("Изменение Авто-модерации", gl),
+        title=await tm.translate_message("config.change_title", gl),
+        description="### " + await tm.translate_message("config.change_automod", gl),
         color=Colour.yellow(),
         fields=fields,
-        footer_text=await tm.translate_message("Изменение Авто-модерации", gl),
+        footer_text=await tm.translate_message("config.change_automod", gl),
         author_text=interaction.user.name,
         author_icon=interaction.user.display_avatar.url,
         guild_id=interaction.guild.id,
         channel_id=mod_log
       )
 
-    await self.update_callback("automoderation", translate_to_all_languages("Changed type", "message", self.language))
+    await self.update_callback("automoderation", translate_to_all_languages("general.changed_type", "message", self.language))
 
   async def automoderationbuttonaddrules_callback(self, interaction: Interaction):
     if not await self.guard(interaction):
       return
     if interaction.response.is_done():
       return
-    await interaction.response.send_modal(rulesmodal(self.user_id, self.language, self.update_callback, self.guild_config, self.bot))
+    await interaction.response.send_modal(RulesModal(self.user_id, self.language, self.update_callback, self.guild_config, self.bot))
 
   async def AIbuttonenable_callback(self, interaction: Interaction):
     if not await self.guard(interaction):
@@ -589,27 +598,27 @@ class конфиг(View):
     if mod_log and interaction.guild.get_channel(mod_log) and tm and se:
       gl = locale(interaction.guild_locale)
       fields = [{
-        'name': await tm.translate_message("Значение До", gl),
+        'name': await tm.translate_message("general.value_before", gl),
         'value': str(old_val),
         'inline': True
       }, {
-        'name': await tm.translate_message("Значение После", gl),
+        'name': await tm.translate_message("general.value_after", gl),
         'value': str(new_val),
         'inline': True
       }]
       await se.send_embed(
-        title=await tm.translate_message("Изменение Конфига Бота", gl),
-        description="### " + await tm.translate_message("Изменение ИИ", gl),
+        title=await tm.translate_message("config.change_title", gl),
+        description="### " + await tm.translate_message("config.change_ai", gl),
         color=Colour.yellow(),
         fields=fields,
-        footer_text=await tm.translate_message("Изменение ИИ", gl),
+        footer_text=await tm.translate_message("config.change_ai", gl),
         author_text=interaction.user.name,
         author_icon=interaction.user.display_avatar.url,
         guild_id=interaction.guild.id,
         channel_id=mod_log
       )
 
-    await self.update_callback("AI", translate_to_all_languages("Toggled", "message", self.language))
+    await self.update_callback("AI", translate_to_all_languages("general.toggled", "message", self.language))
 
   async def wordchannel_callback(self, interaction: Interaction):
     if not await self.guard(interaction):
@@ -652,9 +661,9 @@ class конфиг(View):
 
     tm = self.bot.get_cog("TranslateMessage")
     if tm:
-      await interaction.followup.send(await tm.translate_message("Словарь Сброшен.", self.language), ephemeral=True)
+      await interaction.followup.send(await tm.translate_message("game.dictionary_reset", self.language), ephemeral=True)
 
-    await self.update_callback("games", translate_to_all_languages("Words reset", "message", self.language))
+    await self.update_callback("games", translate_to_all_languages("game.words_reset", "message", self.language))
 
   async def filter_callback(self, interaction: Interaction):
     if not await self.guard(interaction):
@@ -768,7 +777,7 @@ class конфиг(View):
     channel = interaction.guild.get_channel(channel_id)
 
     if not channel:
-      await interaction.followup.send(await tm.translate_message("Канал Не Найден.", self.language), ephemeral=True)
+      await interaction.followup.send(await tm.translate_message("error.channel_not_found", self.language), ephemeral=True)
       return
     
     perms = channel.permissions_for(interaction.guild.me)
@@ -788,10 +797,10 @@ class конфиг(View):
 
       tm = self.bot.get_cog("TranslateMessage")
       if tm:
-        await interaction.followup.send(await tm.translate_message("Сначала Выберите Канал.", self.language), ephemeral=True)
+        await interaction.followup.send(await tm.translate_message("error.select_channel_first", self.language), ephemeral=True)
       return
     
-    await interaction.response.send_modal(ttlmodal(self.user_id, self.language, self.update_callback, self.guild_config, self.ttl_channel_id, self.bot))
+    await interaction.response.send_modal(TtlModal(self.user_id, self.language, self.update_callback, self.guild_config, self.ttl_channel_id, self.bot))
 
 class Config(commands.Cog):
   def __init__(self, bot):
@@ -800,33 +809,32 @@ class Config(commands.Cog):
   @slash_command(
     default_member_permissions=8,
     description="Команда Для Настройки Меня.",
-    name_localizations=translate_to_all_languages('settings', 'name'),
-    description_localizations=translate_to_all_languages('Команда Для Настройки Меня.', 'description')
+    name_localizations=translate_to_all_languages('command.settings', 'name'),
+    description_localizations=translate_to_all_languages('settings.command_desc', 'description')
   )
-  async def настройки(self, interaction: Interaction):
+  async def settings(self, interaction: Interaction):
     try:
+      tm = self.bot.get_cog("TranslateMessage")
+      gd = self.bot.get_cog("GetData")
+      gi = self.bot.get_cog("GetInvite")
+      se = self.bot.get_cog("SendEmbed")
+
       user_id = interaction.user.id
       current_time = time()
 
       if user_id in slash_command_cooldown:
         last_command_time = slash_command_cooldown[user_id]['time']
         if current_time - last_command_time < 10:
-          tm = self.bot.get_cog("TranslateMessage")
-          if tm:
-            ul = locale(interaction.locale)
-            await interaction.response.send_message(
-              await tm.translate_message("You write commands so fast,", ul) + f" **<t:{round(last_command_time+10)}:R>** " + await tm.translate_message("you can write commands.", ul),
-              ephemeral=True
-            )
+          ul = locale(interaction.locale)
+          await interaction.response.send_message(
+            await tm.translate_message("error.rate_limit_part1", ul) + f" **<t:{round(last_command_time+10)}:R>** " + await tm.translate_message("error.rate_limit_part2", ul),
+            ephemeral=True
+          )
           return
         else:
           slash_command_cooldown[user_id]['time'] = current_time
       else:
         slash_command_cooldown[user_id] = {'time': current_time}
-
-      gd = self.bot.get_cog("GetData")
-      tm = self.bot.get_cog("TranslateMessage")
-      gi = self.bot.get_cog("GetInvite")
 
       user_settings = {}
       if gd:
@@ -837,11 +845,11 @@ class Config(commands.Cog):
 
       if not interaction.guild:
         if tm:
-          await interaction.followup.send(await tm.translate_message("Эта команда работает только на серверах.", language), ephemeral=True)
+          await interaction.followup.send(await tm.translate_message("error.command_only_on_servers", language), ephemeral=True)
         return
       if not interaction.user.guild_permissions.administrator:
         if tm:
-          await interaction.followup.send(await tm.translate_message("Ты Не Администратор.", language), ephemeral=True)
+          await interaction.followup.send(await tm.translate_message("error.not_admin", language), ephemeral=True)
         return
 
       invite = None
@@ -849,42 +857,40 @@ class Config(commands.Cog):
         invite = await gi.invite(interaction.guild)
 
       async def update_config(value: str, data=None):
-        gd2 = self.bot.get_cog("GetData")
         cfg = {}
-        if gd2:
-          cfg = await gd2.get_data(
-            interaction.guild.id,
-            ['moderation', 'aibot', 'moderation_type', 'mod_log_channel', 'rules', 'word_channel', 'number_channel', 'filter',
-             'news_channel', 'important_channel', 'critical_channel', 'news', 'important', 'ttl_channel'],
-            'guild_settings',
-            'guild_id',
-            interaction.guild
-          )
+        cfg = await gd.get_data(
+          interaction.guild.id,
+          ['moderation', 'aibot', 'moderation_type', 'mod_log_channel', 'rules', 'word_channel', 'number_channel', 'filter',
+           'news_channel', 'important_channel', 'critical_channel', 'news', 'important', 'ttl_channel'],
+          'guild_settings',
+          'guild_id',
+          interaction.guild
+        )
 
         update_config_embed = Embed(
-          title=await tm.translate_message("Настройки", language) if tm else "Настройки",
-          description="### " + (await tm.translate_message("**Выберите, Что Хотите Изменить Во мне!**", language) if tm else "**Выберите, Что Хотите Изменить Во мне!**"),
+          title=await tm.translate_message("general.settings", language) if tm else "Настройки",
+          description="### " + (await tm.translate_message("settings.choose_what_to_change", language) if tm else "**Выберите, Что Хотите Изменить Во мне!**"),
           color=Colour.brand_green(),
           timestamp=datetime.now(timezone.utc)
         )
         update_config_embed.set_author(name=interaction.user.name, icon_url=interaction.user.display_avatar.url)
 
         if value:
-          update_config_embed.description = "## " + (await tm.translate_message("**Вы Выбрали**", language) if tm else "**Вы Выбрали**") + f"\n{value}"
+          update_config_embed.description = "## " + (await tm.translate_message("general.you_selected", language) if tm else "**Вы Выбрали**") + f"\n{value}"
 
         if data:
           update_config_embed.add_field(
-            name=await tm.translate_message("Изменено", language) if tm else "Изменено",
+            name=await tm.translate_message("general.changed", language) if tm else "Изменено",
             value=str(data)[:1024],
             inline=False
           )
 
-        view = конфиг(interaction.user.id, language, update_config, value, cfg, self.bot)
+        view = ConfigView(interaction.user.id, language, update_config, value, cfg, self.bot)
         await update_config_embed_message.edit(embed=update_config_embed, view=view)
 
       update_config_embed = Embed(
-        title=await tm.translate_message("Настройки", language) if tm else "Настройки",
-        description="### " + (await tm.translate_message("**Выберите, Что Хотите Изменить Во мне!**", language) if tm else "**Выберите, Что Хотите Изменить Во мне!**"),
+        title=await tm.translate_message("general.settings", language) if tm else "Настройки",
+        description="### " + (await tm.translate_message("settings.choose_what_to_change", language) if tm else "**Выберите, Что Хотите Изменить Во мне!**"),
         color=Colour.brand_green(),
         timestamp=datetime.now(timezone.utc)
       )
@@ -901,7 +907,7 @@ class Config(commands.Cog):
           interaction.guild
         )
 
-      view = конфиг(interaction.user.id, language, update_config, None, cfg0, self.bot)
+      view = ConfigView(interaction.user.id, language, update_config, None, cfg0, self.bot)
       update_config_embed_message = await interaction.followup.send(embed=update_config_embed, view=view, wait=True)
       await update_config(None)
 
@@ -909,44 +915,40 @@ class Config(commands.Cog):
       traceback_msg = ((''.join(format_exception(type(e), e, e.__traceback__)))[:5000])
       fields = [
         {
-          'name': 'Пользователь',
+          'name': 'User',
           'value': f"{interaction.user.id} | {interaction.user.mention} | {interaction.user.name}",
           'inline': True
         },
         {
-          'name': 'Сервер',
-          'value': f"{interaction.guild.id} | {invite} | {interaction.guild.name}" if interaction.guild else "ЛС",
+          'name': 'Server',
+          'value': f"{interaction.guild.id} | {invite} | {interaction.guild.name}" if interaction.guild else "DM",
           'inline': True
         },
         {
-          'name': 'Канал',
+          'name': 'Channel',
           'value': f"<#{interaction.channel.id}>(`{interaction.channel.id}` | `{interaction.channel.name if interaction.guild else 'DM'}`)",
           'inline': True
         },
         {
-          'name': 'Ошибка',
+          'name': 'Error',
           'value': traceback_msg,
           'inline': False
         }
       ]
-      se = self.bot.get_cog("SendEmbed")
-      if se:
-        await se.send_embed(
-          title=f"Произошла ошибка при вводе команды /{interaction.application_command.name}",
-          description=str(e)[:2048],
-          color=Colour.red(),
-          fields=fields,
-          footer_text='Ошибка в cogs.commands.🔧other.config',
-          author_text='ERROR',
-          author_icon=interaction.user.display_avatar.url,
-          channel_id=1159138280651104256
-        )
-      tm = self.bot.get_cog("TranslateMessage")
-      if tm:
-        ul = locale(interaction.locale)
-        await interaction.followup.send(await tm.translate_message("Произошла Ошибка, Логи Ошибки Сохранены, В Ближайшее Время Их Будут Рассматривать.", ul), ephemeral=True)
+      await se.send_embed(
+        title=f"Error executing /{interaction.application_command.name}",
+        description=str(e)[:2048],
+        color=Colour.red(),
+        fields=fields,
+        footer_text='Error in cogs.commands.🔨moderation.config',
+        author_text='ERROR',
+        author_icon=interaction.user.display_avatar.url,
+        channel_id=1159138280651104256
+      )
+      ul = locale(interaction.locale)
+      await interaction.followup.send(await tm.translate_message("error.occurred_logs_saved_review", ul), ephemeral=True)
 
-  setattr(настройки, "extras", {"description": "С Помощью Этой Команды Вы Можете На Своем Сервере Полностью Изменить Меня!"})
+  setattr(settings, "extras", {"description": "Configure server settings"})
 
 def setup(bot: commands.Bot):
   bot.add_cog(Config(bot))

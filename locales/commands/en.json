@@ -96,5 +96,18 @@
   "privacy.insert_name": "insert_data",
   "privacy.insert_desc": "Import Discord data",
   "privacy.file_param": "file",
-  "privacy.file_desc": "ZIP file with Discord data"
+  "privacy.file_desc": "ZIP file with Discord data",
+  "general.view_lower": "View lower",
+  "command.help": "Help",
+  "about.all_about_me": "All about me",
+  "general.personally": "Personally",
+  "general.ephemeral_desc": "Ephemeral message description",
+  "general.ephemeral_desc_typo": "Ephemeral message description",
+  "other.translate_name": "Translate message",
+  "command.settings": "Settings",
+  "settings.command_desc": "Command description",
+  "moderation.report_message_name": "Report message",
+  "report.user_title": "User report",
+  "privacy.command_name": "Privacy",
+  "privacy.command_desc": "Privacy command description"
 }
