@@ -1,123 +1,295 @@
 from datetime import datetime, timezone
-from nextcord import Embed, IntegrationType, InteractionContextType, slash_command, Interaction, Color, ButtonStyle
-from nextcord.ui import View, Button
-from nextcord.ext import commands
-import Utils.translate_to_all_languages
 from time import time
-from Utils.config import slash_command_cooldown
 from traceback import format_exception
+
+from nextcord import Embed, IntegrationType, InteractionContextType, slash_command, Interaction, Color, ButtonStyle, SelectOption
+from nextcord.ui import View, Button, Select
+from nextcord.ext import commands
+
+import Utils.translate_to_all_languages
+from Utils.config import slash_command_cooldown
+from Utils.privacy_flags import SECTION_ORDER, SECTION_LABELS, FLAG_DEPENDENCIES, SECTION_FLAGS, FLAG_TEXTS, PRESETS, VALID_FLAGS
 
 translate_to_all_languages = Utils.translate_to_all_languages.translate_to_all_languages
 
-def _return_emoji(value:bool):
-  if value==False:
-    return "✅"
-  else:
-    return "❌"
+def _locale_to_language(locale: str) -> str:
+  if locale in ("en-US", "en-GB"):
+    return "en"
+  if locale == "es-ES":
+    return "es"
+  if locale == "sv-SE":
+    return "sv"
+  return locale
 
-class конф_меню(View):
-  def __init__(self, user_id:int, language:str, update_callback, privacy:dict, bot:commands.Bot, timeout=60*5):
+def _state_emoji(value: bool) -> str:
+  return "🟢" if value else "🔴"
+
+def _state_style(value: bool) -> ButtonStyle:
+  return ButtonStyle.green if value else ButtonStyle.red
+
+def _t(text, lang):
+  result = translate_to_all_languages(text, "message", lang)
+  return result if isinstance(result, str) else str(result.get(lang, text))
+
+class PrivacySectionSelect(Select):
+  def __init__(self, view: "PrivacySettingsView"):
+    self.view_ref = view
+    options = []
+    for section in SECTION_ORDER:
+      label = _t(SECTION_LABELS[section], view.language)
+      options.append(
+        SelectOption(
+          label=label,
+          value=section,
+          default=(section == view.section),
+        )
+      )
+    super().__init__(
+      placeholder=_t("privacy.select_section", view.language),
+      options=options,
+      row=0,
+    )
+
+  async def callback(self, interaction: Interaction):
+    await self.view_ref.set_section(interaction, self.values[0])
+
+class PrivacyToggleButton(Button):
+  def __init__(self, view: "PrivacySettingsView", flag: str, label: str, row: int = 1):
+    self.view_ref = view
+    self.flag = flag
+    value = view.privacy.get(flag, False)
+    dependency = FLAG_DEPENDENCIES.get(flag)
+    disabled = bool(dependency and not view.privacy.get(dependency, False))
+    super().__init__(
+      style=_state_style(value),
+      label=label,
+      emoji=_state_emoji(value),
+      row=row,
+      disabled=disabled,
+    )
+
+  async def callback(self, interaction: Interaction):
+    await self.view_ref.toggle_flag(interaction, self.flag)
+
+class PrivacyPresetButton(Button):
+  def __init__(self, view: "PrivacySettingsView", preset_key: str, label: str, row: int = 4):
+    self.view_ref = view
+    self.preset_key = preset_key
+    super().__init__(
+      style=ButtonStyle.secondary,
+      label=label,
+      row=row,
+    )
+
+  async def callback(self, interaction: Interaction):
+    await self.view_ref.apply_preset(interaction, self.preset_key)
+
+class PrivacyResetButton(Button):
+  def __init__(self, view: "PrivacySettingsView", label: str, row: int = 4):
+    self.view_ref = view
+    super().__init__(
+      style=ButtonStyle.danger,
+      label=label,
+      row=row,
+    )
+
+  async def callback(self, interaction: Interaction):
+    await self.view_ref.reset_all(interaction)
+
+class PrivacySettingsView(View):
+  def __init__(self, user_id: int, user_name: str, avatar_url: str, language: str, privacy: dict, update_data, timeout: int = 300):
     super().__init__(timeout=timeout)
-    self.language = language
     self.user_id = user_id
-    self.update_callback = update_callback
+    self.user_name = user_name
+    self.avatar_url = avatar_url
+    self.language = language
     self.privacy = privacy
-    self.bot = bot
-    self.get_data = self.bot.get_cog("GetData")
-    self.update_data = self.bot.get_cog("UpdateData")
-    if not (self.get_data and self.update_data):
-      raise RuntimeError("Cogs not loaded")
-    self.add_privacy()
+    self.update_data = update_data
+    self.section = "overview"
+    self.refresh_components()
 
-  def add_privacy(self):
+  def normalize_dependencies(self):
+    for child, parent in FLAG_DEPENDENCIES.items():
+      if self.privacy.get(child, False) and not self.privacy.get(parent, False):
+        self.privacy[parent] = True
+      if not self.privacy.get(parent, False):
+        self.privacy[child] = False
+
+  def refresh_components(self):
     self.clear_items()
-    save_messages = Button(
-      style=ButtonStyle.green if not self.privacy['save_messages'] else ButtonStyle.red,
-      label=translate_to_all_languages("Сообщения", 'message', self.language),
-      row=0,
-      emoji=_return_emoji(self.privacy['save_messages'])
-    )
-    save_messages.callback = lambda i: self.save_flags(i, 'save_messages')
-    self.add_item(save_messages)
+    self.add_item(PrivacySectionSelect(self))
 
-    save_message_data = Button(
-      style=ButtonStyle.green if not self.privacy['save_message_data'] else ButtonStyle.red,
-      label=translate_to_all_languages("Контент Сообщений", 'message', self.language),
-      row=1,
-      emoji=_return_emoji(self.privacy['save_message_data'])
-    )
-    save_message_data.callback = lambda i: self.save_flags(i, 'save_message_data')
-    self.add_item(save_message_data)
+    for idx, flag in enumerate(SECTION_FLAGS.get(self.section, []), start=1):
+      label = _t(FLAG_TEXTS[flag], self.language)
+      self.add_item(PrivacyToggleButton(self, flag, label, row=idx))
 
-    save_voice = Button(
-      style=ButtonStyle.green if not self.privacy['save_voice'] else ButtonStyle.red,
-      label=translate_to_all_languages("Войс-Активность", 'message', self.language),
-      row=0,
-      emoji=_return_emoji(self.privacy['save_voice'])
+    self.add_item(
+      PrivacyPresetButton(
+        self,
+        "private",
+        _t("privacy.preset_strict", self.language),
+      )
     )
-    save_voice.callback = lambda i: self.save_flags(i, 'save_voice')
-    self.add_item(save_voice)
+    self.add_item(
+      PrivacyPresetButton(
+        self,
+        "balanced",
+        _t("privacy.preset_balanced", self.language),
+      )
+    )
+    self.add_item(
+      PrivacyPresetButton(
+        self,
+        "analytics",
+        _t("privacy.preset_analytics", self.language),
+      )
+    )
+    self.add_item(
+      PrivacyResetButton(
+        self,
+        _t("privacy.reset_all", self.language),
+      )
+    )
 
-    save_activity = Button(
-      style=ButtonStyle.green if not self.privacy['save_activity'] else ButtonStyle.red,
-      label=translate_to_all_languages("Discord Активность", 'message', self.language),
-      row=1,
-      emoji=_return_emoji(self.privacy['save_activity'])
-    )
-    save_activity.callback = lambda i: self.save_flags(i, 'save_activity')
-    self.add_item(save_activity)
+  async def interaction_check(self, interaction: Interaction) -> bool:
+    if interaction.user.id != self.user_id:
+      if not interaction.response.is_done():
+        await interaction.response.send_message(
+          _t("privacy.menu_not_yours", self.language),
+          ephemeral=True,
+        )
+      return False
+    return True
 
-    save_activity_data = Button(
-      style=ButtonStyle.green if not self.privacy['save_activity_data'] else ButtonStyle.red,
-      label=translate_to_all_languages("Данные Активности", 'message', self.language),
-      row=0,
-      emoji=_return_emoji(self.privacy['save_activity_data'])
-    )
-    save_activity_data.callback = lambda i: self.save_flags(i, 'save_activity_data')
-    self.add_item(save_activity_data)
+  async def set_section(self, interaction: Interaction, section: str):
+    self.section = section
+    self.refresh_components()
+    await interaction.response.edit_message(embed=await self.build_embed(), view=self)
 
-    save_activity_profile = Button(
-      style=ButtonStyle.green if not self.privacy['save_activity_profile'] else ButtonStyle.red,
-      label=translate_to_all_languages("Данные Профиля", 'message', self.language),
-      row=0,
-      emoji=_return_emoji(self.privacy['save_activity_profile'])
-    )
-    save_activity_profile.callback = lambda i: self.save_flags(i, 'save_activity_profile')
-    self.add_item(save_activity_profile)
-
-    track_activity = Button(
-      style=ButtonStyle.green if not self.privacy['track_activity'] else ButtonStyle.red,
-      label=translate_to_all_languages("Диагностика команд", 'message', self.language),
-      row=1,
-      emoji=_return_emoji(self.privacy['track_activity'])
-    )
-    track_activity.callback = lambda i: self.save_flags(i, 'track_activity')
-    self.add_item(track_activity)
- 
-  async def save_flags(self, interaction:Interaction, name:str):
-    if interaction.user.id!=self.user_id:
-      return
-    if interaction.response.is_done():
-      return
+  async def toggle_flag(self, interaction: Interaction, flag: str):
     await interaction.response.defer()
-    value = self.privacy[name]
-    data = {
-      name: not value
-    }
-    await self.update_data.update_data(interaction.user.id, data, 'user_privacy', 'user_id', interaction.guild)
-    self.privacy[name] = not value
-    self.add_privacy()
-    await interaction.edit_original_message(view=self)
-    await self.update_callback(self.privacy)
+
+    current = bool(self.privacy.get(flag, False))
+    self.privacy[flag] = not current
+    self.normalize_dependencies()
+
+    changes = {flag: self.privacy[flag]}
+    for child, parent in FLAG_DEPENDENCIES.items():
+      if flag == parent and not self.privacy.get(parent, False):
+        self.privacy[child] = False
+        changes[child] = False
+
+    for key, value in changes.items():
+      await self.update_data.update_data(
+        self.user_id,
+        {key: value},
+        "user_privacy",
+        "user_id",
+        interaction.guild,
+      )
+
+    self.refresh_components()
+    await interaction.edit_original_message(embed=await self.build_embed(), view=self)
+
+
+  async def apply_preset(self, interaction: Interaction, preset_key: str):
+    await interaction.response.defer()
+
+    preset = PRESETS[preset_key].copy()
+    self.privacy.update(preset)
+    self.normalize_dependencies()
+
+    for key, value in preset.items():
+      await self.update_data.update_data(
+        self.user_id,
+        {key: value},
+        "user_privacy",
+        "user_id",
+        interaction.guild,
+      )
+
+    self.refresh_components()
+    await interaction.edit_original_message(embed=await self.build_embed(), view=self)
+
+
+  async def reset_all(self, interaction: Interaction):
+    await interaction.response.defer()
+
+    for key in list(self.privacy.keys()):
+      self.privacy[key] = False
+      await self.update_data.update_data(
+        self.user_id,
+        {key: False},
+        "user_privacy",
+        "user_id",
+        interaction.guild,
+      )
+
+    self.refresh_components()
+    await interaction.edit_original_message(embed=await self.build_embed(), view=self)
+
+  async def build_embed(self) -> Embed:
+    title = _t("privacy.title", self.language)
+    section_name = _t(SECTION_LABELS[self.section], self.language)
+
+    lines = []
+
+    if self.section == "overview":
+      lines.append(_t("privacy.overview_description", self.language))
+      lines.append("")
+      for section in SECTION_ORDER[1:]:
+        flags = SECTION_FLAGS[section]
+        enabled = sum(1 for f in flags if self.privacy.get(f, False))
+        total = len(flags)
+        lines.append(
+          f"• **{_t(SECTION_LABELS[section], self.language)}** — {enabled}/{total}"
+        )
+      lines.append("")
+      lines.append(_t("privacy.overview_footer", self.language))
+    else:
+      lines.append(_t("privacy.section_instructions", self.language))
+      lines.append("")
+      for flag in SECTION_FLAGS[self.section]:
+        value = self.privacy.get(flag, False)
+        dep = FLAG_DEPENDENCIES.get(flag)
+        label = _t(FLAG_TEXTS[flag], self.language)
+        line = f"{_state_emoji(value)} **{label}**"
+        if dep and not self.privacy.get(dep, False):
+          parent_label = _t(FLAG_TEXTS[dep], self.language)
+          line += f"\n  └ {_t('privacy.depends_on', self.language)}: **{parent_label}**"
+        lines.append(str(line))
+
+    footer = _t(
+      "privacy.save_info_footer",
+      self.language,
+    )
+
+    embed = Embed(
+      title=title,
+      description="\n".join(map(str, lines)),
+      color=Color.blurple(),
+      timestamp=datetime.now(timezone.utc),
+    )
+    embed.add_field(
+      name=_t("privacy.current_section", self.language),
+      value=section_name,
+      inline=False,
+    )
+    embed.set_author(
+      name=self.user_name,
+      icon_url=self.avatar_url,
+    )
+    embed.set_footer(text=footer)
+    return embed
 
 class Privacy(commands.Cog):
-  def __init__(self,bot):
-    self.bot:commands.Bot = bot
-  
+  def __init__(self, bot):
+    self.bot = bot
+
   @slash_command(
-    description="Управление сбором данных.",
-    name_localizations=translate_to_all_languages('конфиденциальность', 'name'),
-    description_localizations=translate_to_all_languages('Управление сбором данных.', 'description'),
+    description="Manage your privacy settings",
+    name_localizations=translate_to_all_languages("privacy.command_name", "name"),
+    description_localizations=translate_to_all_languages("privacy.command_desc", "description"),
     integration_types=[
       IntegrationType.user_install,
       IntegrationType.guild_install,
@@ -126,118 +298,104 @@ class Privacy(commands.Cog):
       InteractionContextType.guild,
       InteractionContextType.bot_dm,
       InteractionContextType.private_channel,
-    ],)
-  async def конфиденциальность(self,interaction: Interaction):
+    ],
+  )
+  async def privacy(self, interaction: Interaction):
     try:
       user_id = interaction.user.id
       current_time = time()
 
-      translate_message = self.bot.get_cog("TranslateMessage")
-      get_data = self.bot.get_cog("GetData")
-      get_invite = self.bot.get_cog("GetInvite")
-      send_embed = self.bot.get_cog("SendEmbed")
-      if not (translate_message and get_data and get_invite and send_embed):
+      tm = self.bot.get_cog("TranslateMessage")
+      gd = self.bot.get_cog("GetData")
+      gi = self.bot.get_cog("GetInvite")
+      se = self.bot.get_cog("SendEmbed")
+      ud = self.bot.get_cog("UpdateData")
+      if not (tm and gd and gi and se and ud):
         return
 
       if user_id in slash_command_cooldown:
-        last_command_time = slash_command_cooldown[user_id]['time']
+        last_command_time = slash_command_cooldown[user_id]["time"]
         if current_time - last_command_time < 10:
-          await interaction.response.send_message(await translate_message.translate_message(f"You write commands so fast,",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv')+f" **<t:{round(last_command_time+10)}:R>** "+await translate_message.translate_message(f"you can write commands.",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv'), ephemeral=True)
+          locale = _locale_to_language(interaction.locale)
+          await interaction.response.send_message(
+            await tm.translate_message("error.rate_limit", locale, variables={"time": f"<t:{round(last_command_time + 10)}:R>"}),
+            ephemeral=True,
+          )
           return
-        else:
-          slash_command_cooldown[user_id]['time'] = current_time
+        slash_command_cooldown[user_id]["time"] = current_time
       else:
-        slash_command_cooldown[user_id] = {'time': current_time}
+        slash_command_cooldown[user_id] = {"time": current_time}
 
-      user_settings = await get_data.get_data(user_id,['language'],'users','user_id',interaction.guild)
-      language = user_settings['language']
+      user_settings = await gd.get_data(user_id, ["language"], "users", "user_id", interaction.guild)
+      language = user_settings["language"]
 
-      user_privacy = await get_data.get_data(user_id,['save_messages', 'save_message_data', 'save_voice', 'save_activity', 'save_activity_data', 'save_activity_profile', 'track_activity'],'user_privacy','user_id',interaction.guild)
-      
-      await interaction.response.defer(ephemeral=True)
-
-      async def build_desc(data: dict) -> str:
-        parts = [
-          await translate_message.translate_message("🛡️ **Конфиденциальность и данные**", language), "\n\n",
-          await translate_message.translate_message("Я стараюсь быть максимально прозрачным: **что сохраняю** и **зачем**.", language), "\n\n",
-          await translate_message.translate_message("По умолчанию я сохраняю только технические данные для стабильной работы:", language), "\n",
-          await translate_message.translate_message("• 🧪 ошибки при использовании команд", language), "\n",
-          await translate_message.translate_message("• ⚙️ вводимые команды (для поиска багов и улучшения функций)", language), "\n\n",
-          await translate_message.translate_message("📦 **Срок хранения:** данные хранятся **без ограничения по времени**, пока вы сами не удалите их.", language), "\n\n",
-          await translate_message.translate_message("🔐 **Настройки ниже:**", language), "\n",
-
-          f"{_return_emoji(not data['save_messages'])} " + await translate_message.translate_message("**Сообщения (метаданные)** — `UserId`, `GuildId`, `ChannelId`, ссылка, время отправки. Нужны для графика активности.", language), "\n",
-          f"{_return_emoji(not data['save_message_data'])} " + await translate_message.translate_message("**Контент сообщений** — текст сообщений и вложения. Работает только если включены **Сообщения**.", language), "\n",
-          f"{_return_emoji(not data['save_voice'])} " + await translate_message.translate_message("**Войс-активность** — вход/выход/переход между войс-каналами (без записи голоса/экрана).", language), "\n",
-          f"{_return_emoji(not data['save_activity'])} " + await translate_message.translate_message("**Discord Активность** — только время и длительность ваших любых активностей.", language), "\n",
-          f"{_return_emoji(not data['save_activity_data'])} " + await translate_message.translate_message("**Данные активности** — полная карточка активности. Работает только если включена **Активность**.", language), "\n",
-          f"{_return_emoji(not data['save_activity_profile'])} " + await translate_message.translate_message("**Данные профиля** — Сохраняет время и все ваши изменения профиля. Работает только если включена **Активность**.", language), "\n",
-          f"{_return_emoji(not data['track_activity'])} " + await translate_message.translate_message("**Диагностика команд** — где и когда использовалась команда (помогает мне находить ошибки и улучшать команды).", language), "\n\n",
-
-          await translate_message.translate_message("🧹 **Управление:** вы всегда можете отключить категории и удалить данные.", language),
-        ]
-        return "".join(parts)
-
-      privacy_embed = Embed(
-        title=await translate_message.translate_message("Конфиденциальность", language),
-        description=(await build_desc(user_privacy)),
-        color=Color.blurple(),
-        timestamp=datetime.now(timezone.utc)
-      )
-      privacy_embed.set_author(
-        name=interaction.user.name,
-        icon_url=interaction.user.display_avatar.url
-      )
-      privacy_embed.set_footer(
-        text=await translate_message.translate_message("Конфиденциальность",language)
+      user_privacy = await gd.get_data(
+        user_id,
+        list(VALID_FLAGS),
+        "user_privacy",
+        "user_id",
+        interaction.guild,
       )
 
-      async def send_privacy_message(data:dict):
-        privacy_embed.description = (await build_desc(data))
-        await helper.edit(embed=privacy_embed, view=view)
-      
-      view = конф_меню(interaction.user.id, language, send_privacy_message, user_privacy, self.bot)
-      helper = await interaction.followup.send(embed=privacy_embed,view=view,wait=True, ephemeral=True)
-      await send_privacy_message(user_privacy)
+      view = PrivacySettingsView(
+        user_id=user_id,
+        user_name=interaction.user.name,
+        avatar_url=interaction.user.display_avatar.url,
+        language=language,
+        privacy=user_privacy,
+        update_data=ud,
+      )
+      embed = await view.build_embed()
+
+      await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
     except Exception as e:
-      invite = await get_invite.invite(interaction.guild)
-      traceback_msg = ((''.join(format_exception(type(e), e, e.__traceback__)))[:5000])
+      invite = await gi.invite(interaction.guild)
+      traceback_msg = "".join(format_exception(type(e), e, e.__traceback__))[:5000]
       fields = [
         {
-          'name':'Пользователь',
-          'value':f"{interaction.user.id} | {interaction.user.mention} | {interaction.user.name}",
-          'inline':True
+          "name": "User",
+          "value": f"{interaction.user.id} | {interaction.user.mention} | {interaction.user.name}",
+          "inline": True,
         },
         {
-          'name':'Сервер',
-          'value':f"{interaction.guild.id} | {invite} | {interaction.guild.name}" if interaction.guild else "ЛС",
-          'inline':True
+          "name": "Server",
+          "value": f"{interaction.guild.id} | {invite} | {interaction.guild.name}" if interaction.guild else "DM",
+          "inline": True,
         },
         {
-          'name':'Канал',
-          'value':f"<#{interaction.channel.id}>(`{interaction.channel.id}` | `{interaction.channel.name if interaction.guild else f'[<@{interaction.user.id}>({interaction.user.id} | {interaction.user.name}({interaction.user.display_name})]'}`)",
-          'inline':True
+          "name": "Channel",
+          "value": f"<#{interaction.channel.id}>(`{interaction.channel.id}` | `{interaction.channel.name if interaction.guild else 'DM'}`)",
+          "inline": True,
         },
         {
-          'name':'Ошибка',
-          'value':traceback_msg,
-          'inline':False
-        }
+          "name": "Error",
+          "value": traceback_msg,
+          "inline": False,
+        },
       ]
-      await send_embed.send_embed(
-        title=f"Произошла ошибка при вводе команды /{interaction.application_command.name}",
+      await se.send_embed(
+        title=f"Error in command /{interaction.application_command.name}",
         description=str(e)[:2048],
         color=Color.red(),
         fields=fields,
-        footer_text=f'Ошибка в cogs.commands.🔧other.help',
-        author_text='ЕРРОР',
+        footer_text="Error in privacy command",
+        author_text="ERROR",
         author_icon=interaction.user.display_avatar.url,
-        channel_id=1159138280651104256
+        channel_id=1159138280651104256,
       )
-      await interaction.followup.send(await translate_message.translate_message(f"Произошла Ошибка, Логи Ошибки Сохранены, В Ближайшее Время Их Будут Рассматривать.",interaction.locale if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'en' if interaction.locale=='en-US' or interaction.locale=='en-GB' and interaction.locale!='es-ES' and interaction.locale!='sv-SE' else 'es' if interaction.locale!='en-US' and interaction.locale!='en-GB' and interaction.locale=='es-ES' and interaction.locale!='sv-SE' else 'sv'), ephemeral=True)
+      locale = _locale_to_language(interaction.locale)
+      error_text = await tm.translate_message("error.occurred_logs_saved_review", locale)
+      if interaction.response.is_done():
+        await interaction.followup.send(error_text, ephemeral=True)
+      else:
+        await interaction.response.send_message(error_text, ephemeral=True)
 
-  setattr(конфиденциальность,"extras",{"description": "Эта команда позволяет вам выбрать, что именно вы разрешаете боту сохранять связанное с вашей активностью в Discord."})
+  setattr(
+    privacy,
+    "extras",
+    {"description": "Configure what data the bot is allowed to collect about your activity."},
+  )
 
-def setup(bot:commands.Bot):
+def setup(bot: commands.Bot):
   bot.add_cog(Privacy(bot))
