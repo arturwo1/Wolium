@@ -1,4 +1,4 @@
-# Wolium — Global Economy, Moderation & Activity Discord Bot
+# Wolium™ — Global Economy, Moderation & Activity Discord Bot
 
 **Wolium** is a multi-system Discord bot focused on **global progression**, **server activity**, and **practical moderation tools**.
 
@@ -181,4 +181,4 @@ https://discord.gg/MXupeAApza
 
 ---
 
-**Wolium — One bot. Multiple systems. Clean design.**
+**Wolium™ — One bot. Multiple systems. Clean design.**

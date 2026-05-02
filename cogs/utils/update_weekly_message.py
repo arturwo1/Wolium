@@ -127,7 +127,7 @@ class UpdateWeeklyMessage(commands.Cog):
         else:
           message = f"# **К Сожелению Выходные Закончились Но Щас Идет Праздник `{holiday['name']}`, Который Начался В `{holiday['start_date'].strftime('%d.%m.%Y')}` И Закончится В `{holiday['end_date'].strftime('%d.%m.%Y')}`(Длительность: *`{holiday['duration']} дней`*)!**\nВ Магазине Активированы Скидки(`х2`)\n Ждите Следующие Выходные Если Хотите Ещё Выше Скидки!(Главное Чтоб Праздник Не Прошел) :D"
 
-      if week_message and week_message.content != message:
+      if week_message and message not in week_message.content:
         try:
           await week_message.edit(content=bp1+message)
         except HTTPException as e:

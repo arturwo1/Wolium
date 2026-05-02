@@ -1,6 +1,7 @@
 from nextcord import Guild, Interaction, Colour
 from nextcord.ext import commands
 from asyncio import sleep
+from json import dumps
 
 class OnApplicationCommandCompletion(commands.Cog):
   def __init__(self, bot):
@@ -58,7 +59,7 @@ class OnApplicationCommandCompletion(commands.Cog):
     gd = None
     gi = None
     se = None
-    while not (get_data and gi and se):
+    while not (gd and gi and se):
       gd = self.bot.get_cog("GetData")
       gi = self.bot.get_cog("GetInvite")
       se = self.bot.get_cog("SendEmbed")
@@ -99,6 +100,16 @@ class OnApplicationCommandCompletion(commands.Cog):
       author_icon=f"{user.display_avatar.url}",
       channel_id=1348577723097808977
     )
+
+    if getattr(self.bot, "db_pool") and self.bot.db_pool:
+      user_id = user.id
+      guild_id = guild.id if guild else None
+      channel_id = channel.id if channel else None
+      args = dumps(dict(flat))
+
+      async with self.bot.db_pool.acquire() as conn:
+        async with conn.transaction():
+          await conn.execute("WITH cmd AS (INSERT INTO public.commands (name) VALUES ($5) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id ) INSERT INTO public.user_commands (user_id, guild_id, channel_id, command_id, args) VALUES ($1, $2, $3, (SELECT id FROM cmd), $4)", user_id, guild_id, channel_id, args, command_name)
 
 def setup(bot:commands.Bot):
   bot.add_cog(OnApplicationCommandCompletion(bot))

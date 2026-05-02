@@ -1,4 +1,4 @@
-# Contributing to Wolium
+# Contributing to Wolium™
 
 Thank you for your interest in improving Wolium.
 

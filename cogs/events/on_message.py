@@ -1,8 +1,8 @@
 from nextcord.ext import commands
 from nextcord import Message, Invite, Color
 from nextcord.errors import HTTPException
-from asyncio import sleep, to_thread, create_task
-from re import sub, search
+from asyncio import to_thread, create_task
+from re import sub, search, match
 from traceback import format_exception
 from Utils.config import servers_with_no_acces_for_bot, users_with_no_acces_for_bot, гласные, согласные
 from Utils.config import users, pending
@@ -12,6 +12,7 @@ from langdetect import detect
 from langdetect.lang_detect_exception import LangDetectException
 from spellchecker import SpellChecker
 from datetime import timezone
+from string import ascii_letters
 
 class OnMessage(commands.Cog):
   def __init__(self, bot):
@@ -43,10 +44,8 @@ class OnMessage(commands.Cog):
             if guild_config['aibot']==False:
               return
           async with message.channel.typing():
-            await sleep(1)
             GPT = self.bot.get_cog("GPT").GPT
             edited, AI_message = await GPT(message,language,invite)
-            await sleep(1)
             if AI_message not in [None,'None','']:
               try:
                 for i in range(0, len(AI_message), 2000):
@@ -397,13 +396,7 @@ class OnMessage(commands.Cog):
       return
     
     invite = await gi.invite(message.guild)
-    create_task(self.GPTTalk(message, language, invite))
     await self.games(message,language)
-    
-    # if search(f"[{гласные}]{3}",message.content) or search(f"[{согласные}]{3}",message.content) or not any(c in ascii_letters + " " for c in message.content) or match(r"^[\W\d_]+$", message.content.strip()) or len(message.content.strip()) < 3 or not message.guild:
-    #   return
-    # if 'http' in message.content:
-    #   return
 
     if message.guild:
       guild_config = await gd.get_data(message.guild.id,['mod_log_channel','moderation','moderation_type','rules', 'ttl_channel'],'guild_settings','guild_id',message.guild)
@@ -425,6 +418,13 @@ class OnMessage(commands.Cog):
           g = pending.setdefault(guild_id, {})
           bucket = g.setdefault(ch_key, {})
           bucket[str(message.id)] = created_ts
+    
+    if search(f"[{гласные}]{3}",message.content) or search(f"[{согласные}]{3}",message.content) or not any(c in ascii_letters + " " for c in message.content) or match(r"^[\W\d_]+$", message.content.strip()) or len(message.content.strip()) < 3 or not message.guild:
+      return
+    if 'http' in message.content:
+      return
+
+    create_task(self.GPTTalk(message, language, invite))
 
     if message.author!=self.bot.user and message.guild:
       user_privacy = await gd.get_data(user_id,['save_messages', 'save_message_data'], 'user_privacy', 'user_id', message.guild)

@@ -15,8 +15,8 @@ class ActivityTracker(commands.Cog):
   def __init__(self, bot: commands.Bot):
     self.bot = bot
 
-    self._user_locks: dict[tuple[int, int], Lock] = {}
-    self._open_sessions: dict[tuple[int, int], dict[str, dict[str, Any]]] = {}
+    self._user_locks: dict[int, Lock] = {}
+    self._open_sessions: dict[int, dict[str, dict[str, Any]]] = {}
 
     self._activity_def_cache: dict[str, int] = {}
     self._snapshot_cache: dict[str, int] = {}
@@ -31,27 +31,23 @@ class ActivityTracker(commands.Cog):
 
     now = self._utc_now()
 
-    for key in list(self._open_sessions.keys()):
-      guild_id, user_id = key
-      lock = self._get_user_lock(guild_id, user_id)
+    for user_id in list(self._open_sessions.keys()):
+      lock = self._get_user_lock(user_id)
 
       async with lock:
-        sessions = self._open_sessions.get(key)
+        sessions = self._open_sessions.get(user_id)
         if not sessions:
-          self._open_sessions.pop(key, None)
+          self._open_sessions.pop(user_id, None)
           continue
 
         rows = []
         for session in sessions.values():
           rows.append((
-            guild_id,
             user_id,
             session["def_id"],
             session["snapshot_id"],
             session["started_at"],
             now,
-            session["activity_started_at"],
-            session["activity_ended_at"],
           ))
 
         if rows:
@@ -60,21 +56,20 @@ class ActivityTracker(commands.Cog):
               await connection.executemany(
                 """
                 INSERT INTO activity_segments (
-                  guild_id,
                   user_id,
                   def_id,
                   snapshot_id,
                   started_at,
-                  ended_at,
-                  activity_started_at,
-                  activity_ended_at
+                  ended_at
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                VALUES ($1, $2, $3, $4, $5)
+                ON CONFLICT (def_id, started_at) DO UPDATE
+                SET ended_at = EXCLUDED.ended_at
                 """,
                 rows,
               )
 
-        self._open_sessions.pop(key, None)
+        self._open_sessions.pop(user_id, None)
 
   async def handle_presence_update(self, member: Member):
     await self._sync_member_state(member)
@@ -89,20 +84,16 @@ class ActivityTracker(commands.Cog):
     if not self._user_header_changed(before, after):
       return
 
-    target_keys = [key for key in self._open_sessions.keys() if key[1] == after.id]
-    if not target_keys:
+    if after.id not in self._open_sessions:
       return
 
-    for guild_id, user_id in target_keys:
-      guild = self.bot.get_guild(guild_id)
-      if guild is None:
-        continue
-
-      member = guild.get_member(user_id)
+    for guild in self.bot.guilds:
+      member = guild.get_member(after.id)
       if member is None:
         continue
 
       await self._sync_member_state(member, after)
+      break
 
   @staticmethod
   def _utc_now() -> datetime:
@@ -247,11 +238,10 @@ class ActivityTracker(commands.Cog):
   def _source_kind(activity: BaseActivity) -> int:
     return 1 if isinstance(activity, Spotify) else 0
 
-  def _get_user_lock(self, guild_id: int, user_id: int) -> Lock:
-    key = (guild_id, user_id)
-    if key not in self._user_locks:
-      self._user_locks[key] = Lock()
-    return self._user_locks[key]
+  def _get_user_lock(self, user_id: int) -> Lock:
+    if user_id not in self._user_locks:
+      self._user_locks[user_id] = Lock()
+    return self._user_locks[user_id]
 
   def _trim_cache(self):
     if len(self._activity_def_cache) > self._max_activity_def_cache:
@@ -371,15 +361,6 @@ class ActivityTracker(commands.Cog):
     large_image_url = self._asset_url(getattr(activity, "large_image_url", None))
     small_image_url = self._asset_url(getattr(activity, "small_image_url", None))
 
-    large_image_text = (
-      self._str_or_none(getattr(activity, "large_image_text", None))
-      or self._str_or_none(assets.get("large_text"))
-    )
-    small_image_text = (
-      self._str_or_none(getattr(activity, "small_image_text", None))
-      or self._str_or_none(assets.get("small_text"))
-    )
-
     emoji_obj = getattr(activity, "emoji", None)
     if emoji_obj is not None:
       emoji_name = self._str_or_none(getattr(emoji_obj, "name", None))
@@ -414,14 +395,6 @@ class ActivityTracker(commands.Cog):
       duration = getattr(activity, "duration", None)
       spotify_duration_seconds = int(duration.total_seconds()) if duration else None
 
-    activity_started_at = getattr(activity, "start", None)
-    activity_ended_at = getattr(activity, "end", None)
-
-    if activity_started_at is None:
-      activity_started_at = self._parse_activity_timestamp(timestamps.get("start"))
-    if activity_ended_at is None:
-      activity_ended_at = self._parse_activity_timestamp(timestamps.get("end"))
-
     payload = self._drop_empty({
       "class_name": type(activity).__name__,
       "source_kind": source_kind,
@@ -432,9 +405,7 @@ class ActivityTracker(commands.Cog):
       "url": url,
       "application_id": application_id,
       "large_image_url": large_image_url,
-      "large_image_text": large_image_text,
       "small_image_url": small_image_url,
-      "small_image_text": small_image_text,
       "emoji_name": emoji_name,
       "emoji_id": emoji_id,
       "emoji_animated": emoji_animated,
@@ -458,8 +429,6 @@ class ActivityTracker(commands.Cog):
       "source_kind": source_kind,
       "activity_type": activity_type,
       "name": name,
-      "activity_started_at": activity_started_at,
-      "activity_ended_at": activity_ended_at,
     }
 
   def _build_activity_entries(self, member: Member) -> Dict[str, Dict[str, Any]]:
@@ -483,8 +452,6 @@ class ActivityTracker(commands.Cog):
         item["name"] or "",
         item["payload"].get("details", ""),
         item["payload"].get("state", ""),
-        self._dt_to_iso(item["activity_started_at"]) or "",
-        self._dt_to_iso(item["activity_ended_at"]) or "",
         item["fingerprint"],
       )
     )
@@ -495,8 +462,6 @@ class ActivityTracker(commands.Cog):
     for item in items:
       session_base = {
         "fingerprint": item["fingerprint"],
-        "activity_started_at": self._dt_to_iso(item["activity_started_at"]),
-        "activity_ended_at": self._dt_to_iso(item["activity_ended_at"]),
       }
 
       base_key = self._sha256_hex(self._json_dumps(session_base))
@@ -513,8 +478,6 @@ class ActivityTracker(commands.Cog):
         "source_kind": item["source_kind"],
         "activity_type": item["activity_type"],
         "name": item["name"],
-        "activity_started_at": item["activity_started_at"],
-        "activity_ended_at": item["activity_ended_at"],
       }
 
     return result
@@ -625,8 +588,8 @@ class ActivityTracker(commands.Cog):
     self._trim_cache()
     return snapshot_id
 
-  def _drop_user_open_sessions_without_save(self, guild_id: int, user_id: int):
-    self._open_sessions.pop((guild_id, user_id), None)
+  def _drop_user_open_sessions_without_save(self, user_id: int):
+    self._open_sessions.pop(user_id, None)
 
   async def _get_member_privacy(self, member: Member) -> Optional[dict]:
     guild_id = member.guild.id
@@ -635,11 +598,11 @@ class ActivityTracker(commands.Cog):
     if guild_id in servers_with_no_acces_for_bot or user_id in users_with_no_acces_for_bot:
       return None
 
-    get_data = self.bot.get_cog("GetData")
-    if get_data is None:
+    gd = self.bot.get_cog("GetData")
+    if gd is None:
       return None
 
-    guild_settings = await get_data.get_data(
+    guild_settings = await gd.get_data(
       guild_id,
       ["banned"],
       "guilds",
@@ -647,7 +610,7 @@ class ActivityTracker(commands.Cog):
       member.guild,
     )
 
-    user_settings = await get_data.get_data(
+    user_settings = await gd.get_data(
       user_id,
       ["banned"],
       "users",
@@ -662,7 +625,7 @@ class ActivityTracker(commands.Cog):
         users_with_no_acces_for_bot.append(user_id)
       return None
 
-    return await get_data.get_data(
+    return await gd.get_data(
       user_id,
       ["save_activity", "save_activity_data", "save_activity_profile"],
       "user_privacy",
@@ -683,25 +646,25 @@ class ActivityTracker(commands.Cog):
 
     guild_id = member.guild.id
     user_id = member.id
-    lock = self._get_user_lock(guild_id, user_id)
+    lock = self._get_user_lock(user_id)
 
     async with lock:
       try:
         privacy = await self._get_member_privacy(member)
 
         if privacy is None:
-          self._drop_user_open_sessions_without_save(guild_id, user_id)
+          self._drop_user_open_sessions_without_save(user_id)
           return
 
         if not privacy.get("save_activity", False):
-          self._drop_user_open_sessions_without_save(guild_id, user_id)
+          self._drop_user_open_sessions_without_save(user_id)
           return
 
         save_activity_data = bool(privacy.get("save_activity_data", False))
         save_activity_profile = bool(privacy.get("save_activity_profile", False))
 
         if not save_activity_data:
-          self._drop_user_open_sessions_without_save(guild_id, user_id)
+          self._drop_user_open_sessions_without_save(user_id)
           return
 
         now = self._utc_now()
@@ -735,12 +698,9 @@ class ActivityTracker(commands.Cog):
               resolved_entries[session_key] = {
                 "def_id": def_id,
                 "snapshot_id": snapshot_id,
-                "activity_started_at": entry["activity_started_at"],
-                "activity_ended_at": entry["activity_ended_at"],
               }
 
-            key = (guild_id, user_id)
-            old_sessions = self._open_sessions.get(key, {})
+            old_sessions = self._open_sessions.get(user_id, {})
 
             rows_to_insert = []
             next_open_sessions: dict[str, dict[str, Any]] = {}
@@ -751,14 +711,11 @@ class ActivityTracker(commands.Cog):
 
               if new_session is None:
                 rows_to_insert.append((
-                  guild_id,
                   user_id,
                   old_session["def_id"],
                   old_session["snapshot_id"],
                   old_session["started_at"],
                   now,
-                  old_session["activity_started_at"],
-                  old_session["activity_ended_at"],
                 ))
                 continue
 
@@ -771,22 +728,17 @@ class ActivityTracker(commands.Cog):
                 continue
 
               rows_to_insert.append((
-                guild_id,
                 user_id,
                 old_session["def_id"],
                 old_session["snapshot_id"],
                 old_session["started_at"],
                 now,
-                old_session["activity_started_at"],
-                old_session["activity_ended_at"],
               ))
 
               next_open_sessions[session_key] = {
                 "def_id": new_session["def_id"],
                 "snapshot_id": new_session["snapshot_id"],
                 "started_at": now,
-                "activity_started_at": new_session["activity_started_at"],
-                "activity_ended_at": new_session["activity_ended_at"],
               }
               processed_keys.add(session_key)
 
@@ -798,32 +750,37 @@ class ActivityTracker(commands.Cog):
                 "def_id": new_session["def_id"],
                 "snapshot_id": new_session["snapshot_id"],
                 "started_at": now,
-                "activity_started_at": new_session["activity_started_at"],
-                "activity_ended_at": new_session["activity_ended_at"],
               }
 
             if rows_to_insert:
+              seen = {}
+              deduped_rows = []
+              for row in rows_to_insert:
+                dedup_key = (row[1], row[3])
+                if dedup_key not in seen:
+                  seen[dedup_key] = True
+                  deduped_rows.append(row)
+
               await connection.executemany(
                 """
                 INSERT INTO activity_segments (
-                  guild_id,
                   user_id,
                   def_id,
                   snapshot_id,
                   started_at,
-                  ended_at,
-                  activity_started_at,
-                  activity_ended_at
+                  ended_at
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                VALUES ($1, $2, $3, $4, $5)
+                ON CONFLICT (user_id, def_id, started_at) DO UPDATE -- <-- Теперь тут 3 колонки
+                SET ended_at = EXCLUDED.ended_at
                 """,
-                rows_to_insert,
+                deduped_rows,
               )
 
             if next_open_sessions:
-              self._open_sessions[key] = next_open_sessions
+              self._open_sessions[user_id] = next_open_sessions
             else:
-              self._open_sessions.pop(key, None)
+              self._open_sessions.pop(user_id, None)
 
       except Exception:
         log.exception(

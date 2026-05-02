@@ -35,12 +35,11 @@ class SetBotStatus(commands.Cog):
                 "self": self,
                 "conn": conn,
               }
-
+              formatted_expr = "\n".join(f"  {line}" for line in expr.split('\n'))
               code = (
                 "async def __render__():\n"
-                + indent(expr, "  ")
+                f"{formatted_expr}"
               )
-
               ns = {}
               exec(code, ctx, ns)
               name_1 = await ns["__render__"]()
@@ -91,7 +90,6 @@ class SetBotStatus(commands.Cog):
               await self.bot.change_presence(status=nextcord.Status[status], activity=activity, shard_id=shard)
               break
             except aiohttp.client_exceptions.ClientConnectionResetError as e:
-              await asyncio.sleep(15)
               traceback_msg = ((''.join(format_exception(type(e), e, e.__traceback__)))[:5000])
               fields = [
                 {
@@ -108,6 +106,7 @@ class SetBotStatus(commands.Cog):
                 footer_text='Error in set_bot_status',
                 channel_id=1159138280651104256
               )
+              await asyncio.sleep(15)
     except Exception as e:
       await asyncio.sleep(15)
       traceback_msg = ((''.join(format_exception(type(e), e, e.__traceback__)))[:5000])

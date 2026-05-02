@@ -169,7 +169,7 @@ class Work(commands.Cog):
             total_votes = data.get("points", 0)
             monthly_votes = data.get("monthlyPoints", 0)
           else:
-            print(f'TopGG work: {resp.status} - {await resp.text()}')
+            pass
 
       work_amount = uniform(9.26, 13.98)*(3.5*(1.5*upgrade)**1.5)*(1+буст*(0.05*((int(monthly_votes)**0.5)+(int(total_votes)**0.1)+(0.5*int(streak))+(0.1*int(user_votes)))))*vote
 
@@ -274,7 +274,7 @@ class Work(commands.Cog):
       except Exception:
         await interaction.followup.send(f"Произошла Ошибка, Логи Ошибки Сохранены, В Ближайшее Время Их Будут Рассматривать.", ephemeral=True)
 
-  setattr(работать,"extras",{"description": "Самый простой способ получить экономическую валюту которая очень важна в моих командах, использование этой команды самый простой."})
+  setattr(work,"extras",{"description": "Самый простой способ получить экономическую валюту которая очень важна в моих командах, использование этой команды самый простой."})
 
 def setup(bot: commands.Bot):
   bot.add_cog(Work(bot))
