@@ -105,6 +105,5 @@ class TTLListener(commands.Cog):
   async def before_check(self):
     await self.bot.wait_until_ready()
 
-
 def setup(bot: commands.Bot):
   bot.add_cog(TTLListener(bot))

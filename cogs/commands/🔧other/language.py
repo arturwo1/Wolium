@@ -37,7 +37,7 @@ class Language(commands.Cog):
   async def language(self,
     interaction: nextcord.Interaction,
     language_code: str=SlashOption(name="language_code", description="Choose a language.",required=True, name_localizations=translate_to_all_languages('general.language_lower', 'name'), description_localizations=translate_to_all_languages('general.choose_language', 'description')),
-    ephemeral: bool=SlashOption(name="ephemeral", description="Only you see the message or everyone.",required=False,default=False, name_localizations=translate_to_all_languages('general.personally', 'name'), description_localizations=translate_to_all_languages('general.ephemeral_desc_typo', 'description')),
+    ephemeral: bool=SlashOption(name="ephemeral", description="Only you see the message or everyone.",required=False,default=False, name_localizations=translate_to_all_languages('general.personally', 'name'), description_localizations=translate_to_all_languages('general.ephemeral_desc', 'description')),
   ):
     try:
       user_id = interaction.user.id

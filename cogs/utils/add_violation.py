@@ -76,30 +76,23 @@ class AddViolation(commands.Cog):
             'inline':True
           },
           ({
-            'name':await tm.translate_message('general.duration',mod_lang),
+            'name':await tm.translate_message('general.duration_label',mod_lang),
             'value':f"**<t:{duration+timestamp}:R>**(**`{timedelta(seconds=duration)}`**)",
             'inline':True
           } if duration else {}),
         ]
-        issued_by_text = await tm.translate_message("general.issued_by", mod_lang)
-        type_text = await tm.translate_message(type_, mod_lang)
-        by_reason_text = await tm.translate_message("punishment.by_reason", mod_lang)
         duration_text = ''
         if duration:
-          on_text = await tm.translate_message("general.on", mod_lang)
+          on_text = await tm.translate_message("general.for", mod_lang)
           duration_text = f" {on_text} **<t:{duration+timestamp}:R>**."
-        else:
-          duration_text = "."
         
         description = await tm.translate_message(
-          "punishment.violation_description", 
-          mod_lang, 
+          "punishment.violation_description",
+          mod_lang,
           variables={
             "moderator": mod.mention,
-            "issued_by": issued_by_text,
-            "type": type_text,
+            "type": await tm.translate_message(type_, mod_lang),
             "user": user.mention,
-            "by_reason": by_reason_text,
             "reason": reason,
             "duration_text": duration_text
           }

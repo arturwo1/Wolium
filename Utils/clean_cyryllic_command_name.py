@@ -1,6 +1,6 @@
 from re import sub
 def clean_cyryllic_command_name(name: str):
-  return sub(r'[^а-яА-ЯёЁiI0-9_]', '', (name.translate(str.maketrans({
+  return sub(r'[^а-яА-ЯёЁ0-9_]', '', (name.translate(str.maketrans({
     ' ': '_',
     'Ґ': 'Г',
     'Є': 'Э',

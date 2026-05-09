@@ -1,6 +1,6 @@
 from nextcord.ext import commands
 from nextcord import Message, Invite, Color
-from nextcord.errors import HTTPException
+from nextcord.errors import HTTPException, NotFound
 from asyncio import to_thread, create_task
 from re import sub, search, match
 from traceback import format_exception
@@ -51,11 +51,20 @@ class OnMessage(commands.Cog):
                 for i in range(0, len(AI_message), 2000):
                   if i==0:
                     if edited:
-                      msg = await message.reply(AI_message[i:i+2000], view=edited)
+                      if message:
+                        try:
+                          msg = await message.reply(AI_message[i:i+2000], view=edited)
+                        except HTTPException as e:
+                          if e.code == 50035 and "message_reference" in str(e.text):
+                            msg = await message.channel.send(AI_message[i:i+2000], view=edited)
                       self.bot.add_view(edited)
                       edited.save(message.guild.id, msg.channel.id, msg.id)
                     else:
-                      await message.reply(AI_message[i:i+2000], delete_after=5*60)
+                      try:
+                        await message.reply(AI_message[i:i+2000], delete_after=5*60)
+                      except HTTPException as e:
+                        if e.code == 50035 and "message_reference" in str(e.text):
+                          await message.channel.send(AI_message[i:i+2000], delete_after=5*60)
                   else:
                     await message.channel.send(AI_message[i:i+2000], delete_after=30)
                 privacy = (await gd.get_data(message.author.id,['track_activity'],'user_privacy','user_id',message.guild))['track_activity']
@@ -100,10 +109,11 @@ class OnMessage(commands.Cog):
                 try:
                   await message.delete(delay=5*60)
                 except HTTPException:
-                  pass
-              except HTTPException as e:
-                if "Unknown Message" in str(e):
                   return
+              except HTTPException as e:
+                if e.code == 50035 and "message_reference" in str(e.text):
+                  return
+                
                 traceback_msg = ((''.join(format_exception(type(e), e, e.__traceback__)))[:5000])
                 fields = [
                   {
@@ -144,11 +154,11 @@ class OnMessage(commands.Cog):
                 pass
 
         except Exception as e:
-          if "Unknown Message" in str(e):
+          if "unknown message" in str(e).lower():
             return
-          elif 'Список API-ключей пуст' in str(e):
+          elif 'список api-ключей пуст' in str(e).lower():
             return
-          elif 'Нет доступных API-ключей' in str(e):
+          elif 'нет доступных api-ключей' in str(e).lower():
             return
         
           traceback_msg = ((''.join(format_exception(type(e), e, e.__traceback__)))[:5000])

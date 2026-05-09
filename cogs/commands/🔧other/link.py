@@ -65,7 +65,7 @@ class Link(commands.Cog):
   async def link(self,
     interaction: Interaction,
     url: str=SlashOption(name="url", description="Choose a link.",required=True, name_localizations=translate_to_all_languages('general.link_lower', 'name'), description_localizations=translate_to_all_languages('general.choose_link', 'description')),
-    ephemeral: bool=SlashOption(name="ephemeral", description="Only you see the message or everyone.",required=False,default=False, name_localizations=translate_to_all_languages('general.personally', 'name'), description_localizations=translate_to_all_languages('general.ephemeral_desc_typo', 'description')),
+    ephemeral: bool=SlashOption(name="ephemeral", description="Only you see the message or everyone.",required=False,default=False, name_localizations=translate_to_all_languages('general.personally', 'name'), description_localizations=translate_to_all_languages('general.ephemeral_desc', 'description')),
   ):
     try:
       user_id = interaction.user.id

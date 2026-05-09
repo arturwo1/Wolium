@@ -231,7 +231,7 @@ def translate_one_google(lang: str, text: str, thing: str, headers: dict, source
 
   if thing == 'name':
     cleaned_translation = clean_latin_command_name(translated)
-    cleaned_russian_translation = clean_cyryllic_command_name(translated)
+    cleaned_russian_translation = clean_cyryllic_command_name(translated) or source_text
 
     if lang == 'en':
       return {'en-US': cleaned_translation[:32], 'en-GB': cleaned_translation[:32]}
@@ -324,7 +324,7 @@ def translate_to_all_languages(text: str | dict | set | list, thing: str, messag
         elif lng == 'sv':
           new_result['sv-SE'] = clean_latin_command_name(val)[:32]
         elif lng in ('bg', 'ru', 'uk'):
-          new_result[lng] = clean_cyryllic_command_name(val)[:32]
+          new_result[lng] = clean_cyryllic_command_name(val)[:32] or str(new_data[text])[:32]
         else:
           new_result[lng] = clean_latin_command_name(val)[:32]
       else:
@@ -351,7 +351,7 @@ def translate_to_all_languages(text: str | dict | set | list, thing: str, messag
         
         if thing == 'name':
           cleaned_translation = clean_latin_command_name(translated)
-          cleaned_russian_translation = clean_cyryllic_command_name(translated)
+          cleaned_russian_translation = clean_cyryllic_command_name(translated) or source_text
           if lng == 'en':
             new_result['en-US'] = cleaned_translation[:32]
             new_result['en-GB'] = cleaned_translation[:32]

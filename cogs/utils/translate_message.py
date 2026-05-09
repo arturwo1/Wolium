@@ -1,7 +1,7 @@
 from asyncio import Lock, to_thread
 from threading import Lock as ThreadLock
 from nextcord import Colour
-from nextcord.ext import commands
+from nextcord.ext import commands, tasks
 from deep_translator import GoogleTranslator
 from traceback import format_exception
 from json import load, dump, loads
@@ -179,8 +179,25 @@ async def find_base_text_async(key: str, category: str):
   return None, None
 
 class TranslateMessage(commands.Cog):
-  def __init__(self, bot):
+  def __init__(self, bot: commands.Bot):
     self.bot = bot
+    self.cache = {}
+    self.clear_cache.start()
+
+  def cog_unload(self):
+    self.clear_cache.cancel()
+
+  @tasks.loop(seconds=3600)
+  async def clear_cache(self):
+    for key in list(self.cache.keys()):
+      data = self.cache[key]
+      for lang in list(data.keys()):
+        entry = data[lang]
+        timestamp = entry.get("timestamp", 0)
+        if time() - timestamp > 3600:
+          del self.cache[key][lang]
+      if not self.cache[key]:
+        del self.cache[key]
 
   async def translate_message(self, text: str, message_language: str | None = None, message_language_for_now: str | None = None, save: bool = True, variables: dict | None = None):
     if not text: return "<None>"
@@ -189,8 +206,18 @@ class TranslateMessage(commands.Cog):
     if not lang:
       lang = 'en'
 
+    cache_translation = self.cache.get(text, {}).get(lang, {})
+    if cache_translation:
+      return format_text(cache_translation.get("translation", text), variables)
+
     new_data = await read_locale_async('messages', lang)
     if save and text in new_data:
+      if not self.cache.get(text):
+        self.cache[text] = {}
+        self.cache[text][lang] = {
+          "translation": new_data[text],
+          "timestamp": time()
+        }
       return format_text(new_data[text], variables)
 
     source_text, source_lang = await find_base_text_async(text, 'messages')
@@ -200,12 +227,24 @@ class TranslateMessage(commands.Cog):
       return format_text(text, variables)
 
     if lang == source_lang:
+      if not self.cache.get(text):
+        self.cache[text] = {}
+        self.cache[text][lang] = {
+          "translation": source_text,
+          "timestamp": time()
+        }
       return format_text(source_text, variables)
 
     try:
       translated = await to_thread(_gemini_translate_sync, source_text or text, source_lang or "auto", lang)
       if translated and save:
         await write_locale_async('messages', lang, text, translated)
+      if not self.cache.get(text):
+        self.cache[text] = {}
+        self.cache[text][lang] = {
+          "translation": translated,
+          "timestamp": time()
+        }
       return format_text(translated, variables)
     except Exception:
       pass
@@ -215,6 +254,12 @@ class TranslateMessage(commands.Cog):
       if translation:
         if save:
           await write_locale_async('messages', lang, text, translation)
+        if not self.cache.get(text):
+          self.cache[text] = {}
+          self.cache[text][lang] = {
+            "translation": translation,
+            "timestamp": time()
+          }
         return format_text(translation, variables)
       return format_text(source_text, variables)
     except Exception as a:
@@ -261,6 +306,10 @@ class TranslateMessage(commands.Cog):
       return format_text(command_data[text][lang], variables)
     
     return format_text(source_text, variables)
+
+  @clear_cache.before_loop
+  async def before_clear_cache(self):
+    await self.bot.wait_until_ready()
 
 def setup(bot: commands.Bot):
   bot.add_cog(TranslateMessage(bot))

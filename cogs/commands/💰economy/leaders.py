@@ -141,7 +141,7 @@ class Leaders(commands.Cog):
       description="Тип ЛидерБорда",
       choices={"World": "world", "Server": "server", "Top Servers": "tservers"},
       required=True,
-      name_localizations=translate_to_all_languages('general.type_en', 'name'),
+      name_localizations=translate_to_all_languages('general.type', 'name'),
       description_localizations=translate_to_all_languages('leaderboard.type', 'description'),
       choice_localizations=translate_to_all_languages({"World": "world", "Server": "server", "Top Servers": "tservers"}, 'choice'),
       default='server',

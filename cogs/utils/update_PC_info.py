@@ -823,12 +823,13 @@ class UpdatePCInfo(commands.Cog):
     except Exception:
       return {"total_times_updated": 0, "best_times_updated": 0, "best_time_ON": 0, "total_time_ON": 0}
 
-  async def _load_economy_data_count(self) -> int:
+  async def _get_used_users_in_db(self) -> int:
+    if not hasattr(self.bot, "db_pool") or not self.bot.db_pool:
+      return 0
     try:
-      async with json_lock:
-        with open("economy_data.json", "r", encoding="utf-8") as f:
-          data = load(f)
-      return len(data)
+      async with self.bot.db_pool.acquire() as conn:
+        val = await conn.fetchval("SELECT COUNT(DISTINCT user_id) FROM user_commands")
+        return int(val or 0)
     except Exception:
       return 0
 
@@ -1273,7 +1274,7 @@ class UpdatePCInfo(commands.Cog):
     bot_mem_p = proc.memory_percent()
     bot_mem_i = proc.memory_info()
 
-    saved_users = await self._load_economy_data_count()
+    used_users = await self._get_used_users_in_db()
     economy_users = await self._get_economy_users_in_db()
     total_points, monthly_points = await self._fetch_topgg_votes()
 
@@ -1296,7 +1297,7 @@ class UpdatePCInfo(commands.Cog):
     e.add_field(name="Сервера", value=f"`{len(self.bot.guilds)}`", inline=True)
     e.add_field(name="Шарды", value=f"`{self.bot.shard_count}`", inline=True)
     e.add_field(name="ID Шарда", value=f"`{self.bot.shard_id}`", inline=True)
-    e.add_field(name="Пользователи Сохранено/Всего", value=f"`{saved_users}`/`{len(self.bot.users)}` (economy: `{economy_users}`)", inline=False)
+    e.add_field(name="Пользователи Использовали Меня/Всего", value=f"`{used_users}`/`{len(self.bot.users)}` (economy: `{economy_users}`)", inline=False)
     e.add_field(name="top.gg Голосов Всего", value=f"`{total_points}`", inline=True)
     e.add_field(name="top.gg Голосов За месяц", value=f"`{monthly_points}`", inline=True)
     e.add_field(name="Задержка", value=f"`{self.bot.latency*1000:.2f}ms`", inline=False)

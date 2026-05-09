@@ -90,7 +90,6 @@ class UpdateWeeklyMessage(commands.Cog):
     try:
       if hasattr(self.bot, "db_pool") and self.bot.db_pool:
         servers = len(self.bot.guilds)
-        users = sum(g.member_count or 0 for g in self.bot.guilds)
 
         async with self.bot.db_pool.acquire() as conn:
           await conn.execute(
@@ -98,12 +97,11 @@ class UpdateWeeklyMessage(commands.Cog):
             INSERT INTO public_stats (key, value)
             VALUES
               ('servers', $1),
-              ('users', $2)
+              ('users', (SELECT CAST(COUNT(DISTINCT user_id) AS TEXT) FROM user_commands))
             ON CONFLICT (key)
             DO UPDATE SET value = EXCLUDED.value
             """,
-            str(servers),
-            str(users)
+            str(servers)
           )
     except Exception as e:
       print(f"update weekly message stats update exception: {e}")

@@ -633,7 +633,7 @@ class WebRequestsWorker(commands.Cog):
       user_avatar = str(u.display_avatar.url)
       member = next((m for m in self.bot.get_all_members() if m.id == discord_id), None)
 
-      mutual_guilds = member and member.mutual_guilds or []
+      mutual_guilds = member and getattr(member, "mutual_guilds", None) or self.bot.guilds if member.id==self.bot.application_id else []
       mutual_guilds_row = {}
       for mutual_guild in mutual_guilds:
         mutual_guilds_row[mutual_guild.id] = {"name": mutual_guild.name, "text_channels": {}, "voice_channels": {}}
