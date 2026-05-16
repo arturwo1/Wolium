@@ -258,10 +258,10 @@ class Leaders(commands.Cog):
         )
 
         start = page * 10
-        euro = '€' if сортировка in ('balance', 'bank_balance', 'total_balance') else ''
+        wallet = '₩' if сортировка in ('balance', 'bank_balance', 'total_balance') else ''
 
         for rank, (uid, sv, variation, has_discord, has_telegram) in enumerate(users_and_balances[start:start + 10], start=start + 1):
-          val_str = _fmt_voice(sv) if сортировка == 'voice' else f"{euro}{await suffics(number=sv, variation=variation)}"
+          val_str = _fmt_voice(sv) if сортировка == 'voice' else f"{await suffics(number=sv, variation=variation)}{wallet}"
 
           member = interaction.guild.get_member(uid) if interaction.guild else None
           user_obj = self.bot.get_user(uid)

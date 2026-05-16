@@ -10,6 +10,7 @@ from nextcord import Embed, Colour, CategoryChannel
 from Utils.calculate_LvL import calculate_LvL
 from asyncpg import ConnectionDoesNotExistError, InterfaceError, PostgresConnectionError
 from Utils.privacy_flags import VALID_FLAGS
+from math import ceil
 
 QUEUE_TABLE = "public.web_requests"
 
@@ -25,6 +26,35 @@ MIN_BUCKET_MS = 1_000
 MAX_BUCKET_MS = 30 * 86400_000
 MIN_LIMIT = 80
 MAX_LIMIT = 800
+
+metrics = {
+  "bank_balance": "SELECT user_id, bank_balance AS val FROM user_data",
+  "balance": "SELECT user_id, balance AS val FROM user_data",
+  "upgrade": "SELECT user_id, upgrade AS val FROM user_data",
+  "total_xp": "SELECT user_id, xp AS val FROM user_data",
+  "level": "SELECT user_id, xp AS val FROM user_data",
+  "experience": "SELECT user_id, xp AS val FROM user_data",
+  "total_balance": "SELECT user_id, (bank_balance + balance) AS val FROM user_data",
+  "message_count": "SELECT user_id, COUNT(*)::bigint AS val FROM messages GROUP BY user_id",
+  "voice_time": "SELECT user_id, COALESCE(SUM(EXTRACT(epoch FROM time_spent))::bigint, 0) AS val FROM voice GROUP BY user_id",
+  "streak_votes": "SELECT user_id, streak AS val FROM topgg",
+  "votes": "SELECT user_id, votes AS val FROM topgg",
+  "commands": "SELECT user_id, COUNT(*)::bigint AS val FROM user_commands GROUP BY user_id",
+  "activity_time": """
+    SELECT user_id,
+    COALESCE(SUM(GREATEST(0, EXTRACT(epoch FROM (COALESCE(ended_at, CURRENT_TIMESTAMP) - started_at))))::bigint, 0) AS val
+    FROM (
+      SELECT user_id, started_at, ended_at,
+      row_number() OVER (
+        PARTITION BY def_id, user_id, (EXTRACT(epoch FROM started_at)::bigint / 60)
+        ORDER BY started_at ASC, id ASC
+      ) AS rn
+      FROM activity_segments
+    ) deduped
+    WHERE rn = 1
+    GROUP BY user_id
+  """
+}
 
 class TTLCache:
   def __init__(self, ttl_seconds: int):
@@ -329,6 +359,22 @@ class WebRequestsWorker(commands.Cog):
       return str(status_code_raw).strip().lower()
 
     return None
+  
+  def calc_gap_ms(self, from_ms: int, to_ms: int) -> int:
+    range_ms = max(0, to_ms - from_ms)
+    gap_ms = int(range_ms * 0.002)
+    return max(120_000, min(gap_ms, 90 * 24 * 60 * 60 * 1000))
+  
+  def resolve_user(self, user_id):
+    user = self.bot.get_user(int(user_id))
+    if not user:
+      member = next((m for m in self.bot.get_all_members() if m.id == int(user_id)), None)
+      user = member
+
+    return {
+      "display_name": getattr(user, "display_name", "Unknown User"),
+      "avatar": str(user.display_avatar.url) if user and user.display_avatar else None
+    }
 
   @tasks.loop(seconds=POLL_SECONDS)
   async def loop(self):
@@ -633,7 +679,7 @@ class WebRequestsWorker(commands.Cog):
       user_avatar = str(u.display_avatar.url)
       member = next((m for m in self.bot.get_all_members() if m.id == discord_id), None)
 
-      mutual_guilds = member and getattr(member, "mutual_guilds", None) or self.bot.guilds if member.id==self.bot.application_id else []
+      mutual_guilds = getattr(member, "mutual_guilds", [])
       mutual_guilds_row = {}
       for mutual_guild in mutual_guilds:
         mutual_guilds_row[mutual_guild.id] = {"name": mutual_guild.name, "text_channels": {}, "voice_channels": {}}
@@ -826,118 +872,111 @@ class WebRequestsWorker(commands.Cog):
 
       rows = await conn.fetch("""
         with raw_acts as (
-          select
-            s.id::bigint as id,
-            s.def_id::bigint as def_id,
-            s.snapshot_id::bigint as snapshot_id,
-            (extract(epoch from s.started_at) * 1000)::bigint as act_start_ms,
-            (extract(epoch from least(coalesce(s.ended_at, CURRENT_TIMESTAMP), to_timestamp($3::bigint / 1000.0))) * 1000)::bigint as act_end_ms
+          select s.id::bigint as id,
+                s.def_id::bigint as def_id,
+                s.snapshot_id::bigint as snapshot_id,
+                (extract(epoch from s.started_at) * 1000)::bigint as act_start_ms,
+                (extract(epoch from least(coalesce(s.ended_at, CURRENT_TIMESTAMP), to_timestamp($3::bigint / 1000.0))) * 1000)::bigint as act_end_ms
           from activity_segments s
           where s.user_id = $1::bigint
             and coalesce(s.ended_at, s.started_at) >= to_timestamp($2::bigint / 1000.0)
             and s.started_at <= to_timestamp($3::bigint / 1000.0)
         ),
         acts as (
-          select 
-            a.*,
-            d.source_kind, d.activity_type, d.name, d.payload as activity_def_payload,
-            ps.status_code, ps.payload as presence_payload,
-            ps.fingerprint, ps.guild_id, ps.user_id as ps_user_id,
-            ps.desktop_status_code, ps.mobile_status_code, ps.web_status_code,
-            row_number() over (
-              partition by d.name, (a.act_start_ms / 60000)
-              order by a.act_start_ms asc, a.id asc
-            ) as rn
+          select a.*,
+                d.source_kind,
+                d.activity_type,
+                d.name,
+                d.payload as activity_def_payload,
+                ps.status_code,
+                ps.payload as presence_payload,
+                ps.fingerprint,
+                ps.guild_id,
+                ps.user_id as ps_user_id,
+                ps.desktop_status_code,
+                ps.mobile_status_code,
+                ps.web_status_code
           from raw_acts a
           join activity_defs d on d.id = a.def_id
           left join presence_snapshots ps on ps.id = a.snapshot_id
         ),
         filtered_acts as (
           select * from acts a
-          where a.rn = 1
-            and ($4::text is null or a.name ilike ('%' || $4::text || '%'))
+          where ($4::text is null or a.name ilike ('%' || $4::text || '%'))
             and ($5::text is null or coalesce(a.activity_def_payload->>'track', a.activity_def_payload->>'song', '') ilike ('%' || $5::text || '%'))
             and ($6::text is null or coalesce(a.activity_def_payload->>'album', '') ilike ('%' || $6::text || '%'))
             and ($7::text is null or coalesce(a.activity_def_payload->>'artist', '') ilike ('%' || $7::text || '%'))
             and ($8::bigint is null or (a.act_end_ms - a.act_start_ms)/1000 >= $8::bigint)
             and ($9::bigint is null or (a.act_end_ms - a.act_start_ms)/1000 <= $9::bigint)
-            and (
-              $10::text is null 
-              or $10::text = '' 
-              or a.status_code = case lower($10::text)
-                when 'offline' then 0
-                when 'online' then 1
-                when 'idle' then 2
-                when 'dnd' then 3
-                when 'invisible' then 4
-              end::smallint
-            )
-        ),
-        buckets as (
-          select 
-            generate_series as bucket_start_ms,
-            (generate_series + $11::bigint) as bucket_end_ms
-          from generate_series(
-            ($2::bigint / $11::bigint) * $11::bigint, 
-            ($3::bigint / $11::bigint) * $11::bigint, 
-            $11::bigint
-          )
+            and ($10::text is null or $10::text = '' or a.status_code = case lower($10::text) when 'offline' then 0 when 'online' then 1 when 'idle' then 2 when 'dnd' then 3 when 'invisible' then 4 end::smallint)
         ),
         bucketed_acts as (
-          select 
-            b.bucket_start_ms,
-            b.bucket_end_ms,
-            f.*,
-            (least(f.act_end_ms, b.bucket_end_ms) - greatest(f.act_start_ms, b.bucket_start_ms)) as overlap_ms
-          from buckets b
-          join filtered_acts f 
-            on f.act_start_ms < b.bucket_end_ms 
-           and f.act_end_ms > b.bucket_start_ms
+          select ((f.act_start_ms / $11::bigint) * $11::bigint) as bucket_start,
+                f.*
+          from filtered_acts f
         ),
-        ranked_buckets as (
+        buck as (
           select
-            bucket_start_ms as bucket_start,
-            bucket_end_ms as bucket_end,
-            count(*) over (partition by bucket_start_ms) as total_count,
-            sum(overlap_ms) over (partition by bucket_start_ms) / 1000 as total_duration,
-            min(act_start_ms) over (partition by bucket_start_ms) as min_ts,
-            row_number() over (partition by bucket_start_ms order by overlap_ms desc) as bucket_rn,
-            *
+            bucket_start,
+            (bucket_start + $11::bigint) as bucket_end,
+            count(*)::bigint as total_count,
+            sum((least(act_end_ms, bucket_start + $11::bigint) - greatest(act_start_ms, bucket_start)))/1000 as total_duration,
+            min(act_start_ms) as min_ts
           from bucketed_acts
+          group by 1
+        ),
+        sample as (
+          select distinct on (bucket_start)
+            bucket_start,
+            id as sample_id,
+            def_id as sample_def_id,
+            snapshot_id as sample_snapshot_id,
+            act_start_ms as sample_act_start_ms,
+            act_end_ms as sample_act_end_ms,
+            source_kind as sample_source_kind,
+            activity_type as sample_activity_type,
+            name as sample_name,
+            activity_def_payload as sample_activity_def_payload,
+            status_code as sample_status_code,
+            presence_payload as sample_presence_payload,
+            fingerprint as sample_fingerprint,
+            guild_id as sample_guild_id,
+            ps_user_id as sample_ps_user_id,
+            desktop_status_code as sample_desktop_status_code,
+            mobile_status_code as sample_mobile_status_code,
+            web_status_code as sample_web_status_code
+          from bucketed_acts
+          order by bucket_start, (act_end_ms - act_start_ms) desc
         )
         select
-          (case when rb.total_count = 1 then rb.min_ts else (rb.bucket_start + ($11::bigint / 2)) end)::bigint as ts,
-          rb.total_count::bigint as y_count,
-          rb.total_duration::bigint as y_duration,
-          rb.bucket_start::bigint as bucket_start,
-          rb.bucket_end::bigint as bucket_end,
-          
-          rb.id, rb.def_id, rb.act_start_ms as started_at_ms, rb.act_end_ms as ended_at_ms,
-          ((rb.act_end_ms - rb.act_start_ms)/1000)::bigint as duration_seconds, 
-          rb.source_kind, rb.activity_type, rb.name, rb.activity_def_payload,
-          rb.snapshot_id as presence_snapshot_id, rb.fingerprint as presence_snapshot_fingerprint,
-          rb.guild_id as presence_snapshot_guild_id, rb.ps_user_id as presence_snapshot_user_id,
-          rb.status_code, rb.desktop_status_code, rb.mobile_status_code, rb.web_status_code,
-          rb.presence_payload as presence_snapshot_payload
-        from ranked_buckets rb
-        where rb.bucket_rn = 1
-        order by rb.bucket_start asc
+          (case when b.total_count = 1 then b.min_ts else (b.bucket_start + ($11::bigint / 2)) end)::bigint as ts,
+          b.total_count::bigint as y_count,
+          b.total_duration::bigint as y_duration,
+          b.bucket_start::bigint as bucket_start,
+          b.bucket_end::bigint as bucket_end,
+          s.sample_id as id,
+          s.sample_def_id as def_id,
+          s.sample_act_start_ms as started_at_ms,
+          s.sample_act_end_ms as ended_at_ms,
+          ((s.sample_act_end_ms - s.sample_act_start_ms)/1000)::bigint as duration_seconds,
+          s.sample_source_kind as source_kind,
+          s.sample_activity_type as activity_type,
+          s.sample_name as name,
+          s.sample_activity_def_payload as activity_def_payload,
+          s.sample_snapshot_id as presence_snapshot_id,
+          s.sample_fingerprint as presence_snapshot_fingerprint,
+          s.sample_guild_id as presence_snapshot_guild_id,
+          s.sample_ps_user_id as presence_snapshot_user_id,
+          s.sample_status_code as status_code,
+          s.sample_desktop_status_code as desktop_status_code,
+          s.sample_mobile_status_code as mobile_status_code,
+          s.sample_web_status_code as web_status_code,
+          s.sample_presence_payload as presence_snapshot_payload
+        from buck b
+        left join sample s using (bucket_start)
+        order by b.bucket_start asc
         limit $12;
-      """,
-        discord_id,
-        p["from_ms"],
-        p["to_ms"],
-        p["activity_name"],
-        p["track"],
-        p["album"],
-        p["artist"],
-        p["min_duration_seconds"],
-        p["max_duration_seconds"],
-        p["status"],
-        p["bucket_ms"],
-        p["limit"]
-      )
-
+      """, discord_id, p["from_ms"], p["to_ms"], p["activity_name"], p["track"], p["album"], p["artist"], p["min_duration_seconds"], p["max_duration_seconds"], p["status"], p["bucket_ms"], p["limit"])
       out = []
 
       for r in rows:
@@ -1125,6 +1164,196 @@ class WebRequestsWorker(commands.Cog):
         await conn.execute("DELETE FROM users WHERE user_id = $1", discord_id)
       except Exception as e:
         return None, f"Failed to delete all data: {e}"
+
+    if kind == "user_guilds":
+      publicity = (await gd.get_data(discord_id, ["publicity"], "user_privacy", "user_id", None))["publicity"]
+      if not publicity:
+        return None, "Make your profile public to view leaderboard."
+      
+      member = next((m for m in self.bot.get_all_members() if m.id == discord_id), None)
+      if not member:
+        return None, "I can't find you. Make sure we share at least one server."
+      
+      mutual_guilds = getattr(member, "mutual_guilds", [])
+      mutual_guilds_js = []
+      for guild in mutual_guilds:
+        mutual_guilds_js.append({
+          "id": str(guild.id),
+          "name": guild.name
+        })
+      return mutual_guilds_js, None
+  
+    if kind == "leaderboard":
+      publicity = (await gd.get_data(discord_id, ["publicity"], "user_privacy", "user_id", None))["publicity"]
+      if not publicity:
+        return None, "Make your profile public to view leaderboard."
+      
+      metric = payload.get("metric", "total_balance")
+      scope = payload.get("scope", "world")
+      page = max(1, int(payload.get("page", 1)))
+      guild_id = payload.get("guild_id")
+
+      limit = 10
+      offset = (page - 1) * limit
+
+      value_cte = metrics.get(metric)
+      if not value_cte:
+        return None, f"Unknown metric: {metric}"
+
+      if scope == "server":
+        if str(guild_id).isdigit():
+          guild_id = int(guild_id)
+        else:
+          guild_id = None
+
+        if not guild_id:
+          return None, "guild_id is required for server scope"
+        
+        query = f"""
+          WITH metric_data AS ({value_cte}),
+          ranked_data AS (
+            SELECT
+              md.user_id,
+              md.val AS value,
+              ROW_NUMBER() OVER (ORDER BY md.val DESC, md.user_id ASC) AS rank
+            FROM metric_data md
+            JOIN guild_users gu ON md.user_id = gu.user_id
+            LEFT JOIN user_privacy up ON md.user_id = up.user_id
+            WHERE gu.guild_id = $1
+            AND COALESCE(up.publicity, TRUE)
+          ),
+          totals AS (
+            SELECT COUNT(*) AS total_count FROM ranked_data
+          )
+          SELECT *
+          FROM ranked_data
+          CROSS JOIN totals
+          WHERE (rank > $2 AND rank <= $3) OR user_id = $4
+          ORDER BY rank
+        """
+        args = [guild_id, offset, offset + limit, discord_id]
+
+      elif scope == "world":
+        query = f"""
+          WITH metric_data AS ({value_cte}),
+          ranked_data AS (
+            SELECT
+              md.user_id,
+              md.val AS value,
+              ROW_NUMBER() OVER (ORDER BY md.val DESC, md.user_id ASC) AS rank
+            FROM metric_data md
+            LEFT JOIN user_privacy up ON md.user_id = up.user_id
+            WHERE COALESCE(up.publicity, TRUE)
+          ),
+          totals AS (
+            SELECT COUNT(*) AS total_count FROM ranked_data
+          )
+          SELECT *
+          FROM ranked_data
+          CROSS JOIN totals
+          WHERE (rank > $1 AND rank <= $2) OR user_id = $3
+          ORDER BY rank
+        """
+        args = [offset, offset + limit, discord_id]
+
+      elif scope == "top_servers":
+        query = f"""
+          WITH metric_data AS ({value_cte}),
+          server_sums AS (
+            SELECT
+              gu.guild_id,
+              SUM(md.val) AS value
+            FROM metric_data md
+            JOIN guild_users gu ON md.user_id = gu.user_id
+            LEFT JOIN user_privacy up ON md.user_id = up.user_id
+            WHERE COALESCE(up.publicity, TRUE)
+            GROUP BY gu.guild_id
+          ),
+          ranked_data AS (
+            SELECT
+              guild_id,
+              value,
+              ROW_NUMBER() OVER (ORDER BY value DESC, guild_id ASC) AS rank
+            FROM server_sums
+          ),
+          totals AS (
+            SELECT COUNT(*) AS total_count FROM ranked_data
+          )
+          SELECT *
+          FROM ranked_data
+          CROSS JOIN totals
+          WHERE rank > $1 AND rank <= $2
+          ORDER BY rank
+        """
+        args = [offset, offset + limit]
+
+      else:
+        return None, f"Unknown scope: {scope}"
+
+      rows = await conn.fetch(query, *args)
+
+      if not rows:
+        return {
+          "total": 0,
+          "page": page,
+          "pages": 0,
+          "entries": [],
+          "self": None
+        }, None
+
+      total_records = rows[0].get("total_count", 0)
+      total_pages = ceil(total_records / limit)
+
+      entries = []
+      self_data = None
+
+      for row in rows:
+        if scope == "top_servers":
+          guild = self.bot.get_guild(int(row["guild_id"]))
+
+          if metric == "level":
+            row = dict(row)
+            lvl, _, _ = calculate_LvL(row["value"])
+            row["value"] = lvl
+          elif metric == "experience":
+            row = dict(row)
+            _, _, xp_now = calculate_LvL(row["value"])
+            row["value"] = xp_now
+
+          entry = {
+            "rank": row["rank"],
+            "guild_id": str(row["guild_id"]),
+            "guild_name": guild.name if guild else "Unknown Server",
+            "icon": str(guild.icon.url) if guild and guild.icon else None,
+            "value": row["value"]
+          }
+        else:
+          user_data = self.resolve_user(row["user_id"])
+
+          entry = {
+            "rank": row["rank"],
+            "user_id": str(row["user_id"]),
+            "display_name": user_data["display_name"],
+            "avatar": user_data["avatar"],
+            "value": row["value"]
+          }
+
+        if offset < row["rank"] <= offset + limit:
+          entries.append(entry)
+
+        if scope != "top_servers" and str(row["user_id"]) == str(discord_id):
+          self_data = entry
+
+      if self_data and any(e["user_id"] == self_data["user_id"] for e in entries):
+        self_data = None
+
+      return {
+        "total": total_records,
+        "page": page,
+        "pages": total_pages,
+        "entries": entries,
+        "self": self_data
+      }, None
 
     return None, f"Unknown kind: {kind}"
 

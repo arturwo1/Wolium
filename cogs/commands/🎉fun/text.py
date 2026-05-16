@@ -24,7 +24,7 @@ class Text(commands.Cog):
     self.bot: commands.Bot = bot
   
   @nextcord.slash_command(
-    description="Send message as bot (costs €50)",
+    description="Send message as bot (costs 50₩)",
     name_localizations=translate_to_all_languages('fun.text_name', 'name'),
     description_localizations=translate_to_all_languages('fun.text_desc', 'description'),
   )

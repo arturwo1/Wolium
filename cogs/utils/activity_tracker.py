@@ -21,8 +21,11 @@ class ActivityTracker(commands.Cog):
     self._activity_def_cache: dict[str, int] = {}
     self._snapshot_cache: dict[str, int] = {}
 
+    self._primary_guild_by_user: dict[int, int] = {}
+
     self._max_activity_def_cache = 50000
     self._max_snapshot_cache = 50000
+    self._min_session_duration_ms = 60_000
 
   async def flush_all_open_sessions(self):
     if not hasattr(self.bot, "db_pool") or not self.bot.db_pool:
@@ -42,6 +45,9 @@ class ActivityTracker(commands.Cog):
 
         rows = []
         for session in sessions.values():
+          if not self._keep_session_row(session["started_at"], now):
+            continue
+
           rows.append((
             user_id,
             session["def_id"],
@@ -63,13 +69,14 @@ class ActivityTracker(commands.Cog):
                   ended_at
                 )
                 VALUES ($1, $2, $3, $4, $5)
-                ON CONFLICT (def_id, started_at) DO UPDATE
+                ON CONFLICT (user_id, def_id, started_at) DO UPDATE
                 SET ended_at = EXCLUDED.ended_at
                 """,
                 rows,
               )
 
         self._open_sessions.pop(user_id, None)
+        self._primary_guild_by_user.pop(user_id, None)
 
   async def handle_presence_update(self, member: Member):
     await self._sync_member_state(member)
@@ -84,16 +91,19 @@ class ActivityTracker(commands.Cog):
     if not self._user_header_changed(before, after):
       return
 
-    if after.id not in self._open_sessions:
+    primary_guild_id = self._get_primary_guild_id(after.id)
+    if primary_guild_id is None:
       return
 
-    for guild in self.bot.guilds:
-      member = guild.get_member(after.id)
-      if member is None:
-        continue
+    guild = self.bot.get_guild(primary_guild_id)
+    if guild is None:
+      return
 
-      await self._sync_member_state(member, after)
-      break
+    member = guild.get_member(after.id)
+    if member is None:
+      return
+
+    await self._sync_member_state(member, after)
 
   @staticmethod
   def _utc_now() -> datetime:
@@ -250,6 +260,20 @@ class ActivityTracker(commands.Cog):
     if len(self._snapshot_cache) > self._max_snapshot_cache:
       self._snapshot_cache.clear()
 
+  def _keep_session_row(self, started_at: datetime, ended_at: datetime) -> bool:
+    try:
+      duration_ms = int((ended_at - started_at).total_seconds() * 1000)
+    except Exception:
+      return False
+    return duration_ms >= self._min_session_duration_ms
+
+  def _get_primary_guild_id(self, user_id: int) -> Optional[int]:
+    return self._primary_guild_by_user.get(user_id)
+
+  def _set_primary_guild_id(self, user_id: int, guild_id: int):
+    if user_id not in self._primary_guild_by_user:
+      self._primary_guild_by_user[user_id] = guild_id
+
   def _extract_custom_status(self, member: Member) -> Dict[str, Any]:
     for activity in member.activities or []:
       is_custom = isinstance(activity, CustomActivity) or self._activity_type_code(activity) == 4
@@ -294,8 +318,7 @@ class ActivityTracker(commands.Cog):
 
     username = self._str_or_none(getattr(user_obj, "name", None))
     global_name = self._str_or_none(getattr(user_obj, "global_name", None))
-    nickname = self._str_or_none(member.nick)
-    display_name = nickname or global_name or username
+    display_name = global_name or username
 
     payload = {
       "status": self._status_to_string(member.status),
@@ -308,18 +331,15 @@ class ActivityTracker(commands.Cog):
     if include_profile:
       payload.update({
         "avatar_url": self._asset_url(getattr(user_obj, "display_avatar", None)),
-        "guild_avatar_url": self._asset_url(getattr(member, "guild_avatar", None)),
         "banner_url": self._asset_url(getattr(user_obj, "banner", None) or getattr(member, "banner", None)),
         "username": username,
-        "nickname": nickname,
-        "display_name": display_name,
         "global_name": global_name,
+        "display_name": display_name,
       })
 
     payload = self._drop_empty(payload)
 
     fingerprint_payload = {
-      "guild_id": member.guild.id,
       "user_id": member.id,
       **payload,
     }
@@ -648,6 +668,15 @@ class ActivityTracker(commands.Cog):
     user_id = member.id
     lock = self._get_user_lock(user_id)
 
+    primary_guild_id = self._get_primary_guild_id(user_id)
+
+    if primary_guild_id is None:
+      self._set_primary_guild_id(user_id, guild_id)
+      primary_guild_id = guild_id
+
+    if guild_id != primary_guild_id:
+      return
+
     async with lock:
       try:
         privacy = await self._get_member_privacy(member)
@@ -727,13 +756,14 @@ class ActivityTracker(commands.Cog):
                 processed_keys.add(session_key)
                 continue
 
-              rows_to_insert.append((
-                user_id,
-                old_session["def_id"],
-                old_session["snapshot_id"],
-                old_session["started_at"],
-                now,
-              ))
+              if self._keep_session_row(old_session["started_at"], now):
+                rows_to_insert.append((
+                  user_id,
+                  old_session["def_id"],
+                  old_session["snapshot_id"],
+                  old_session["started_at"],
+                  now,
+                ))
 
               next_open_sessions[session_key] = {
                 "def_id": new_session["def_id"],

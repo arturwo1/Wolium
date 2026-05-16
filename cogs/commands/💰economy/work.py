@@ -202,17 +202,17 @@ class Work(commands.Cog):
       )
       work.add_field(
         name=await tm.translate_message("economy.total_balance_label", language),
-        value=f"`€{stotal_balance}`",
+        value=f"`{stotal_balance}₩`",
         inline=False
       )
       work.add_field(
         name=await tm.translate_message("economy.bank_balance_label", language),
-        value=f"`€{sbank_balance}`",
+        value=f"`{sbank_balance}₩`",
         inline=False
       )
       work.add_field(
         name=await tm.translate_message("economy.hand_balance_label", language),
-        value=f"`€{sbalance}`",
+        value=f"`{sbalance}₩`",
         inline=False
       )
       work.add_field(

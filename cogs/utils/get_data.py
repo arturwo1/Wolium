@@ -61,10 +61,10 @@ class GetData(commands.Cog):
                 get_user_data = await conn.fetchrow(query,user_id)
 
                 self.temp_cache[(user_id, data_str, table, checker)] = {
-                  "data": {got_data:get_user_data[got_data] for got_data in data},
+                  "data": {got_data:get_user_data[got_data] for got_data in data if get_user_data and got_data},
                   "timestamp": datetime.now(timezone.utc).timestamp()
                 }
-                return {got_data:get_user_data[got_data] for got_data in data}
+                return {got_data:get_user_data[got_data] for got_data in data if get_user_data and got_data}
           except Exception as e:
             if isinstance(e, gaierror) and e.errno in {11001, 11002}:
               return self.temp_cache.get((user_id, data_str, table, checker), {"data": {name:None for name in data}})["data"]

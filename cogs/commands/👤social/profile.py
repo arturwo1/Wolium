@@ -341,9 +341,9 @@ class Profile(commands.Cog):
         paste_icon(ico_name, 24, 24, y_px)
 
       rows = [
-        (strings['total_label'], f" €{kwargs.get('total_balance', 0)}"),
-        (strings['bank_label'], f" €{kwargs.get('bank_balance', 0)}"),
-        (strings['balance_label'], f" €{kwargs.get('balance', 0)}"),
+        (strings['total_label'], f" {kwargs.get('total_balance', 0)}₩"),
+        (strings['bank_label'], f" {kwargs.get('bank_balance', 0)}₩"),
+        (strings['balance_label'], f" {kwargs.get('balance', 0)}₩"),
         (strings['upgrade_label'], f" {kwargs.get('upgrade', 0)}"),
         (strings['x2work_label'], f" {kwargs.get('x2workamount', 0)}"),
         (strings['x2buy_label'], f" {kwargs.get('x2buyamount', 0)}"),

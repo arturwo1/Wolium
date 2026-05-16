@@ -3,7 +3,7 @@ from nextcord.ext import commands
 from datetime import datetime, timezone
 from Utils.components_v2 import Container, ActionRow, TextDisplay, Separator, Select, V2Sender
 from traceback import format_exception
-from helper import get_general
+from helper import _find_channel
 
 feature_keys = [
   "welcome.feature_1",
@@ -84,7 +84,7 @@ class OnGuildJoin(commands.Cog):
     container.add(Separator(spacing=1, divider=False))
     container.add(TextDisplay(await tm.translate_message("welcome.footer", lang)))
 
-    general = await get_general(guild, self.bot, None)
+    general, _ = await _find_channel(self.bot, guild, "critical", None)
     if not general:
       return
 

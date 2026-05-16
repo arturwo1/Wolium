@@ -339,7 +339,6 @@ async def on_ready():
     import Utils.translate_to_all_languages
     номер_перевода = Utils.translate_to_all_languages.номер_перевода
     DISCORD_LANGUAGES = Utils.translate_to_all_languages.DISCORD_LANGUAGES
-    номер_перевода_символы = Utils.translate_to_all_languages.номер_перевода_символы
     print(f"\033[38;5;51m{bot.user}\033[0m \033[38;5;82mзакончил запуск в\033[0m \033[38;5;226m{datetime.now()}\033[0m\033[38;5;82m, запуск длился\033[0m \033[38;5;226m{datetime.now()-bot_started_launch}\033[0m")
     bot_started_launch2 = datetime.now()
     print(f"Начало загрузки переменных \033[38;5;51m{bot.user}\033[0m")
@@ -360,7 +359,7 @@ async def on_ready():
     except Exception as e:
       print('Произошла ошибка в on_ready при старте сайта\n',''.join(format_exception(type(e), e, e.__traceback__)))
 
-    text = f"Переведено {номер_перевода}({номер_перевода_символы} символов) текста на {len(DISCORD_LANGUAGES)} языка при запуске бота.\nСо всего было переведено {номер_перевода*len(DISCORD_LANGUAGES)} текста учитывая языки."
+    text = f"Переведено {номер_перевода} текста на {len(DISCORD_LANGUAGES)} языка при запуске бота.\nСо всего было переведено {номер_перевода*len(DISCORD_LANGUAGES)} текста учитывая языки."
     await bot.get_guild(807304463449849938).get_channel(807366228670152764).send(f'```ansi\nтокен от: \033[1;34m{bot.user}\033[0m\n\nБот Начал Запуск В: {time_when_bot_run_firts}\nБот Закончил Запуск В: {str(datetime.now())}\nБот Запускался: {datetime.now()-time_when_bot_run_firts}```\n```ansi\n{lazylightshow(text)[:1700]}```')
     print(f'\033[38;5;51m{bot.user}\033[0m полностью запустился в \033[38;5;226m{datetime.now()}\033[0m, заняло времени: \033[38;5;226m{datetime.now()-bot_started_launch2}\033[0m')
     print(f"В общем запуск длился \033[38;5;226m{datetime.now()-time_when_bot_run_firts}\033[0m")
@@ -374,7 +373,7 @@ if __name__=='__main__':
   async def load_cogs():
     for root, _, files in os.walk("cogs"):
       for file in files:
-        if file.endswith(".py"):
+        if file.endswith(".py") and file!="on_connect.py":
           cog_path = f"{root.replace(os.sep, '.')}.{file[:-3]}"
           a = datetime.now()
           print(f"🔹Загружаем cog: \033[38;5;21m{cog_path}\033[0m в \033[38;5;226m{datetime.now()}\033[0m"+" "*50, end="")
@@ -383,7 +382,13 @@ if __name__=='__main__':
             print(f"\r🔹\033[38;5;82mCog загружен:\033[0m \033[38;5;21m{cog_path}\033[0m \033[38;5;82mв\033[0m \033[38;5;226m{datetime.now()}\033[0m\033[38;5;82m, загрузка длилась\033[0m \033[38;5;226m{datetime.now()-a}\033[0m"+" "*50)
           except Exception as e:
             print(f"\r🔹\033[38;5;196mCog\033[0m \033[38;5;21m{cog_path}\033[0m \033[38;5;196mне загружен, ошибка: {e}\033[0m. \033[38;5;226m{datetime.now()}\033[0m\033[38;5;196m, загрузка длилась\033[0m \033[38;5;226m{datetime.now()-a}\033[0m"+" "*50)
-
+    await asyncio.sleep(3)
+    a = datetime.now()
+    try:
+      bot.load_extension(f"cogs.events.on_connect")
+      print(f"\r🔹\033[38;5;82mCog загружен:\033[0m \033[38;5;21mcogs.events.on_connect\033[0m \033[38;5;82mв\033[0m \033[38;5;226m{datetime.now()}\033[0m\033[38;5;82m, загрузка длилась\033[0m \033[38;5;226m{datetime.now()-a}\033[0m"+" "*50)
+    except Exception as e:
+      print(f"\r🔹\033[38;5;196mCog\033[0m \033[38;5;21mcogs.events.on_connect\033[0m \033[38;5;196mне загружен, ошибка: {e}\033[0m. \033[38;5;226m{datetime.now()}\033[0m\033[38;5;196m, загрузка длилась\033[0m \033[38;5;226m{datetime.now()-a}\033[0m"+" "*50)
   async def main_code():
     await load_cogs()
     print(f"\033[38;5;82m🔹Все cog'и загружены и запущены в\033[0m \033[38;5;226m{datetime.now()}\033[0m\033[38;5;82m, загрузка длилась\033[0m \033[38;5;226m{datetime.now()-bot_started_launch}\033[0m")
