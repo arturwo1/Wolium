@@ -382,7 +382,7 @@ def translate_to_all_languages(
     lang = message_language or 'en'
 
     cached = _cache_get(category, lang, text)
-    if cached is not None:
+    if cached:
       return format_text(cached, variables)
 
     source_text, source_lang = find_base_text(text, category)
@@ -406,7 +406,7 @@ def translate_to_all_languages(
 
   for lng in DISCORD_LANGUAGES:
     cached = _cache_get(category, lng, text)
-    if cached is not None:
+    if cached:
       _apply_translation(result, lng, cached, thing, source_text)
     else:
       missing_langs.append(lng)

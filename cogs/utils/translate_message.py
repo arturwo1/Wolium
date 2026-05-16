@@ -208,17 +208,20 @@ class TranslateMessage(commands.Cog):
 
     cache_translation = self.cache.get(text, {}).get(lang, {})
     if cache_translation:
-      return format_text(cache_translation.get("translation", text), variables)
+      translation = cache_translation.get("translation")
+      if translation:
+        return format_text(translation, variables)
 
     new_data = await read_locale_async('messages', lang)
     if save and text in new_data:
-      if not self.cache.get(text):
-        self.cache[text] = {}
-        self.cache[text][lang] = {
-          "translation": new_data[text],
-          "timestamp": time()
-        }
-      return format_text(new_data[text], variables)
+      if new_data[text]:
+        if not self.cache.get(text):
+          self.cache[text] = {}
+          self.cache[text][lang] = {
+            "translation": new_data[text],
+            "timestamp": time()
+          }
+        return format_text(new_data[text], variables)
 
     source_text, source_lang = await find_base_text_async(text, 'messages')
     
