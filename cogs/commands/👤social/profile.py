@@ -770,7 +770,7 @@ class Profile(commands.Cog):
       await interaction.followup.send(await tm.translate_message("error.occurred_logs_saved_review", lang), ephemeral=True)
       await self.bot.get_guild(807304463449849938).get_channel(1159138280651104256).send(embed=log)
 
-  setattr(profile, "extras", {"description": "Shows comprehensive profile information for any user."})
+  setattr(profile, "extras", {"description": "commands.profile.description"})
 
 
 def setup(bot: commands.Bot):

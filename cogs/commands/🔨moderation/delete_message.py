@@ -205,7 +205,7 @@ class DeleteMessage(commands.Cog):
           ephemeral=True
         )
 
-  setattr(purge,"extras",{"description": "Allows deleting messages from users."})
+  setattr(purge,"extras",{"description": "commands.purge.description"})
 
 def setup(bot:commands.Bot):
   bot.add_cog(DeleteMessage(bot))

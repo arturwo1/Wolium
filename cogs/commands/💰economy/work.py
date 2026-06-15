@@ -274,7 +274,7 @@ class Work(commands.Cog):
       except Exception:
         await interaction.followup.send(f"Произошла Ошибка, Логи Ошибки Сохранены, В Ближайшее Время Их Будут Рассматривать.", ephemeral=True)
 
-  setattr(work,"extras",{"description": "Самый простой способ получить экономическую валюту которая очень важна в моих командах, использование этой команды самый простой."})
+  setattr(work,"extras",{"description": "commands.work.description"})
 
 def setup(bot: commands.Bot):
   bot.add_cog(Work(bot))

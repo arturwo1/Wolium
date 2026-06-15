@@ -271,7 +271,7 @@ class Graph(commands.Cog):
     file = File(buf, filename="graph.png")
     await interaction.followup.send(content=message,file=file)
 
-  setattr(graph,"extras",{"description": "Ты Можешь Узнать Свою Активность За Любой Промежуток Времени С Момента Установки Меня."})
+  setattr(graph,"extras",{"description": "commands.graph.description"})
 
 def setup(bot: commands.Bot):
   bot.add_cog(Graph(bot))

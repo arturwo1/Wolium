@@ -102,7 +102,7 @@ class Transaction(commands.Cog):
       sbalance = await suffics(number=balance, variation=variation)
       await interaction.followup.send(await tm.translate_message("economy.transfer_to_hand_success", language, variables={"amount": s_amount, "bank": sbalance, "hand": sbank_balance}), ephemeral=True)
 
-  setattr(transaction,"extras",{"description": "Позволяет перекидывать деньги с банка в руки и обратно."})
+  setattr(transaction,"extras",{"description": "commands.transaction.description"})
 
 def setup(bot: commands.Bot):
   bot.add_cog(Transaction(bot))

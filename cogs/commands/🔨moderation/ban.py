@@ -138,6 +138,8 @@ class Ban(Cog):
       except Exception:
         await interaction.followup.send(await tm.translate_message("error.occurred_logs_saved_review", lang), ephemeral=True)
       await self.bot.get_guild(807304463449849938).get_channel(1159138280651104256).send(embed=log)
+  
+  setattr(ban, "extras", {"description": "commands.ban.description"})
 
 def setup(bot:Bot):
   bot.add_cog(Ban(bot))

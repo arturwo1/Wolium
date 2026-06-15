@@ -441,7 +441,7 @@ class MessageReport(commands.Cog):
         except Exception:
           pass
 
-  setattr(message_report, "extras", {"description": "Report a message to moderators"})
+  setattr(message_report, "extras", {"description": "commands.message_report.description"})
 
 def setup(bot:commands.Bot):
   bot.add_cog(MessageReport(bot))

@@ -426,8 +426,7 @@ class UserReport(commands.Cog):
       )
       await interaction.followup.send(await tm.translate_message("moderation.error_message", lang), ephemeral=True)
 
-  setattr(user_report,"extras",{"description": "С Помощью Этой Команды Вы Можете Репортнуть Пользователя(за его аватарку/имя/ник/поведение)!"})
-
+  setattr(user_report,"extras",{"description": "commands.user_report.description"})
 
 def setup(bot:commands.Bot):
   bot.add_cog(UserReport(bot))

@@ -11,6 +11,9 @@ from google import genai
 from google.genai import types
 from time import time, sleep
 from typing import Callable
+import traceback
+
+_file_mtime = {}
 
 _cache: dict[str, dict[str, dict[str, str]]] = {}
 _cache_lock = Lock()
@@ -18,24 +21,60 @@ _cache_lock = Lock()
 def _is_valid_translation(value) -> bool:
   return isinstance(value, str) and bool(value.strip())
 
+def _file_changed(file_path: str) -> bool:
+  try:
+    mtime = path.getmtime(file_path)
+  except OSError:
+    return False
+  old = _file_mtime.get(file_path)
+  if old is None or mtime > old:
+    _file_mtime[file_path] = mtime
+    return True
+  return False
+
 def _load_all_locales():
+  total = 0
   for category in ('commands', 'messages'):
     folder = f'locales/{category}'
     if not path.exists(folder):
+      print(f"[LOCALISATION] Folder not found: {folder}")
       continue
     _cache.setdefault(category, {})
     for filename in listdir(folder):
       if not filename.endswith('.json'):
         continue
       lang = filename[:-5]
+      file_path = f'{folder}/{filename}'
+      if not _file_changed(file_path):
+        continue
       try:
-        with open(f'{folder}/{filename}', 'r', encoding='utf-8') as f:
+        with open(file_path, 'r', encoding='utf-8') as f:
           raw = load(f)
-        _cache[category][lang] = {k: v for k, v in raw.items() if _is_valid_translation(v)}
+        _cache[category][lang] = {
+          k: v for k, v in raw.items()
+          if _is_valid_translation(v)
+        }
+        count = len(_cache[category][lang])
+        total += count
+        print(f"[LOCALISATION] Loaded {file_path}: {count} keys")
       except Exception:
+        print(f"[LOCALISATION] Failed to load {file_path}:")
+        traceback.print_exc()
         _cache[category][lang] = {}
+  if total>0:
+    print(f"[LOCALISATION] Total keys loaded: {total}")
 
 _load_all_locales()
+
+def reload_locales():
+  _load_all_locales()
+
+def _locale_watcher():
+  while True:
+    sleep(5)
+    _load_all_locales()
+
+Thread(target=_locale_watcher, daemon=True).start()
 
 def _cache_get(category: str, lang: str, key: str) -> str | None:
   with _cache_lock:

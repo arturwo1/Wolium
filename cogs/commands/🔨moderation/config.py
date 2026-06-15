@@ -35,7 +35,8 @@ class RulesModal(Modal):
       max_length=4000,
       required=True,
       default_value=guild_config.get('rules') or '',
-      placeholder=translate_to_all_languages("automod.ai_scanning_rules", 'message', language)
+      placeholder=translate_to_all_languages("automod.ai_scanning_rules", 'message', language),
+      custom_id=f"config_rules_input_{user_id}"
     )
     self.add_item(self.rules)
 
@@ -99,7 +100,8 @@ class TtlModal(Modal):
       max_length=50,
       required=True,
       default_value=loads(guild_config.get('ttl_channel', {})).get(ttl_channel_id) if isinstance(loads(guild_config.get('ttl_channel', {})), dict) else '',
-      placeholder=translate_to_all_languages("general.example", 'message', language)+": 10s 20m "+translate_to_all_languages("general.write", 'message', language)+" 0s "+translate_to_all_languages("general.to_cancel", 'message', language)
+      placeholder=translate_to_all_languages("general.example", 'message', language)+": 10s 20m "+translate_to_all_languages("general.write", 'message', language)+" 0s "+translate_to_all_languages("general.to_cancel", 'message', language),
+      custom_id=f"config_ttl_input_{user_id}"
     )
     self.add_item(self.time)
 
@@ -231,7 +233,8 @@ class ConfigView(View):
       options=[
         SelectOption(label=opt['label'], description=opt.get('description', ''), value=opt['value'])
         for opt in options
-      ]
+      ],
+      custom_id=f"config_select_{self.user_id}"
     )
     select_menu.callback = self.select_callback
     self.add_item(select_menu)
@@ -252,7 +255,8 @@ class ConfigView(View):
     self.clear_items()
     channel_id = ChannelSelect(
       placeholder=translate_to_all_languages("settings.select_log_channel", 'message', self.language),
-      channel_types=[ChannelType.text]
+      channel_types=[ChannelType.text],
+      custom_id=f"config_logchannel_select_{self.user_id}"
     )
     channel_id.callback = self.modlogchannel_callback
     self.add_item(channel_id)
@@ -262,7 +266,8 @@ class ConfigView(View):
     automoderation_button = Button(
       style=ButtonStyle.success if self.automoderation == False else ButtonStyle.danger,
       emoji="✔" if self.automoderation == False else "❌",
-      label=translate_to_all_languages("general.enable", 'message', self.language) if self.automoderation == False else translate_to_all_languages("general.disable", 'message', self.language)
+      label=translate_to_all_languages("general.enable", 'message', self.language) if self.automoderation == False else translate_to_all_languages("general.disable", 'message', self.language),
+      custom_id=f"config_automoderation_button_{self.user_id}"
     )
     automoderation_button.callback = self.automoderationbuttonenable_callback
     self.add_item(automoderation_button)
@@ -270,7 +275,8 @@ class ConfigView(View):
     automoderationchangemod_button = Button(
       style=ButtonStyle.primary,
       emoji='👮‍♂️',
-      label=translate_to_all_languages("settings.ai", 'message', self.language) if self.moderation_type == 'AI' else translate_to_all_languages("general.algorithm", 'message', self.language)
+      label=translate_to_all_languages("settings.ai", 'message', self.language) if self.moderation_type == 'AI' else translate_to_all_languages("general.algorithm", 'message', self.language),
+      custom_id=f"config_automoderationchangemod_button_{self.user_id}"
     )
     automoderationchangemod_button.callback = self.automoderationbuttonchangemod_callback
     self.add_item(automoderationchangemod_button)
@@ -278,7 +284,8 @@ class ConfigView(View):
     automoderationaddrules_button = Button(
       style=ButtonStyle.primary,
       emoji='📘',
-      label=translate_to_all_languages("general.rules_en", 'message', self.language)
+      label=translate_to_all_languages("general.rules_en", 'message', self.language),
+      custom_id=f"config_automoderationaddrules_button_{self.user_id}"
     )
     automoderationaddrules_button.callback = self.automoderationbuttonaddrules_callback
     self.add_item(automoderationaddrules_button)
@@ -288,7 +295,8 @@ class ConfigView(View):
     AI_button = Button(
       style=ButtonStyle.success if self.aibot == False else ButtonStyle.danger,
       emoji="✔" if self.aibot == False else "❌",
-      label=translate_to_all_languages("general.enable", 'message', self.language) if self.aibot == False else translate_to_all_languages("general.disable", 'message', self.language)
+      label=translate_to_all_languages("general.enable", 'message', self.language) if self.aibot == False else translate_to_all_languages("general.disable", 'message', self.language),
+      custom_id=f"config_ai_button_{self.user_id}"
     )
     AI_button.callback = self.AIbuttonenable_callback
     self.add_item(AI_button)
@@ -298,7 +306,8 @@ class ConfigView(View):
     word_channel_button = ChannelSelect(
       row=0,
       placeholder='🔤' + translate_to_all_languages("games.words_channel", 'message', self.language),
-      channel_types=[ChannelType.text]
+      channel_types=[ChannelType.text],
+      custom_id=f"config_word_channel_select_{self.user_id}"
     )
     word_channel_button.callback = self.wordchannel_callback
     self.add_item(word_channel_button)
@@ -307,7 +316,8 @@ class ConfigView(View):
       row=1,
       style=ButtonStyle.danger,
       emoji="❌",
-      label=translate_to_all_languages("game.reset_dictionary", 'message', self.language)
+      label=translate_to_all_languages("game.reset_dictionary", 'message', self.language),
+      custom_id=f"config_word_reset_button_{self.user_id}"
     )
     words_reset_button.callback = self.wordsreset_callback
     self.add_item(words_reset_button)
@@ -330,7 +340,8 @@ class ConfigView(View):
       options=[
         SelectOption(label=opt['label'], description=opt.get('description', ''), value=opt['value'])
         for opt in options
-      ]
+      ],
+      custom_id=f"config_filter_select_{self.user_id}"
     )
     filter_selection.callback = self.filter_callback
     self.add_item(filter_selection)
@@ -338,7 +349,8 @@ class ConfigView(View):
     number_channel_button = ChannelSelect(
       row=3,
       placeholder='🧮' + translate_to_all_languages("games.counting_channel", 'message', self.language),
-      channel_types=[ChannelType.text]
+      channel_types=[ChannelType.text],
+      custom_id=f"config_numberchannel_select_{self.user_id}"
     )
     number_channel_button.callback = self.numberchannel_callback
     self.add_item(number_channel_button)
@@ -350,7 +362,8 @@ class ConfigView(View):
       row=0,
       style=ButtonStyle.danger if self.news else ButtonStyle.success,
       emoji="❌" if self.news else "✔",
-      label=translate_to_all_languages("notifications.disable_news", 'message', self.language) if self.news else translate_to_all_languages("notifications.enable_news", 'message', self.language)
+      label=translate_to_all_languages("notifications.disable_news", 'message', self.language) if self.news else translate_to_all_languages("notifications.enable_news", 'message', self.language),
+      custom_id=f"config_news_toggle_{self.user_id}"
     )
     news_toggle.callback = self.newstoggle_callback
     self.add_item(news_toggle)
@@ -359,7 +372,8 @@ class ConfigView(View):
       row=0,
       style=ButtonStyle.danger if self.important else ButtonStyle.success,
       emoji="❌" if self.important else "✔",
-      label=translate_to_all_languages("notifications.disable_important", 'message', self.language) if self.important else translate_to_all_languages("notifications.enable_important", 'message', self.language)
+      label=translate_to_all_languages("notifications.disable_important", 'message', self.language) if self.important else translate_to_all_languages("notifications.enable_important", 'message', self.language),
+      custom_id=f"config_important_toggle_{self.user_id}"
     )
     important_toggle.callback = self.importanttoggle_callback
     self.add_item(important_toggle)
@@ -369,14 +383,16 @@ class ConfigView(View):
       style=ButtonStyle.secondary,
       emoji="🚨",
       label=translate_to_all_languages("notifications.critical_always_on", 'message', self.language),
-      disabled=True
+      disabled=True,
+      custom_id=f"config_critical_toggle_{self.user_id}"
     )
     self.add_item(critical_label)
 
     news_channel_select = ChannelSelect(
       row=1,
       placeholder='📰 ' + translate_to_all_languages("notifications.news_channel", 'message', self.language),
-      channel_types=[ChannelType.text, ChannelType.forum, ChannelType.news, ChannelType.news_thread]
+      channel_types=[ChannelType.text, ChannelType.forum, ChannelType.news, ChannelType.news_thread],
+      custom_id=f"config_news_channel_select_{self.user_id}"
     )
     news_channel_select.callback = self.newschannel_callback
     self.add_item(news_channel_select)
@@ -384,7 +400,8 @@ class ConfigView(View):
     important_channel_select = ChannelSelect(
       row=2,
       placeholder='⭐ ' + translate_to_all_languages("notifications.important_channel", 'message', self.language),
-      channel_types=[ChannelType.text, ChannelType.forum, ChannelType.news, ChannelType.news_thread]
+      channel_types=[ChannelType.text, ChannelType.forum, ChannelType.news, ChannelType.news_thread],
+      custom_id=f"config_important_channel_select_{self.user_id}"
     )
     important_channel_select.callback = self.importantchannel_callback
     self.add_item(important_channel_select)
@@ -392,7 +409,8 @@ class ConfigView(View):
     critical_channel_select = ChannelSelect(
       row=3,
       placeholder='🚨 ' + translate_to_all_languages("notifications.critical_channel", 'message', self.language),
-      channel_types=[ChannelType.text, ChannelType.forum, ChannelType.news, ChannelType.news_thread]
+      channel_types=[ChannelType.text, ChannelType.forum, ChannelType.news, ChannelType.news_thread],
+      custom_id=f"config_critical_channel_select_{self.user_id}"
     )
     critical_channel_select.callback = self.criticalchannel_callback
     self.add_item(critical_channel_select)
@@ -403,7 +421,8 @@ class ConfigView(View):
     ttlchannel_select = ChannelSelect(
       row=1,
       placeholder=translate_to_all_languages("general.select_channel", 'message', self.language),
-      channel_types=[ChannelType.text, ChannelType.forum, ChannelType.news, ChannelType.news_thread]
+      channel_types=[ChannelType.text, ChannelType.forum, ChannelType.news, ChannelType.news_thread],
+      custom_id=f"config_ttl_channel_select_{self.user_id}"
     )
     ttlchannel_select.callback = self.ttlchannel_callback
     self.add_item(ttlchannel_select)
@@ -411,7 +430,8 @@ class ConfigView(View):
     choosetime_button = Button(
       style=ButtonStyle.primary,
       emoji='⏳',
-      label=translate_to_all_languages("settings.time_until_deletion", 'message', self.language)
+      label=translate_to_all_languages("settings.time_until_deletion", 'message', self.language),
+      custom_id=f"config_ttlchoosetime_button_{self.user_id}"
     )
     choosetime_button.callback = self.choosetime_callback
     self.add_item(choosetime_button)
@@ -948,7 +968,7 @@ class Config(commands.Cog):
       ul = locale(interaction.locale)
       await interaction.followup.send(await tm.translate_message("error.occurred_logs_saved_review", ul), ephemeral=True)
 
-  setattr(settings, "extras", {"description": "Configure server settings"})
+  setattr(settings, "extras", {"description": "commands.config.description"})
 
 def setup(bot: commands.Bot):
   bot.add_cog(Config(bot))

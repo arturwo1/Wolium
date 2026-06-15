@@ -2,7 +2,6 @@ import sys, ctypes, clr
 from time import sleep, time
 from re import sub
 from typing import Any, Iterator
-from threading import Thread
 
 if __name__ == "__main__":
   def is_admin():
@@ -56,12 +55,10 @@ def enum_name(x: Any) -> str:
     return str(x).split(".")[-1]      # "HardwareType.Cpu" -> "Cpu"
   
 def init_lhm(self):
-  thread = Thread(target=self.pc.Open)
-  thread.start()
+  self.pc.Open()
 
 def update_hw(hw):
-  thread = Thread(target=hw.Update)
-  thread.start()
+  hw.Update()
 
 class Node:
   __slots__ = ("_data",)

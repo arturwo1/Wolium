@@ -113,6 +113,7 @@ class HelpMenu(View):
       row=0,
       placeholder="🌍" + translate_to_all_languages("general.select_category", "message", self.language),
       options=options,
+      custom_id=f"help_category_select_{self.user_id}",
     )
     select_menu.callback = self.select_callback
     self.add_item(select_menu)
@@ -122,6 +123,7 @@ class HelpMenu(View):
       label="◀",
       row=1,
       disabled=self.page <= 0,
+      custom_id=f"help_back_{self.user_id}",
     )
     back_button.callback = self.button1_callback
     self.add_item(back_button)
@@ -131,6 +133,7 @@ class HelpMenu(View):
       label="▶",
       row=1,
       disabled=self.page >= self.max_page,
+      custom_id=f"help_forward_{self.user_id}",
     )
     forward_button.callback = self.button2_callback
     self.add_item(forward_button)
@@ -217,34 +220,23 @@ class Help(commands.Cog):
 
     if selected_value in SPECIAL_VALUES:
       if selected_value == "about":
-        help_embed.description = await tm.translate_message(
-          """
-# **Особенности**:
-### **1**. *🤖Встроенный ИИ, С Доступом К Интернету.*
-### **2**. *💥Множество Абсолютно Разных Команд.*
-### **3**. *💹Развитая+Глобальная Экономика, Которая Может Быть Интегрирована К Каждому Дискорд Серверу.*
-### **5**. *🎈Вдохновлен Многими Популярными Ботами В Дискорде.*
-### **6**. *👀Всегда Развивается И Максимально Прислушивается К Комьюнити.*
-### **7**. *💬Встроенная Поддержка Абсолютно Всех Языков Дискорда Практически Во Всех Командах.*
-### **8**. *✅Возможность Узнать В Любом Стиле Свою Активность.*
-### **9**. *📰Есть Разнообразные Квесты.*
-### **10**. *🎇Интегрированность На Разных Платформах **В будущем**.*
-### **11**. *📊Поддержка Различных Статистик И Графиков.*
-### **12**. *🎵Музыкальные Команды С Поддержкой YouTube И Локальных Файлов.*
-### **13**. *🛠️Инструменты Для Разработчиков И Администраторов.*
-### **14**. *🔒Безопасность И Конфиденциальность.*
-### **15**. *🌐Поддержка Многоязычности И Локализации.*
-### **16**. *📅Автоматическое Обновление И Добавление Новых Функций.*
-### **17**. *🧩Интеграция С Различными API И Сервисами.*
-### **18**. *📚Документация И Руководства Для Пользователей.*
-### **19**. *🎮Игровые Команды И Мини-Игры.*
-### **20**. *📈Мониторинг И Аналитика Использования Бота.*
-# **Другое**:
-""",
-          language,
-        )
-        help_embed.description += f"""
-### **🔗[`{await tm.translate_message('general.bot_support_server', language)}`](https://discord.gg/DhtQr4PGYM)**  |  **🔗[`{await tm.translate_message('general.developer_server', language)}`](https://discord.gg/MXupeAApza)**  |  **🔗[`{await tm.translate_message('general.bot_website', language)}`](https://wolium.netlify.app/)**  |  **🔗[`{await tm.translate_message('general.support', language)}`](https://www.patreon.com/arturwol)**
+        features_title = await tm.translate_message("features.title", language)
+        other_title = await tm.translate_message("features.other_title", language)
+        feature_items = []
+        item_numbers = [1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+        for num in item_numbers:
+          translated_item = await tm.translate_message(f"features.item{num}", language)
+          feature_items.append(translated_item)
+        features_body = "\n".join(feature_items)
+        btn_support_server = await tm.translate_message('general.bot_support_server', language)
+        btn_dev_server = await tm.translate_message('general.developer_server', language)
+        btn_website = await tm.translate_message('general.bot_website', language)
+        btn_support = await tm.translate_message('general.support', language)
+        help_embed.description = f"""
+{features_title}
+{features_body}
+{other_title}
+### **🔗[`{btn_support_server}`](https://discord.gg/DhtQr4PGYM)** |  **🔗[`{btn_dev_server}`](https://discord.gg/MXupeAApza)** |  **🔗[`{btn_website}`](https://wolium.netlify.app/)** |  **🔗[`{btn_support}`](https://www.patreon.com/arturwol)**
 """
       elif selected_value == "tospp":
         help_embed.description = (
@@ -254,19 +246,24 @@ class Help(commands.Cog):
           f"[`{await tm.translate_message('general.rules', language)}`](https://wolium.netlify.app/rules/)**"
         )
       elif selected_value == "faq":
-        help_embed.description = await tm.translate_message(
-          """
-# **Часто Задаваемые Вопросы**:
-## **1**. ***ИИ Не Отвечает Или Пишет None.***
-### **Сервера Нейросети Выключены/Закончились Токены/Другая Ошибка, Если После 3-5 Раз Нейросеть Не Ответила/Написала None То Скорее Всего Закончились Токены, Нужно Будет Ждать Начала Следующего Месяца.**
-## **2**. ***Где Узнать ID Канала?***
-### > 1. **Перейдите В Настройки Дискорда.**
-### > 2. **Во Вкладке `Настройки приложения` Нажмите `Расширенные`.**
-### > 3. **Включите `Режим разработчика`.**
-### > 4. **ПКМ По Каналу > `Скопировать ID канала`.**
-""",
-          language,
-        )
+        faq_title = await tm.translate_message("faq.title", language)
+        q1_title = await tm.translate_message("faq.q1.title", language)
+        q1_body = await tm.translate_message("faq.q1.body", language)
+        q2_title = await tm.translate_message("faq.q2.title", language)
+        step1 = await tm.translate_message("faq.q2.body.step1", language)
+        step2 = await tm.translate_message("faq.q2.body.step2", language)
+        step3 = await tm.translate_message("faq.q2.body.step3", language)
+        step4 = await tm.translate_message("faq.q2.body.step4", language)
+        help_embed.description = f"""
+{faq_title}
+{q1_title}
+{q1_body}
+{q2_title}
+{step1}
+{step2}
+{step3}
+{step4}
+"""
       elif selected_value == "formules":
         help_embed.description = "### **" + await tm.translate_message("general.all_info_here", language) + f" | *{selected_value}***"
 

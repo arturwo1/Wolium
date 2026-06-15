@@ -105,8 +105,7 @@ class DeleteData(Cog):
       )
       await interaction.followup.send(await tm.translate_message("error.occurred_logs_saved_review", lang), ephemeral=True)
 
-
-  setattr(delete_data,"extras",{"description": "Delete all your stored messages and voice activity data."})
+  setattr(delete_data,"extras",{"description": "commands.delete_data.description"})
 
 def setup(bot:Bot):
   bot.add_cog(DeleteData(bot))

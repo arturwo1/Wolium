@@ -220,7 +220,7 @@ class Text(commands.Cog):
         await interaction.followup.send(await tm.translate_message("error.occurred_logs_saved_review", lang), ephemeral=True)
       await self.bot.get_guild(807304463449849938).get_channel(1159138280651104256).send(embed=log)
     
-  setattr(text,"extras",{"description": "Use this command to write anywhere on my behalf!"},)
+  setattr(text,"extras",{"description": "commands.text.description"})
 
 def setup(bot: commands.Bot):
   bot.add_cog(Text(bot))

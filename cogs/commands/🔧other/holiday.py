@@ -23,7 +23,7 @@ class HolidayPagination(View):
     self.children[0].disabled = (self.page == 0)
     self.children[1].disabled = (self.page == self.max_page)
 
-  @button(label="◀", style=ButtonStyle.primary)
+  @button(label="◀", style=ButtonStyle.primary, custom_id="prev_button")
   async def prev_button(self, button: Button, interaction: Interaction):
     if interaction.response.is_done():
       return
@@ -37,7 +37,7 @@ class HolidayPagination(View):
     embed = await self.get_page_embed_coro(self.page)
     await interaction.edit_original_message(embed=embed, view=self)
 
-  @button(label="▶", style=ButtonStyle.primary)
+  @button(label="▶", style=ButtonStyle.primary, custom_id="next_button")
   async def next_button(self, button: Button, interaction: Interaction):
     if interaction.response.is_done():
       return
@@ -65,10 +65,10 @@ class Holiday(commands.Cog):
     return "en"
 
   @slash_command(
-    name="праздник",
-    description="Узнать Праздники Которые Бот Использует.",
-    name_localizations=translate_to_all_languages('holiday.holiday_lower', 'name'),
-    description_localizations=translate_to_all_languages('holiday.learn_used_holidays', 'description'),
+    name="holiday",
+    description="Learn which holidays the bot uses.",
+    name_localizations=translate_to_all_languages('holiday.cmd_name', 'name'),
+    description_localizations=translate_to_all_languages('holiday.cmd_desc', 'description'),
     integration_types=[IntegrationType.user_install, IntegrationType.guild_install],
     contexts=[InteractionContextType.guild, InteractionContextType.bot_dm, InteractionContextType.private_channel],
   )
@@ -76,21 +76,21 @@ class Holiday(commands.Cog):
     self,
     interaction: Interaction,
     праздник: str = SlashOption(
-      name="праздник", 
-      description="Выбери Что Хочешь Узнать.",
+      name="holiday", 
+      description="Choose what you want to learn.",
       choices={"Current holiday": "current_holiday", "All holidays": "print_holidays"},
       required=True, 
-      name_localizations=translate_to_all_languages('holiday.holiday_lower', 'name'), 
-      description_localizations=translate_to_all_languages('general.choose_info', 'description'), 
-      choice_localizations=translate_to_all_languages({"праздник сегодня": "current_holiday", "все праздники": "print_holidays"}, 'choice')
+      name_localizations=translate_to_all_languages('holiday.opt_holiday_name', 'name'), 
+      description_localizations=translate_to_all_languages('holiday.opt_holiday_desc', 'description'), 
+      choice_localizations=translate_to_all_languages({"holiday.choice_current": "current_holiday", "holiday.choice_all": "print_holidays"}, 'choice')
     ),
     лично: bool = SlashOption(
-      name="лично", 
-      description="Только Ты Увидишь Сообщение, Или Все.",
+      name="personally", 
+      description="Whether only you will see the message, or everyone.",
       required=False,
       default=False, 
-      name_localizations=translate_to_all_languages('general.personally', 'name'), 
-      description_localizations=translate_to_all_languages('general.ephemeral_desc', 'description')
+      name_localizations=translate_to_all_languages('holiday.opt_personally_name', 'name'), 
+      description_localizations=translate_to_all_languages('holiday.opt_personally_desc', 'description')
     )
   ):
     user_id = interaction.user.id
@@ -104,7 +104,8 @@ class Holiday(commands.Cog):
         msg1 = await tm.translate_message("error.rate_limit_part1", locale)
         msg2 = await tm.translate_message("error.rate_limit_part2", locale)
         
-        await interaction.response.send_message(f"{msg1} **<t:{round(last_command_time + 10)}:R>** {msg2}", ephemeral=True)
+        space = " " if msg2 else ""
+        await interaction.response.send_message(f"{msg1} **<t:{round(last_command_time + 10)}:R>**{space}{msg2}", ephemeral=True)
         return
       else:
         slash_command_cooldown[user_id]['time'] = current_time
@@ -122,10 +123,10 @@ class Holiday(commands.Cog):
       if current_holiday:
         season = current_holiday['season']
         colors_map = {
-          "весна": Colour.from_rgb(0, 255, 0),
-          "лето": Colour.from_rgb(255, 255, 0),
-          "осень": Colour.from_rgb(255, 128, 0),
-          "зима": Colour.from_rgb(0, 255, 255)
+          "spring": Colour.from_rgb(0, 255, 0),
+          "summer": Colour.from_rgb(255, 255, 0),
+          "autumn": Colour.from_rgb(255, 128, 0),
+          "winter": Colour.from_rgb(0, 255, 255),
         }
         embed_color = colors_map.get(season, Colour.blurple())
 
@@ -206,8 +207,9 @@ class Holiday(commands.Cog):
           v_end = f"{await tm.translate_message('holiday.end', language)} {end_date}"
           v_dur = f"{await tm.translate_message('holiday.duration_label', language)} {duration} {await tm.translate_message('time.days', language)}"
 
+          field_prefix = await tm.translate_message("holiday.field_title_prefix", language)
           embed.add_field(
-            name=await tm.translate_message(f"Название Праздника: {name}", language),
+            name=f"{field_prefix}{await tm.translate_message(name, language)}",
             value=f"{v_remain}\n{v_season}\n{v_start}\n{v_end}\n{v_dur}",
             inline=False
           )

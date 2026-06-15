@@ -38,6 +38,7 @@ if __name__=='__main__':
   import hide_to_tray
 
   logging.basicConfig(level=logging.WARNING)
+  logging.getLogger("nextcord.http").setLevel(logging.ERROR)
 
   print(f"Библиотеки загрузились в: \033[38;5;226m{datetime.now()}\033[0m, загрузка шла: \033[38;5;226m{datetime.now()-time_when_bot_run_firts}\033[0m")
 tracemalloc.start()
@@ -47,21 +48,15 @@ load_dotenv()
 script_directory = os.path.dirname(os.path.abspath(__file__))
 os.chdir(script_directory)
 
-intents = nextcord.Intents.all()
-intents.message_content = True
-intents.typing = True
-intents.presences = True
-intents.voice_states = True
-intents.all()
-
 bot = commands.AutoShardedBot(
   command_prefix="_",
   help_command=None,
-  intents=intents,
+  intents=nextcord.Intents.all(),
   owner_id=740543157623848960,
   shard_ids=[0, 1],
   shard_count=2,
-  shard_id=0
+  shard_id=0,
+  allowed_mentions=nextcord.AllowedMentions.none()
 )
 
 async def init_database():

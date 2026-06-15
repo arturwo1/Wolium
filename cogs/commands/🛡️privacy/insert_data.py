@@ -430,8 +430,7 @@ class InsertData(Cog):
       await interaction.followup.send(await tm.translate_message("error.occurred_logs_saved_review", lang), ephemeral=True)
       await self.give_cooldown(user_id, ts=int(time()-60))
 
-
-  setattr(insert_data,"extras",{"description": "Import your Discord messages from an official Discord data archive."})
+  setattr(insert_data,"extras",{"description": "commands.insert_data.description"})
 
 def setup(bot:Bot):
   bot.add_cog(InsertData(bot))

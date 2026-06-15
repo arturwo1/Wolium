@@ -177,5 +177,7 @@ class UnBan(Cog):
         )
       await self.bot.get_guild(807304463449849938).get_channel(1159138280651104256).send(embed=log)
 
+  setattr(unban, "extras", {"description": "commands.unban.description"})
+
 def setup(bot:Bot):
   bot.add_cog(UnBan(bot))

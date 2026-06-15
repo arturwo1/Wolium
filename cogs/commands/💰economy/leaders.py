@@ -341,7 +341,7 @@ class Leaders(commands.Cog):
         await interaction.followup.send(error_msg, ephemeral=True)
       await self.bot.get_guild(807304463449849938).get_channel(1159138280651104256).send(embed=log)
 
-  setattr(leaders, "extras", {"description": "Показывает список лидеров в любом вам удобном формате."})
+  setattr(leaders, "extras", {"description": "commands.leaders.description"})
 
 def setup(bot: commands.Bot):
   bot.add_cog(Leaders(bot))

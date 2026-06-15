@@ -8,6 +8,9 @@ class OnMemberJoin(commands.Cog):
   
   @commands.Cog.listener()
   async def on_member_join(self,member:nextcord.Member):
+    if not self.bot.is_ready() or not getattr(self.bot, "db_pool", None):
+      return
+    
     user_id = member.id
     guild = member.guild
     guild_id = guild.id
@@ -25,6 +28,10 @@ class OnMemberJoin(commands.Cog):
       "guild": guild.name
     }
     await self.bot.get_cog("LogMemberActivity").log_member_activity(user_id, guild_id, activity_type, data)
+
+    async with self.bot.db_pool.acquire() as conn:
+      async with conn.transaction():
+        await conn.execute('INSERT INTO guild_member_stats (guild_id, total) VALUES ($1, $2)', guild_id, guild.member_count)
 
 def setup(bot:commands.Bot):
   bot.add_cog(OnMemberJoin(bot))

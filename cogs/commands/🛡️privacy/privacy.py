@@ -48,6 +48,7 @@ class PrivacySectionSelect(Select):
       placeholder=_t("privacy.select_section", view.language),
       options=options,
       row=0,
+      custom_id=f"privacy_section_select_{view.user_id}",
     )
 
   async def callback(self, interaction: Interaction):
@@ -66,6 +67,7 @@ class PrivacyToggleButton(Button):
       emoji=_state_emoji(value),
       row=row,
       disabled=disabled,
+      custom_id=f"privacy_toggle_button_{self.flag}_{view.user_id}",
     )
 
   async def callback(self, interaction: Interaction):
@@ -79,6 +81,7 @@ class PrivacyPresetButton(Button):
       style=ButtonStyle.secondary,
       label=label,
       row=row,
+      custom_id=f"privacy_preset_button_{preset_key}_{view.user_id}",
     )
 
   async def callback(self, interaction: Interaction):
@@ -91,6 +94,7 @@ class PrivacyResetButton(Button):
       style=ButtonStyle.danger,
       label=label,
       row=row,
+      custom_id=f"privacy_reset_{view.user_id}"
     )
 
   async def callback(self, interaction: Interaction):
@@ -391,11 +395,7 @@ class Privacy(commands.Cog):
       else:
         await interaction.response.send_message(error_text, ephemeral=True)
 
-  setattr(
-    privacy,
-    "extras",
-    {"description": "Configure what data the bot is allowed to collect about your activity."},
-  )
+  setattr(privacy, "extras", {"description": "commands.privacy.description"})
 
 def setup(bot: commands.Bot):
   bot.add_cog(Privacy(bot))

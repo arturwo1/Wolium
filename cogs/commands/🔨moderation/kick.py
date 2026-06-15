@@ -160,5 +160,7 @@ class Kick(Cog):
         )
       await self.bot.get_guild(807304463449849938).get_channel(1159138280651104256).send(embed=log)
 
+  setattr(kick, "extras", {"description": "commands.kick.description"})
+
 def setup(bot:Bot):
   bot.add_cog(Kick(bot))
