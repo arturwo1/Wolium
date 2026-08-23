@@ -35,9 +35,8 @@ class OnVoiceStateUpdate(commands.Cog):
       users_with_no_acces_for_bot.append(user_id)
       return
     
-    user_privacy = await gd.get_data(user_id,['save_voice'], 'user_privacy', 'user_id', member.guild)
-    
-    if not user_privacy['save_voice']:
+    guild_privacy = await gd.get_data(guild_id,['save_voice'], 'guild_settings_privacy', 'guild_id', member.guild, member)
+    if not guild_privacy['save_voice']:
       return
 
     sdeaf = member.voice.self_deaf if member.voice else None

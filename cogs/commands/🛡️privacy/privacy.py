@@ -8,7 +8,7 @@ from nextcord.ext import commands
 
 import Utils.translate_to_all_languages
 from Utils.config import slash_command_cooldown
-from Utils.privacy_flags import SECTION_ORDER, SECTION_LABELS, FLAG_DEPENDENCIES, SECTION_FLAGS, FLAG_TEXTS, PRESETS, VALID_FLAGS
+from Utils.privacy_flags import SECTION_ORDER, SECTION_LABELS, SECTION_FLAGS, FLAG_TEXTS, PRESETS, VALID_FLAGS
 
 translate_to_all_languages = Utils.translate_to_all_languages.translate_to_all_languages
 
@@ -59,14 +59,11 @@ class PrivacyToggleButton(Button):
     self.view_ref = view
     self.flag = flag
     value = view.privacy.get(flag, False)
-    dependency = FLAG_DEPENDENCIES.get(flag)
-    disabled = bool(dependency and not view.privacy.get(dependency, False))
     super().__init__(
       style=_state_style(value),
       label=label,
       emoji=_state_emoji(value),
       row=row,
-      disabled=disabled,
       custom_id=f"privacy_toggle_button_{self.flag}_{view.user_id}",
     )
 
@@ -111,13 +108,6 @@ class PrivacySettingsView(View):
     self.update_data = update_data
     self.section = "overview"
     self.refresh_components()
-
-  def normalize_dependencies(self):
-    for child, parent in FLAG_DEPENDENCIES.items():
-      if self.privacy.get(child, False) and not self.privacy.get(parent, False):
-        self.privacy[parent] = True
-      if not self.privacy.get(parent, False):
-        self.privacy[child] = False
 
   def refresh_components(self):
     self.clear_items()
@@ -175,13 +165,8 @@ class PrivacySettingsView(View):
 
     current = bool(self.privacy.get(flag, False))
     self.privacy[flag] = not current
-    self.normalize_dependencies()
 
     changes = {flag: self.privacy[flag]}
-    for child, parent in FLAG_DEPENDENCIES.items():
-      if flag == parent and not self.privacy.get(parent, False):
-        self.privacy[child] = False
-        changes[child] = False
 
     for key, value in changes.items():
       await self.update_data.update_data(
@@ -201,7 +186,6 @@ class PrivacySettingsView(View):
 
     preset = PRESETS[preset_key].copy()
     self.privacy.update(preset)
-    self.normalize_dependencies()
 
     for key, value in preset.items():
       await self.update_data.update_data(
@@ -255,12 +239,8 @@ class PrivacySettingsView(View):
       lines.append("")
       for flag in SECTION_FLAGS[self.section]:
         value = self.privacy.get(flag, False)
-        dep = FLAG_DEPENDENCIES.get(flag)
         label = _t(FLAG_TEXTS[flag], self.language)
         line = f"{_state_emoji(value)} **{label}**"
-        if dep and not self.privacy.get(dep, False):
-          parent_label = _t(FLAG_TEXTS[dep], self.language)
-          line += f"\n  └ {_t('privacy.depends_on', self.language)}: **{parent_label}**"
         lines.append(str(line))
 
     footer = _t(

@@ -24,6 +24,11 @@ class EnsureGuildExists(commands.Cog):
                   "INSERT INTO guild_settings (guild_id) VALUES ($1) ON CONFLICT (guild_id) DO NOTHING",
                   guild_id
                 )
+
+                await conn.execute(
+                  "INSERT INTO guild_settings_privacy (guild_id) VALUES ($1) ON CONFLICT (guild_id) DO NOTHING",
+                  guild_id
+                )
           except Exception as e:
             await sleep(10)
             continue

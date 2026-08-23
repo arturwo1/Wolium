@@ -437,9 +437,11 @@ class OnMessage(commands.Cog):
     create_task(self.GPTTalk(message, language, invite))
 
     if message.author!=self.bot.user and message.guild:
-      user_privacy = await gd.get_data(user_id,['save_messages', 'save_message_data'], 'user_privacy', 'user_id', message.guild)
-      if user_privacy['save_messages']:
-        guild_id = message.guild.id
+      guild_id = message.guild.id
+
+      user_privacy = await gd.get_data(user_id,['save_message_data'], 'user_privacy', 'user_id', message.guild)
+      guild_privacy = await gd.get_data(guild_id,['save_messages'], 'guild_settings_privacy', 'guild_id', message.guild)
+      if guild_privacy['save_messages']:
         channel_id = message.channel.id
         date_time = message.created_at.replace(tzinfo=None)
         content = message.content if user_privacy['save_message_data'] else None

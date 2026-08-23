@@ -645,13 +645,9 @@ class ActivityTracker(commands.Cog):
         users_with_no_acces_for_bot.append(user_id)
       return None
 
-    return await gd.get_data(
-      user_id,
-      ["save_activity", "save_activity_data", "save_activity_profile"],
-      "user_privacy",
-      "user_id",
-      member.guild,
-    )
+    user_privacy = await gd.get_data(user_id, ["save_activity_data", "save_activity_profile"], "user_privacy", "user_id", member.guild)
+    guild_privacy = await gd.get_data(guild_id, ["save_activity"], "guild_settings_privacy", "guild_id", member.guild)
+    return user_privacy|guild_privacy
 
   async def _sync_member_state(
     self,
