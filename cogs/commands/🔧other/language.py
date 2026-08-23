@@ -33,7 +33,7 @@ class Language(commands.Cog):
       InteractionContextType.guild,
       InteractionContextType.bot_dm,
       InteractionContextType.private_channel,
-    ],)
+    ])
   async def language(self,
     interaction: nextcord.Interaction,
     language_code: str=SlashOption(name="language_code", description="Choose a language.",required=True, name_localizations=translate_to_all_languages('general.language_lower', 'name'), description_localizations=translate_to_all_languages('general.choose_language', 'description')),

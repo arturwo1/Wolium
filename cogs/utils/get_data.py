@@ -1,8 +1,8 @@
-import nextcord
+from nextcord import Guild, User, Embed, Colour
 from nextcord.ext import commands, tasks
 from datetime import datetime,timezone
 from Utils.config import users
-import traceback
+from traceback import format_exception
 from asyncio import sleep
 from socket import gaierror
 
@@ -31,16 +31,13 @@ class GetData(commands.Cog):
 
     await sleep(SLEEP/len(self.temp_cache))
 
-  async def get_data(self,user_id:str,data:list,table:str,checker:str,guild:nextcord.Guild=None):
+  async def get_data(self,user_id:str,data:list,table:str,checker:str,guild:Guild=None,user:User=None):
     ensure_guild = self.bot.get_cog("EnsureGuildExists")
     ensure_user = self.bot.get_cog("EnsureUserExists")
     try:
       data_str = ', '.join(data)
       get_user_data = 'None'
-      try:
-        user = self.bot.get_user(user_id)
-      except Exception:
-        user = None
+      user = user or self.bot.get_user(user_id)
       while True:
         if hasattr(self.bot, 'db_pool') and self.bot.db_pool:
           if guild and not user:
@@ -60,25 +57,27 @@ class GetData(commands.Cog):
                 query = f"SELECT {data_str} FROM {table} WHERE {checker} = $1"
                 get_user_data = await conn.fetchrow(query,user_id)
 
+                row_data = {got_data: get_user_data[got_data] for got_data in data} if get_user_data else {name: None for name in data}
+
                 self.temp_cache[(user_id, data_str, table, checker)] = {
-                  "data": {got_data:get_user_data[got_data] for got_data in data if get_user_data and got_data},
+                  "data": row_data,
                   "timestamp": datetime.now(timezone.utc).timestamp()
                 }
-                return {got_data:get_user_data[got_data] for got_data in data if get_user_data and got_data}
+
+                return row_data
           except Exception as e:
             if isinstance(e, gaierror) and e.errno in {11001, 11002}:
               return self.temp_cache.get((user_id, data_str, table, checker), {"data": {name:None for name in data}})["data"]
-            
             raise e
           break
         else:
           await sleep(10)
     except Exception as e:
-      traceback_msg = ((''.join(traceback.format_exception(type(e), e, e.__traceback__)))[:5000])
-      log = nextcord.Embed(
+      traceback_msg = ((''.join(format_exception(type(e), e, e.__traceback__)))[:5000])
+      log = Embed(
         title=f"PostgreSQL | Error retrieving user data",
         description=(f"{e}")[:500],
-        color=nextcord.Colour.red(),
+        color=Colour.red(),
         timestamp=datetime.now(timezone.utc)
       )
       if guild:

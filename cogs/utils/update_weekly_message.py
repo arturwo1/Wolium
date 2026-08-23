@@ -79,7 +79,11 @@ class UpdateWeeklyMessage(commands.Cog):
                 dm = await member.create_dm()
                 user_settings = await gd.get_data(user_id,['language'],'users','user_id',guild)
                 language = user_settings['language']
-                await dm.send(await tm.translate_message(f"Your Ban Expiration Has Passed.", language)+f"\n"+await tm.translate_message(f"On Server:", language)+f" `{guild.name}`\n"+await tm.translate_message(f"Unban Time:", language)+f" <t:{datetime_now}:F>")
+                await dm.send(await tm.translate_message(
+                  "punishment.ban_auto_expired_dm",
+                  language,
+                  variables={"guild": guild.name, "unban_time": f"<t:{datetime_now}:F>"}
+                ))
               except Exception:
                 pass
               await guild.unban(Object(id=int(user_id)))

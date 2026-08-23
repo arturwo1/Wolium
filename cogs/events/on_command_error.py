@@ -7,7 +7,7 @@ class OnCommandError(commands.Cog):
   
   @commands.Cog.listener()
   async def on_command_error(self, ctx: commands.Context,error: commands.CommandError):
-    tm = await self.bot.get_cog("TranslateMessage")
+    tm = self.bot.get_cog("TranslateMessage")
     if isinstance(error, commands.CommandNotFound):
       try:
         if ctx.guild:

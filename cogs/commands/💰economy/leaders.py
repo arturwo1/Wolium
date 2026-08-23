@@ -1,6 +1,7 @@
 from nextcord import SlashOption, IntegrationType, InteractionContextType, ButtonStyle, Interaction, Embed, Color, Colour, slash_command
 from nextcord.ext import commands
 from nextcord.ui import View, Button
+from nextcord.errors import NotFound, Forbidden
 from Utils.suffics import suffics
 from datetime import datetime, timezone, timedelta
 from time import time
@@ -266,6 +267,16 @@ class Leaders(commands.Cog):
           member = interaction.guild.get_member(uid) if interaction.guild else None
           user_obj = self.bot.get_user(uid)
           guild_obj = self.bot.get_guild(uid)
+          if not user_obj and not guild_obj:
+            try:
+              user_obj = await self.bot.fetch_user(uid)
+            except NotFound:
+              pass
+          if not user_obj and not guild_obj:
+            try:
+              guild_obj = await self.bot.fetch_guild(uid)
+            except (NotFound, Forbidden):
+              pass
 
           badges = ''
           if member:
@@ -280,9 +291,9 @@ class Leaders(commands.Cog):
           elif guild_obj:
             display = f"**`{guild_obj.name}`**"
           elif user_obj:
-            display = f"{badges}{getattr(user_obj, 'display_name', (str(badges)+'ID: '+str(uid)))}"
+            display = f"{badges}{getattr(user_obj, 'display_name', f'{badges}ID: {uid}')}"
           else:
-            display = f"{badges}<@{uid}>"
+            display = f"{badges}UNKNOWN({uid})"
 
           lead.add_field(
             name=f"**#{rank}**.",

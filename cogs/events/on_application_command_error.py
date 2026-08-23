@@ -31,7 +31,7 @@ class OnApplicationCommandError(commands.Cog):
         )
       log.add_field(
         name="Channel",
-        value=f"<#{interaction.channel.id}>(`{interaction.channel.id}` | `{interaction.channel.name if interaction.guild else f'[<@{interaction.author.id}>({interaction.author.id} | {interaction.author.name}({interaction.author.display_name})]'}`)",
+        value=f"<#{interaction.channel.id}>(`{interaction.channel.id}` | `{interaction.channel.name if interaction.guild else f'[<@{interaction.user.id}>({interaction.user.id} | {interaction.user.name}({interaction.user.display_name})]'}`)",
         inline=False
       )
       for i in range(0, len(traceback_msg), 1000):
@@ -48,6 +48,5 @@ class OnApplicationCommandError(commands.Cog):
     except Exception as a:
       print(f"⚠ Application command error:\n  Interaction: {{\n    \"name\": \"{interaction.application_command.name}\",\n    \"id\": \"{interaction.id}\",\n    \"user\": \"{interaction.user}\"\n    \"user_id\": \"{interaction.user.id}\"\n}}\n  Error: {exception},\n  Exception: [{traceback_msg}]\n\n⚠ Error while sending error log: {a}")
     
-
 def setup(bot:commands.Bot):
   bot.add_cog(OnApplicationCommandError(bot))

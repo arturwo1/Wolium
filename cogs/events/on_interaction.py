@@ -108,9 +108,7 @@ class OnComponentInteraction(commands.Cog):
     content = content_map.get(selected_value)
     if not content:
       await interaction.response.send_message(
-        await tm.translate_message("welcome.category_not_found", lang),
-        ephemeral=True
-      )
+        await tm.translate_message("welcome.category_not_found", lang), ephemeral=True)
       return
 
     title = await tm.translate_message(content["title_key"], lang)

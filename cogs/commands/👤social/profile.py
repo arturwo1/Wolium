@@ -291,15 +291,11 @@ class Profile(commands.Cog):
     draw.text((int(130 * upscale), int(55 * upscale)), f"@{username}", font=font_small, fill=muted_color, stroke_width=int(0.4 * upscale))
 
     if rank is not None:
-      rank_str = f"#{rank}"
-      rank_bb = draw.textbbox((0, 0), rank_str, font=font_large)
-      rank_w = rank_bb[2] - rank_bb[0]
-      draw.text((width - int(20 * upscale) - rank_w, int(25 * upscale)), rank_str, font=font_large, fill=text_color, stroke_width=int(0.4 * upscale))
       if total_users and total_users > 0:
         pct = rank / total_users * 100
-        pct_str = strings.get('top_label', 'Top') + f" {max(pct, 0.1):.1f}%"
+        pct_str = strings.get('top_label', 'Top') + f" #{rank}({max(pct, 0.1):.1f}%)"
         pct_bb = draw.textbbox((0, 0), pct_str, font=font_small)
-        draw.text((width - int(20 * upscale) - (pct_bb[2] - pct_bb[0]), int(55 * upscale)), pct_str, font=font_small, fill=muted_color, stroke_width=int(0.4 * upscale))
+        draw.text((width - int(20 * upscale) - (pct_bb[2] - pct_bb[0]), int(135 * upscale)), pct_str, font=font_small, fill=muted_color, stroke_width=int(0.4 * upscale))
 
     self._draw_xp_bar(draw, XP_now, XP_need, xp, LvL, (int(130 * upscale), int(90 * upscale)), (int(210 * upscale), int(10 * upscale)), font_small, upscale)
 

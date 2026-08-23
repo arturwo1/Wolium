@@ -105,8 +105,7 @@ class Work(commands.Cog):
 
       time_since_last_usage=time()-worka
       if time_since_last_usage<(60*39):
-        remaining = int((60*39) - time_since_last_usage)
-        await interaction.response.send_message(await tm.translate_message("economy.cooldown_remaining", language, variables={"time": str(timedelta(seconds=remaining))[:-4]}), ephemeral=True)
+        await interaction.response.send_message(await tm.translate_message("economy.cooldown_remaining", language, variables={"time": f"<t:{round(worka + 60 * 39)}:R>"}), ephemeral=True)
         return
       else:
         if hasattr(self.bot, 'db_pool') and self.bot.db_pool:
@@ -226,7 +225,7 @@ class Work(commands.Cog):
         inline=False
       )
       work.set_footer(
-        text=await tm.translate_message("economy.cooldown_footer", language, variables={"minutes": "minutes"}),
+        text=await tm.translate_message("economy.cooldown_footer", language, variables={"minutes": 40}),
         icon_url="https://cdn.discordapp.com/attachments/886241481118068906/1145385898637271060/2088617.png"
       )
       try:

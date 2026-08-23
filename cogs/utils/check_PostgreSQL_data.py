@@ -134,7 +134,7 @@ class CheckPostgreSQLData(commands.Cog):
           })
       if guild_id:
         guild = self.bot.get_guild(guild_id)
-        invite = gi.invite(guild)
+        invite = await gi.invite(guild)
         if guild:
           fields.append({
             'name':'Server',
