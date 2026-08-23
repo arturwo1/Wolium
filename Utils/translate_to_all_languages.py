@@ -10,6 +10,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from google import genai
 from google.genai import types
 from time import time, sleep
+from re import compile as re_compile
 from typing import Callable
 import traceback
 
@@ -17,6 +18,23 @@ _file_mtime = {}
 
 _cache: dict[str, dict[str, dict[str, str]]] = {}
 _cache_lock = Lock()
+
+PLACEHOLDER_RE = re_compile(r'\{[^{}]*\}')
+
+def protect_placeholders(text: str) -> tuple[str, dict]:
+  mapping = {}
+  def repl(m):
+    idx = len(mapping)
+    token = f"§{idx}§"
+    mapping[token] = m.group(0)
+    return token
+  protected = PLACEHOLDER_RE.sub(repl, text)
+  return protected, mapping
+
+def restore_placeholders(text: str, mapping: dict) -> str:
+  for token, original in mapping.items():
+    text = text.replace(token, original)
+  return text
 
 def _is_valid_translation(value) -> bool:
   return isinstance(value, str) and bool(value.strip())
@@ -252,16 +270,23 @@ def _run_batch_worker():
         has_more = bool(_pending)
 
       prompt_map = {}
+      placeholder_maps = {}
       for key, task in batch.items():
+        if task['thing'] == 'name':
+          protected_text = task['source_text']
+          mapping = {}
+        else:
+          protected_text, mapping = protect_placeholders(task['source_text'])
+        placeholder_maps[key] = mapping
         for lng in task['langs']:
-          prompt_map[f"{key}|||{lng}"] = task['source_text']
+          prompt_map[f"{key}|||{lng}"] = protected_text
 
       prompt = (
         f"Translate the following texts. "
         f"Each entry has a unique ID as key and text to translate as value. "
         f"The ID format is 'TRANSLATION_KEY|||TARGET_LANG'. "
         f"Return ONLY a JSON object with the same IDs as keys and translations as values. "
-        f"Keep formatting, variables like {{var_name}} and Discord markdown intact.\n"
+        f"Keep formatting, tokens like §0§, §1§ and Discord markdown intact - do not translate or alter them.\n"
         f"{dumps(prompt_map, ensure_ascii=False)}"
       )
 
@@ -298,6 +323,7 @@ def _run_batch_worker():
         if not _is_valid_translation(translation):
           continue
         task = batch[key]
+        translation = restore_placeholders(translation, placeholder_maps.get(key, {}))
         _store(task['category'], lng, key, translation)
         номер_перевода += 1
         console_text = f"\rTranslates {номер_перевода} text to {len(DISCORD_LANGUAGES)} language."
@@ -320,18 +346,24 @@ def _run_batch_worker():
         fallback_futures = {}
         for key, langs in failed.items():
           task = batch[key]
+          if task['thing'] == 'name':
+            protected_text = task['source_text']
+            mapping = {}
+          else:
+            protected_text, mapping = protect_placeholders(task['source_text'])
           for lng in langs:
             fut = translation_executor.submit(
               _google_translate_one,
-              task['source_text'], task['source_lang'], lng, headers
+              protected_text, task['source_lang'], lng, headers
             )
-            fallback_futures[fut] = (key, lng, task)
+            fallback_futures[fut] = (key, lng, task, mapping)
 
         for fut in as_completed(fallback_futures):
-          key, lng, task = fallback_futures[fut]
+          key, lng, task, mapping = fallback_futures[fut]
           try:
             translated = fut.result()
             if _is_valid_translation(translated):
+              translated = restore_placeholders(translated, mapping)
               _store(task['category'], lng, key, translated)
               номер_перевода += 1
               console_text = f"\rTranslated {номер_перевода} text to {len(DISCORD_LANGUAGES)} languages."

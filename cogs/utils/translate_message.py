@@ -7,6 +7,7 @@ from traceback import format_exception
 from json import load, dump, loads
 from os import replace, path, makedirs, listdir
 from time import time, sleep
+from re import compile as re_compile
 from google import genai
 from google.genai import types
 from Utils.config import gemini_api_keys, system_instruction, gemini_models, g_temperature, g_top_p, g_top_k
@@ -16,6 +17,23 @@ stats_lock = ThreadLock()
 gemini_idx = 0
 gemini_cooldown = 0
 gemini_usage_stats = {}
+
+PLACEHOLDER_RE = re_compile(r'\{[^{}]*\}')
+
+def protect_placeholders(text: str) -> tuple[str, dict]:
+  mapping = {}
+  def repl(m):
+    idx = len(mapping)
+    token = f"§{idx}§"
+    mapping[token] = m.group(0)
+    return token
+  protected = PLACEHOLDER_RE.sub(repl, text)
+  return protected, mapping
+
+def restore_placeholders(text: str, mapping: dict) -> str:
+  for token, original in mapping.items():
+    text = text.replace(token, original)
+  return text
 
 def get_gemini_model():
   global gemini_idx, gemini_cooldown, gemini_usage_stats
@@ -96,7 +114,8 @@ def parse_gemini_json(text: str) -> dict:
   return loads(text.strip())
 
 def _gemini_translate_sync(source_text: str, source_lang: str, target_lang: str) -> str:
-  prompt = f'Translate "{source_text}" from {source_lang} to {target_lang}. Keep formatting and variables intact. Return ONLY a JSON object: {{"translation": "text"}}'
+  protected_text, mapping = protect_placeholders(source_text)
+  prompt = f'Translate "{protected_text}" from {source_lang} to {target_lang}. Do NOT translate or alter tokens like §0§, §1§ - keep them exactly as-is. Return ONLY a JSON object: {{"translation": "text"}}'
   
   max_attempts = len(gemini_api_keys) * len(gemini_models)
   for _ in range(max_attempts):
@@ -113,7 +132,7 @@ def _gemini_translate_sync(source_text: str, source_lang: str, target_lang: str)
       )
       data = parse_gemini_json(response.text)
       sleep(0.5)
-      return data["translation"]
+      return restore_placeholders(data["translation"], mapping)
     except Exception as e:
       err = str(e).lower()
       if "429" in err or "quota" in err or "exhausted" in err or "504" in err:
@@ -170,8 +189,8 @@ async def find_base_text_async(key: str, category: str):
   
   folder = f'locales/{category}'
   if path.exists(folder):
-    for filename in listdir(folder):
-      if filename.endswith('.json'):
+    for filename in sorted(listdir(folder)):
+      if filename.endswith('.json') and filename != 'en.json':
         lang_code = filename.replace('.json', '')
         data = await read_locale_async(category, lang_code)
         if key in data:
@@ -199,6 +218,54 @@ class TranslateMessage(commands.Cog):
       if not self.cache[key]:
         del self.cache[key]
 
+  async def _background_translate(self, text: str, lang: str, source_text: str | None, source_lang: str | None):
+    translated = None
+    try:
+      translated = await to_thread(_gemini_translate_sync, source_text or text, source_lang or "auto", lang)
+    except Exception:
+      try:
+        protected_text, mapping = protect_placeholders(source_text or text)
+        translation = await to_thread(GoogleTranslator(source=source_lang or "auto", target=lang).translate, protected_text)
+        if translation:
+          translated = restore_placeholders(translation, mapping)
+      except Exception as a:
+        traceback_exception = ''.join(format_exception(type(a), a, a.__traceback__))[:4000]
+        fields = [
+          {
+            'name': 'Ключ / Текст для перевода',
+            'value': text,
+            'inline': True
+          },
+          {
+            'name': 'Оригинал',
+            'value': source_text,
+            'inline': True
+          },
+          {
+            'name': 'Язык сообщения',
+            'value': lang,
+            'inline': True
+          },
+          {
+            'name': 'Ошибка',
+            'value': f"**```py\n{traceback_exception}```**",
+            'inline': False
+          }
+        ]
+        await self.bot.get_cog("SendEmbed").send_embed(
+          title="Ошибка при переводе сообщения",
+          description=f"Ошибка: {a}",
+          color=Colour.red(),
+          fields=fields,
+          footer_text="translate_message",
+        )
+
+    if translated:
+      await write_locale_async('messages', lang, text, translated)
+      self.cache.setdefault(text, {})[lang] = {"translation": translated, "timestamp": time()}
+    else:
+      self.cache.get(text, {}).pop(lang, None)
+
   async def translate_message(self, text: str, message_language: str | None = None, message_language_for_now: str | None = None, save: bool = True, variables: dict | None = None):
     if not text: return "<None>"
     
@@ -211,16 +278,17 @@ class TranslateMessage(commands.Cog):
       translation = cache_translation.get("translation")
       if translation:
         return format_text(translation, variables)
+      if cache_translation.get("pending"):
+        source_text, _ = await find_base_text_async(text, 'messages')
+        return format_text(source_text or text, variables)
 
     new_data = await read_locale_async('messages', lang)
     if save and text in new_data:
       if new_data[text]:
-        if not self.cache.get(text):
-          self.cache[text] = {}
-          self.cache[text][lang] = {
-            "translation": new_data[text],
-            "timestamp": time()
-          }
+        self.cache.setdefault(text, {})[lang] = {
+          "translation": new_data[text],
+          "timestamp": time()
+        }
         return format_text(new_data[text], variables)
 
     source_text, source_lang = await find_base_text_async(text, 'messages')
@@ -230,85 +298,19 @@ class TranslateMessage(commands.Cog):
       return format_text(text, variables)
 
     if lang == source_lang:
-      if not self.cache.get(text):
-        self.cache[text] = {}
-        self.cache[text][lang] = {
-          "translation": source_text,
-          "timestamp": time()
-        }
+      self.cache.setdefault(text, {})[lang] = {
+        "translation": source_text,
+        "timestamp": time()
+      }
       return format_text(source_text, variables)
 
-    try:
-      translated = await to_thread(_gemini_translate_sync, source_text or text, source_lang or "auto", lang)
-      if translated and save:
-        await write_locale_async('messages', lang, text, translated)
-      if not self.cache.get(text):
-        self.cache[text] = {}
-        self.cache[text][lang] = {
-          "translation": translated,
-          "timestamp": time()
-        }
-      return format_text(translated, variables)
-    except Exception:
-      pass
+    fallback = source_text or text
 
-    try:
-      translation = await to_thread(GoogleTranslator(source=source_lang or "auto", target=lang).translate, source_text or text)
-      if translation:
-        if save:
-          await write_locale_async('messages', lang, text, translation)
-        if not self.cache.get(text):
-          self.cache[text] = {}
-          self.cache[text][lang] = {
-            "translation": translation,
-            "timestamp": time()
-          }
-        return format_text(translation, variables)
-      return format_text(source_text, variables)
-    except Exception as a:
-      traceback_exception = ''.join(format_exception(type(a), a, a.__traceback__))[:4000]
-      fields = [
-        {
-          'name': 'Ключ / Текст для перевода',
-          'value': text,
-          'inline': True
-        },
-        {
-          'name': 'Оригинал',
-          'value': source_text,
-          'inline': True
-        },
-        {
-          'name': 'Язык сообщения',
-          'value': lang,
-          'inline': True
-        },
-        {
-          'name': 'Ошибка',
-          'value': f"**```py\n{traceback_exception}```**",
-          'inline': False
-        }
-      ]
-      await self.bot.get_cog("SendEmbed").send_embed(
-        title="Ошибка при переводе сообщения",
-        description=f"Ошибка: {a}",
-        color=Colour.red(),
-        fields=fields,
-        footer_text="translate_message",
-      )
-    
-    async with json_lock:
-      try:
-        with open('command_translations.json', 'r', encoding='utf-8') as f:
-          command_data = load(f)
-      except Exception:
-        command_data = {}
+    if save:
+      self.cache.setdefault(text, {})[lang] = {"pending": True, "timestamp": time()}
+      self.bot.loop.create_task(self._background_translate(text, lang, source_text, source_lang))
 
-    if save and text in command_data and lang in command_data[text]:
-      print(f"Используется запасная структура (command_translations.json) для: {text}")
-      return format_text(command_data[text][lang], variables)
-    
-    return format_text(source_text, variables)
+    return format_text(fallback, variables)
 
   @clear_cache.before_loop
   async def before_clear_cache(self):
