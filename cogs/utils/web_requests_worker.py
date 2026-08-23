@@ -1,20 +1,23 @@
 from __future__ import annotations
 from json import loads, dumps
-from asyncio import Lock, Semaphore, create_task, TimeoutError, sleep
+from asyncio import Lock, Semaphore, Event, create_task, wait_for, TimeoutError, sleep, to_thread
 from time import time
 from decimal import Decimal
 from datetime import datetime, timezone
 from traceback import format_exception
+from nextcord.errors import Forbidden, NotFound
 from nextcord.ext import commands, tasks
 from nextcord import Embed, Colour, CategoryChannel, Guild, VoiceChannel
 from Utils.calculate_LvL import calculate_LvL
+import asyncpg
 from asyncpg import ConnectionDoesNotExistError, InterfaceError, PostgresConnectionError
 from math import ceil
+from os import environ
 
 QUEUE_TABLE = "public.web_requests"
+NOTIFY_CHANNEL = "new_web_request"
 
-POLL_SECONDS = 0.8
-
+SAFETY_POLL_SECONDS = 3
 MAX_CONCURRENCY = 8
 BATCH_PER_TICK = 12
 
@@ -105,18 +108,104 @@ class WebRequestsWorker(commands.Cog):
     self._started = False
     self._tasks: set = set()
 
-    if not self.loop.is_running():
-      self.loop.start()
+    self._listen_ctx = None
+    self._listen_conn = None
+    self._new_job_event = Event()
+    self._dispatch_task = None
+
     if not self.cache_gc.is_running():
       self.cache_gc.start()
 
+    self._dispatch_task = self.bot.loop.create_task(self._dispatch_forever())
+
   def cog_unload(self):
-    if self.loop.is_running():
-      self.loop.cancel()
+    if self._dispatch_task:
+      self._dispatch_task.cancel()
     if self.cache_gc.is_running():
       self.cache_gc.cancel()
     for t in list(self._tasks):
       t.cancel()
+    if self._listen_conn:
+      create_task(self._release_listener())
+
+  async def _release_listener(self):
+    try:
+      await self._listen_conn.remove_listener(NOTIFY_CHANNEL, self._on_new_job)
+    except Exception:
+      pass
+    try:
+      await self._listen_ctx.__aexit__(None, None, None)
+    except Exception:
+      pass
+    self._listen_conn = None
+    self._listen_ctx = None
+
+  def _on_new_job(self, connection, pid, channel, payload):
+    self._new_job_event.set()
+
+  async def _ensure_listener(self):
+    if self._listen_conn is not None and not self._listen_conn.is_closed():
+      return
+
+    self._listen_conn = None
+    ctx = self.bot.db_pool.acquire()
+    conn = await ctx.__aenter__()
+    await conn.add_listener(NOTIFY_CHANNEL, self._on_new_job)
+    self._listen_ctx = ctx
+    self._listen_conn = conn
+
+  async def _dispatch_forever(self):
+    await self.bot.wait_until_ready()
+
+    while True:
+      try:
+        if not getattr(self.bot, "db_pool", None):
+          await sleep(2)
+          continue
+
+        try:
+          await self._ensure_listener()
+        except (ConnectionDoesNotExistError, InterfaceError, PostgresConnectionError, ConnectionResetError, OSError):
+          self._listen_conn = None
+          await sleep(1)
+
+        if not self._started:
+          self._started = True
+
+        try:
+          await wait_for(self._new_job_event.wait(), timeout=SAFETY_POLL_SECONDS)
+        except TimeoutError:
+          pass
+
+        self._new_job_event.clear()
+
+        await self._drain_jobs()
+
+      except Exception as e:
+        await self._log_error(e, {"context": "dispatch loop"})
+        await sleep(2)
+
+  async def _drain_jobs(self):
+    while True:
+      free_slots = MAX_CONCURRENCY - len(self._tasks)
+      if free_slots <= 0:
+        break
+
+      jobs = await self._claim_jobs(min(BATCH_PER_TICK, free_slots))
+      if not jobs:
+        break
+
+      for job in jobs:
+        t = create_task(self._handle_job(job))
+        self._tasks.add(t)
+        t.add_done_callback(self._tasks.discard)
+
+      if len(jobs) < min(BATCH_PER_TICK, free_slots):
+        break
+
+  @tasks.loop(seconds=5)
+  async def cache_gc(self):
+    await self.cache.cleanup()
 
   def _parse_payload(self, raw):
     if raw is None:
@@ -227,7 +316,7 @@ class WebRequestsWorker(commands.Cog):
 
     channel_name = f"#{ch_name}" if ch_name else (f"channel {cid}" if cid else "channel")
     return (guild_name, channel_name)
-  
+
   def _safe_int(self, v, default=None):
     try:
       return int(v)
@@ -286,47 +375,40 @@ class WebRequestsWorker(commands.Cog):
       "min_duration_seconds": min_sec,
       "max_duration_seconds": max_sec
     }
-  
-  def resolve_user(self, user_id):
+
+  async def resolve_user(self, user_id):
     user = self.bot.get_user(int(user_id))
     if not user:
-      member = next((m for m in self.bot.get_all_members() if m.id == int(user_id)), None)
-      user = member
-
+      try:
+        user = await self.bot.fetch_user(int(user_id))
+      except NotFound:
+        pass
+    if not user:
+      user = next((m for m in self.bot.get_all_members() if m.id == int(user_id)), None)
+    
     return {
       "display_name": getattr(user, "display_name", "Unknown User"),
       "avatar": str(user.display_avatar.url) if user and user.display_avatar else None
     }
 
-  @tasks.loop(seconds=POLL_SECONDS)
-  async def loop(self):
-    if not self.bot.is_ready() or not getattr(self.bot, "db_pool", None):
-      return
-
-    if not self._started:
-      self._started = True
-
-    jobs = await self._claim_jobs(BATCH_PER_TICK)
-    if not jobs:
-      return
-
-    for job in jobs:
-      t = create_task(self._handle_job(job))
-      self._tasks.add(t)
-      t.add_done_callback(self._tasks.discard)
-
-  @tasks.loop(seconds=5)
-  async def cache_gc(self):
-    await self.cache.cleanup()
+  async def _db_call(self, method, query, *args):
+    try:
+      return await method(query, *args, buffered=False)
+    except TypeError:
+      return await method(query, *args)
 
   async def _claim_jobs(self, limit_n: int):
     try:
       async with self.bot.db_pool.acquire() as conn:
-        rows = await conn.fetch(f"""
+        rows = await self._db_call(conn.fetch, f"""
           with j as (
             select id
             from {QUEUE_TABLE}
-            where status='pending'
+            where status = 'pending'
+              or (
+                status = 'processing'
+                and updated_at < now() - interval '5 minutes'
+              )
             order by created_at
             for update skip locked
             limit $1
@@ -351,7 +433,7 @@ class WebRequestsWorker(commands.Cog):
       return []
 
   async def _get_discord_id(self, conn, auth_user_id):
-    row = await conn.fetchrow("""
+    row = await self._db_call(conn.fetchrow, """
       select (raw_user_meta_data->>'sub')::bigint as discord_id
       from auth.users
       where id = $1
@@ -361,7 +443,7 @@ class WebRequestsWorker(commands.Cog):
 
   async def _set_done(self, conn, req_id, result_obj, err=None):
     result_json = dumps(result_obj or {}, ensure_ascii=False)
-    await conn.execute(f"""
+    await self._db_call(conn.execute, f"""
       update {QUEUE_TABLE}
       set status=$1::text,
         result=$2::jsonb,
@@ -372,7 +454,7 @@ class WebRequestsWorker(commands.Cog):
     """, "error" if err else "done", result_json, err, req_id)
 
   async def _set_error(self, conn, req_id, msg: str):
-    await conn.execute(f"""
+    await self._db_call(conn.execute, f"""
       update {QUEUE_TABLE}
       set status='error',
         error=$2,
@@ -450,16 +532,19 @@ class WebRequestsWorker(commands.Cog):
   async def _process_kind(self, conn, kind: str, discord_id: int, payload: dict, job: dict):
     if kind not in BOT_KINDS:
       return None, f"Kind is handled by Netlify Functions, not bot: {kind}"
-    
+
     gd = self.bot.get_cog("GetData")
     ud = self.bot.get_cog("UpdateData")
+    tm = self.bot.get_cog("TranslateMessage")
     if not gd: return None, "Failed to get data."
 
-    user_info = await gd.get_data(discord_id, ["banned", "auth_user_id", "badges"], "users", "user_id", None)
+    user_info = await gd.get_data(discord_id, ["banned", "auth_user_id", "badges", "language"], "users", "user_id", None)
+
+    language = user_info.get("language", "en")
 
     if user_info.get("banned"):
       return None, "You are banned."
-    
+
     current_auth_user_id = user_info.get("auth_user_id")
     new_auth_user_id = job["user_id"]
 
@@ -467,13 +552,7 @@ class WebRequestsWorker(commands.Cog):
       if not ud:
         return None, "Failed to update data."
 
-      await ud.update_data(
-        discord_id,
-        {"auth_user_id": new_auth_user_id},
-        "users",
-        "user_id",
-        None
-      )
+      await ud.update_data(discord_id, {"auth_user_id": new_auth_user_id}, "users", "user_id", None)
 
     elif current_auth_user_id != new_auth_user_id:
       return None, "You already logged in another account."
@@ -499,9 +578,9 @@ class WebRequestsWorker(commands.Cog):
             where user_id = $1::bigint
             limit 1
           ),
-          
+
           acts_dedup as (
-            select 
+            select
               a.started_at,
               a.ended_at,
               row_number() over (
@@ -512,7 +591,7 @@ class WebRequestsWorker(commands.Cog):
             join activity_defs d on d.id = a.def_id
             where a.user_id = $1::bigint
           ),
-          
+
           act_sec as (
             select coalesce(
               sum(greatest(0, extract(epoch from (coalesce(ended_at, CURRENT_TIMESTAMP) - started_at)))::bigint),
@@ -521,7 +600,7 @@ class WebRequestsWorker(commands.Cog):
             from acts_dedup
             where rn = 1
           ),
-          
+
           cmd as (
             select count(*)::bigint as user_commands
             from user_commands
@@ -544,7 +623,7 @@ class WebRequestsWorker(commands.Cog):
               || '.' || lpad(((ms::bigint) % 1000)::text, 3, '0')
             from voice_ms
           ) as voice_time,
-                                
+
           (
             select
               case
@@ -585,7 +664,7 @@ class WebRequestsWorker(commands.Cog):
         """, str(user_id_raw))
         if user:
           user_id = int(user["user_id"])
-          
+
       if user_id:
         user1_publicity = (await gd.get_data(discord_id, ["publicity"], "user_privacy", "user_id", None))["publicity"]
         if not user1_publicity:
@@ -605,23 +684,28 @@ class WebRequestsWorker(commands.Cog):
       member = next((m for m in self.bot.get_all_members() if m.id == discord_id), None)
 
       mutual_guilds: list[Guild] = getattr(member, "mutual_guilds", [])
-      mutual_guilds_row = {}
-      for mutual_guild in mutual_guilds:
-        mutual_guilds_row[mutual_guild.id] = {"name": mutual_guild.name, "message_channels": {}, "voice_channels": {}}
 
-        message_channels = [ch for ch in mutual_guild.channels if not isinstance(ch, CategoryChannel)] + list(mutual_guild.threads)
-        voice_channels = mutual_guild.voice_channels
-        
-        for channel in message_channels:
-          if not all([getattr(channel.permissions_for(member), permission, False) for permission in ["read_message_history", "view_channel"]+(["connect"] if isinstance(channel, VoiceChannel) else [])]):
-            continue
-          mutual_guilds_row[mutual_guild.id]["message_channels"][channel.id] = {"name": channel.name, "type": channel.__class__.__name__}
-        
-        for channel in voice_channels:
-          if not all([getattr(channel.permissions_for(member), permission, False) for permission in ["connect", "view_channel"]]):
-            continue
-          mutual_guilds_row[mutual_guild.id]["voice_channels"][channel.id] = {"name": channel.name, "type": channel.__class__.__name__}
+      def _build():
+        result = {}
+        for mutual_guild in mutual_guilds:
+          result[mutual_guild.id] = {"name": mutual_guild.name, "message_channels": {}, "voice_channels": {}}
 
+          message_channels = [ch for ch in mutual_guild.channels if not isinstance(ch, CategoryChannel)] + list(mutual_guild.threads)
+          voice_channels = mutual_guild.voice_channels
+
+          for channel in message_channels:
+            if not all([getattr(channel.permissions_for(member), permission, False) for permission in ["read_message_history", "view_channel"]+(["connect"] if isinstance(channel, VoiceChannel) else [])]):
+              continue
+            result[mutual_guild.id]["message_channels"][channel.id] = {"name": channel.name, "type": channel.__class__.__name__}
+
+            for channel in voice_channels:
+              if not all([getattr(channel.permissions_for(member), permission, False) for permission in ["connect", "view_channel"]]):
+                continue
+            result[mutual_guild.id]["voice_channels"][channel.id] = {"name": channel.name, "type": channel.__class__.__name__}
+
+        return result
+
+      mutual_guilds_row = await to_thread(_build)
       lvl, xp_need, xp_now = calculate_LvL(xp)
 
       row = await conn.fetchrow(req, user_id or discord_id)
@@ -811,9 +895,9 @@ class WebRequestsWorker(commands.Cog):
             and ($6::bigint is null or uc.guild_id = $6::bigint)
             and ($7::bigint is null or uc.channel_id = $7::bigint)
             and ($8::text is null or (
-              c.name ilike ($8::text || '%')        -- префикс: "le" → leaders, language
-              or c.name ilike ('%' || $8::text || '%')  -- подстрока: "le" → reload
-              or (length($8::text) >= 3 and similarity(c.name, $8::text) > 0.3)  -- fuzzy только от 3+ символов
+              c.name ilike ($8::text || '%')
+              or c.name ilike ('%' || $8::text || '%')
+              or (length($8::text) >= 3 and similarity(c.name, $8::text) > 0.3)
             ))
         ),
         buck as (
@@ -872,11 +956,11 @@ class WebRequestsWorker(commands.Cog):
       publicity = (await gd.get_data(discord_id, ["publicity"], "user_privacy", "user_id", None))["publicity"]
       if not publicity:
         return None, "Make your profile public to view leaderboard."
-      
+
       member = next((m for m in self.bot.get_all_members() if m.id == discord_id), None)
       if not member:
         return None, "I can't find you. Make sure we share at least one server."
-      
+
       mutual_guilds = getattr(member, "mutual_guilds", [])
       mutual_guilds_js = []
       for guild in mutual_guilds:
@@ -885,12 +969,12 @@ class WebRequestsWorker(commands.Cog):
           "name": guild.name
         })
       return mutual_guilds_js, None
-  
+
     if kind == "leaderboard":
-      publicity = (await gd.get_data(discord_id, ["publicity"], "user_privacy", "user_id", None))["publicity"]
+      publicity = (await gd.get_data(discord_id, ["publicity"], "user_privacy", "user_id"))["publicity"]
       if not publicity:
         return None, "Make your profile public to view leaderboard."
-      
+
       metric = payload.get("metric", "total_balance")
       scope = payload.get("scope", "world")
       page = max(1, int(payload.get("page", 1)))
@@ -911,7 +995,7 @@ class WebRequestsWorker(commands.Cog):
 
         if not guild_id:
           return None, "guild_id is required for server scope"
-        
+
         query = f"""
           WITH metric_data AS ({value_cte}),
           ranked_data AS (
@@ -1042,6 +1126,11 @@ class WebRequestsWorker(commands.Cog):
       for row in rows:
         if scope == "top_servers":
           guild = self.bot.get_guild(int(row["guild_id"]))
+          if not guild:
+            try:
+              guild = await self.bot.fetch_guild(int(row["guild_id"]))
+            except (NotFound, Forbidden):
+              pass
 
           if metric == "level":
             row = dict(row)
@@ -1055,16 +1144,21 @@ class WebRequestsWorker(commands.Cog):
           entry = {
             "rank": row["rank"],
             "guild_id": str(row["guild_id"]),
-            "guild_name": guild.name if guild else "Unknown Server",
+            "guild_name": guild.name if guild else await tm.translate_message("leaderboards.unknown_guild", language),
             "icon": str(guild.icon.url) if guild and guild.icon else None,
             "value": row["value"]
           }
         else:
-          user_data = self.resolve_user(row["user_id"])
+          user_settings = await gd.get_data(row["user_id"], ["publicity"], "user_privacy", "user_id")
+
+          if user_settings["publicity"]:
+            user_data = await self.resolve_user(row["user_id"])
+          else:
+            user_data = {"display_name":await tm.translate_message("leaderboards.anon", language),"avatar":None}
 
           entry = {
             "rank": row["rank"],
-            "user_id": str(row["user_id"]),
+            "user_id": str(row["user_id"] if user_settings["publicity"] else 0),
             "display_name": user_data["display_name"],
             "avatar": user_data["avatar"],
             "value": row["value"]
@@ -1210,20 +1304,25 @@ class WebRequestsWorker(commands.Cog):
           coalesce((select xp from bal), 0) as xp;
         """
 
-      channels = {
-        "message_channels": {},
-        "voice_channels": {}
-      }
-      message_channels = [ch for ch in guild.channels if not isinstance(ch, CategoryChannel)] + list(guild.threads)
-      voice_channels = guild.voice_channels
-      for message_channel in message_channels:
-        if not all([getattr(message_channel.permissions_for(member), permission, False) for permission in ["read_message_history", "view_channel"]+(["connect"] if isinstance(message_channel, VoiceChannel) else [])]):
-          continue
-        channels["message_channels"][message_channel.id] = {"name": message_channel.name, "type": message_channel.__class__.__name__}
-      for voice_channel in voice_channels:
-        if not all([getattr(voice_channel.permissions_for(member), permission, False) for permission in ["connect", "view_channel"]]):
-          continue
-        channels["voice_channels"][voice_channel.id] = {"name": voice_channel.name, "type": voice_channel.__class__.__name__}
+      def _build_channels():
+        result = {
+          "message_channels": {},
+          "voice_channels": {}
+        }
+        message_channels = [ch for ch in guild.channels if not isinstance(ch, CategoryChannel)] + list(guild.threads)
+        voice_channels = guild.voice_channels
+        for message_channel in message_channels:
+          if not all([getattr(message_channel.permissions_for(member), permission, False) for permission in ["read_message_history", "view_channel"]+(["connect"] if isinstance(message_channel, VoiceChannel) else [])]):
+            continue
+          result["message_channels"][message_channel.id] = {"name": message_channel.name, "type": message_channel.__class__.__name__}
+        for voice_channel in voice_channels:
+          if not all([getattr(voice_channel.permissions_for(member), permission, False) for permission in ["connect", "view_channel"]]):
+            continue
+          result["voice_channels"][voice_channel.id] = {"name": voice_channel.name, "type": voice_channel.__class__.__name__}
+
+        return result
+
+      channels = await to_thread(_build_channels)
 
       roles = {role.id: {"name": role.name} for role in guild.roles}
 
@@ -1496,14 +1595,6 @@ class WebRequestsWorker(commands.Cog):
       await self.bot.get_guild(807304463449849938).get_channel(1159138280651104256).send(embed=log)
     except:
       pass
-
-  @loop.before_loop
-  async def before_loop_start(self):
-    await self.bot.wait_until_ready()
-
-  @cache_gc.before_loop
-  async def before_cache_gc_start(self):
-    await self.bot.wait_until_ready()
 
 def setup(bot: commands.Bot):
   bot.add_cog(WebRequestsWorker(bot))
