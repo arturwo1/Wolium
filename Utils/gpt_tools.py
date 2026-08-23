@@ -16,7 +16,7 @@ async def _tool_perform_moderation_action(args: dict, ctx: dict, language: str, 
   action_user_id = args.get("user_id", "")
   action_type = args.get("action_type", "")
   if str(action_user_id) == str(bot.user.id):
-    msg = await tm.translate_message('gpt.cannot_apply_to_self', language, variables={"action_type": action_type})
+    msg = "Tool error: "+await tm.translate_message('gpt.cannot_apply_to_self', language, variables={"action_type": action_type})
     return msg, None
   view_id = str(uuid4())[:8]
   view = GptActionConfirmView(view_id=view_id, user_id=ctx["user_id"], action=args, language=language, bot=bot)
@@ -24,26 +24,38 @@ async def _tool_perform_moderation_action(args: dict, ctx: dict, language: str, 
 
 async def _tool_get_channels(args: dict, ctx: dict, language: str, bot: commands.Bot, **kwargs):
   guild: Guild = ctx["guild"]
+  user: Member = ctx["user"]
+  q = args.get("query", "").lower()
   limit = args.get("limit", 20)
   channels = [
     {"id": str(c.id), "name": c.name, "type": str(c.type)}
     for c in guild.channels
-    if hasattr(c, "send")
+    if q in c.name.lower() and c.permissions_for(user).view_channel
   ][:limit]
   return dumps(channels), None
 
 async def _tool_get_history(args: dict, ctx: dict, language: str, bot: commands.Bot, **kwargs):
   guild: Guild = ctx["guild"]
+  user: Member = ctx["user"]
   channel: TextChannel = ctx["channel"]
   cid = args.get("channel_id")
   target_channel = guild.get_channel(int(cid)) if cid else channel
   uid = args.get("user_id")
-  user: Member | None = guild.get_member(int(uid)) if uid else None
+  q_user: Member | None = guild.get_member(int(uid)) if uid else None
   limit = args.get("limit", 20)
+
+  if not target_channel:
+    return "Tool error: channel not found", None
+
+  if not target_channel.permissions_for(user).view_channel:
+    return "Tool error: user don't have access to that channel", None
+
+  if not target_channel.permissions_for(user).read_message_history:
+    return "Tool error: user don't have access to view messages in that channel", None
 
   messages = []
   async for msg in target_channel.history(limit=limit):
-    if user and msg.author.id != user.id:
+    if q_user and msg.author.id != q_user.id:
       continue
     messages.append({
       "id": str(msg.id),
@@ -77,7 +89,14 @@ async def _tool_set_reaction(args: dict, ctx: dict, language: str, bot: commands
 
   cid = args.get("channel_id")
   target_channel = guild.get_channel(int(cid)) if cid else channel
+
+  if not target_channel:
+    return "Tool error: Unknown channel", None
+
   target_msg: Message = await target_channel.fetch_message(int(args["message_id"]))
+
+  if not target_msg:
+    return "Tool error: Unknown message", None
 
   errors = ""
   for emoji_str in args.get("reactions", []):
@@ -107,7 +126,15 @@ async def _tool_get_message(args: dict, ctx: dict, language: str, bot: commands.
   channel: TextChannel = ctx["channel"]
   cid = args.get("channel_id")
   target_channel = guild.get_channel(int(cid)) if cid else channel
+
+  if not target_channel:
+    return "Tool error: Unknown channel", None
+
   msg: Message = await target_channel.fetch_message(int(args["message_id"]))
+
+  if not msg:
+    return "Tool error: Unknown message", None
+
   return dumps({
     "id": str(msg.id),
     "author": msg.author.display_name,

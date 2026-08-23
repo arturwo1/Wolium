@@ -1,7 +1,7 @@
 from nextcord.ext import commands
 from nextcord import Message, Invite, Color
 from nextcord.errors import HTTPException, NotFound
-from asyncio import to_thread, create_task
+from asyncio import to_thread, create_task, sleep
 from re import sub, search, match
 from traceback import format_exception
 from Utils.config import servers_with_no_acces_for_bot, users_with_no_acces_for_bot, гласные, согласные
@@ -31,6 +31,14 @@ class OnMessage(commands.Cog):
     self.spellcheckers[lang] = spell
     return spell
 
+  async def _delayed_delete(self, msg: Message, delay: float):
+    if not delay: return
+    await sleep(delay)
+    try:
+      await msg.delete()
+    except HTTPException:
+      pass
+
   async def GPTTalk(self,message:Message, language:str, invite: Invite):
     bot_triggers = [f"<@{self.bot.user.id}>",f"<@!{self.bot.user.id}>","Wolium","Волиум","Wolio","Волио"]
     se = self.bot.get_cog("SendEmbed")
@@ -39,34 +47,54 @@ class OnMessage(commands.Cog):
         try:
           gd = self.bot.get_cog("GetData")
           tm = self.bot.get_cog("TranslateMessage")
+
           if message.guild and gd:
-            guild_config = await gd.get_data(message.guild.id,['aibot'],'guild_settings','guild_id',message.guild)
-            if guild_config['aibot']==False:
-              return
+            guild_config = await gd.get_data(message.guild.id,['aibot', 'ai_message_ttl', 'ai_long_message_ttl', 'ai_message_delete', 'aibot_whitelist_channels', 'aibot_blacklist_channels'],'guild_settings','guild_id',message.guild)
+            guild_config['aibot_whitelist_channels'] = loads(guild_config['aibot_whitelist_channels'])
+            guild_config['aibot_blacklist_channels'] = loads(guild_config['aibot_blacklist_channels'])
+            str_channel_id = str(message.channel.id)
+            
+            if not guild_config['aibot']: return
+            if (guild_config['aibot_whitelist_channels'] and str_channel_id not in guild_config['aibot_whitelist_channels']) or (guild_config['aibot_blacklist_channels'] and str_channel_id in guild_config['aibot_blacklist_channels']): return
+
           async with message.channel.typing():
             GPT = self.bot.get_cog("GPT").GPT
-            edited, AI_message = await GPT(message,language,invite)
-            if AI_message not in [None,'None','']:
+            edited, AI_message, status_msg = await GPT(message, language, invite)
+            if AI_message not in [None, 'None', '']:
               try:
                 for i in range(0, len(AI_message), 2000):
-                  if i==0:
-                    if edited:
-                      if message:
+                  chunk = AI_message[i:i+2000]
+                  if i == 0:
+                    if status_msg is not None:
+                      try:
+                        if edited:
+                          await status_msg.edit(content=chunk, view=edited)
+                          self.bot.add_view(edited)
+                          edited.save(message.guild.id, status_msg.channel.id, status_msg.id)
+                        else:
+                          await status_msg.edit(content=chunk)
+                          self.bot.loop.create_task(self._delayed_delete(status_msg, guild_config['ai_message_ttl'] if guild_config['ai_message_delete'] else None))
+                        msg = status_msg
+                      except HTTPException:
+                        status_msg = None
+                    if status_msg is None:
+                      if edited:
+                        if message:
+                          try:
+                            msg = await message.reply(chunk, view=edited)
+                          except HTTPException as e:
+                            if e.code == 50035 and "message_reference" in str(e.text):
+                              msg = await message.channel.send(chunk, view=edited)
+                        self.bot.add_view(edited)
+                        edited.save(message.guild.id, msg.channel.id, msg.id)
+                      else:
                         try:
-                          msg = await message.reply(AI_message[i:i+2000], view=edited)
+                          await message.reply(chunk, delete_after=guild_config['ai_message_ttl'] if guild_config['ai_message_delete'] else None)
                         except HTTPException as e:
                           if e.code == 50035 and "message_reference" in str(e.text):
-                            msg = await message.channel.send(AI_message[i:i+2000], view=edited)
-                      self.bot.add_view(edited)
-                      edited.save(message.guild.id, msg.channel.id, msg.id)
-                    else:
-                      try:
-                        await message.reply(AI_message[i:i+2000], delete_after=5*60)
-                      except HTTPException as e:
-                        if e.code == 50035 and "message_reference" in str(e.text):
-                          await message.channel.send(AI_message[i:i+2000], delete_after=5*60)
+                            await message.channel.send(chunk, delete_after=guild_config['ai_message_ttl'] if guild_config['ai_message_delete'] else None)
                   else:
-                    await message.channel.send(AI_message[i:i+2000], delete_after=30)
+                    await message.channel.send(chunk, delete_after=guild_config['ai_long_message_ttl'] if guild_config['ai_message_delete'] else None)
                 privacy = (await gd.get_data(message.author.id,['track_activity'],'user_privacy','user_id',message.guild))['track_activity']
                 if not "Failed to generate message." in str(AI_message) and se and privacy:
                   fields = [
@@ -107,7 +135,8 @@ class OnMessage(commands.Cog):
                     channel_id=1348577132099538966
                   )
                 try:
-                  await message.delete(delay=5*60)
+                  if guild_config['ai_message_delete']:
+                    await message.delete(delay=guild_config['ai_message_ttl'])
                 except HTTPException:
                   return
               except HTTPException as e:
@@ -406,15 +435,21 @@ class OnMessage(commands.Cog):
       return
     
     invite = await gi.invite(message.guild)
+    
     await self.games(message,language)
 
     if message.guild:
-      guild_config = await gd.get_data(message.guild.id,['mod_log_channel','moderation','moderation_type','rules', 'ttl_channel'],'guild_settings','guild_id',message.guild)
+      guild_config = await gd.get_data(message.guild.id,['mod_log_channel','moderation','moderation_type','rules','ttl_channel','moderation_whitelist_channels','moderation_blacklist_channels'],'guild_settings','guild_id',message.guild)
       if guild_config['mod_log_channel'] and guild_config['moderation'] and guild_config['moderation_type']=='AI' and message.guild.get_channel(int(guild_config['mod_log_channel'])):
         guild_locale = message.guild.preferred_locale
         mod_lang = guild_locale if guild_locale !='en-US' and guild_locale !='en-GB' and guild_locale !='es-ES' and guild_locale !='sv-SE' else 'en' if guild_locale =='en-US' or guild_locale =='en-GB' and guild_locale !='es-ES' and guild_locale !='sv-SE' else 'es' if guild_locale !='en-US' and guild_locale !='en-GB' and guild_locale =='es-ES' and guild_locale !='sv-SE' else 'sv'
-        automod = self.bot.get_cog("GPT").automod
-        await automod(message,mod_lang,invite,guild_config)
+
+        guild_config['moderation_whitelist_channels'] = loads(guild_config['moderation_whitelist_channels'])
+        guild_config['moderation_blacklist_channels'] = loads(guild_config['moderation_blacklist_channels'])
+        str_channel_id = str(message.channel.id)
+        if not (guild_config['moderation_whitelist_channels'] and str_channel_id not in guild_config['moderation_whitelist_channels']) or (guild_config['moderation_blacklist_channels'] and str_channel_id in guild_config['moderation_blacklist_channels']):
+          automod = self.bot.get_cog("GPT").automod
+          await automod(message,mod_lang,invite,guild_config)
 
       ttl_channels = loads(guild_config["ttl_channel"])
       ttl_str = ttl_channels.get(str(message.channel.id))

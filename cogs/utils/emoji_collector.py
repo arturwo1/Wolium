@@ -1,11 +1,13 @@
 import nextcord
 from nextcord.ext import commands, tasks
 import traceback
-import aiohttp
 import json
+from random import choice
+from google import genai
+from google.genai import types
 from datetime import datetime, timezone
 from asyncio import sleep
-from Utils.config import o_url, EMBED_MODEL
+from Utils.config import gemini_api_keys, EMBED_MODEL
 
 class EmojiCollector(commands.Cog):
   def __init__(self, bot):
@@ -15,19 +17,21 @@ class EmojiCollector(commands.Cog):
   def cog_unload(self):
     self.index_emojis.cancel()
 
+  def _make_client(self) -> genai.Client:
+    return genai.Client(api_key=choice(gemini_api_keys))
+
   async def get_embedding(self, text: str) -> list[float] | None:
     try:
-      async with aiohttp.ClientSession() as session:
-        async with session.post(
-          f"{o_url}/api/embeddings",
-          json={"model": EMBED_MODEL, "prompt": text},
-          timeout=aiohttp.ClientTimeout(total=10)
-        ) as resp:
-          if resp.status == 200:
-            data = await resp.json()
-            return data.get("embedding")
+      client = self._make_client()
+      result = await client.aio.models.embed_content(
+        model=EMBED_MODEL,
+        contents=text,
+        config=types.EmbedContentConfig(output_dimensionality=768),
+      )
+      if result.embeddings:
+        return result.embeddings[0].values
     except Exception as e:
-      print(f"[EmojiCollector] Ollama embedding error: {e}")
+      print(f"[EmojiCollector] Gemini embedding error: {type(e).__name__}: {e or 'no details'}")
     return None
 
   @tasks.loop(hours=1.0)
@@ -89,7 +93,7 @@ class EmojiCollector(commands.Cog):
       async with self.bot.db_pool.acquire() as conn:
         rows = await conn.fetch(
           """
-          SELECT name, emoji_id
+          SELECT name, emoji_id, is_animated
           FROM emojis
           WHERE embedding IS NOT NULL
           ORDER BY
@@ -100,7 +104,7 @@ class EmojiCollector(commands.Cog):
           """,
           json.dumps(embedding), limit
         )
-        return [f"{row['name']}:{row['emoji_id']}" for row in rows]
+        return [f"{int(row['is_animated'])}:{row['name']}:{row['emoji_id']}" for row in rows]
     except Exception as e:
       print(f"[EmojiCollector] get_relevant_emojis error: {e}")
       return []
@@ -123,10 +127,10 @@ class EmojiCollector(commands.Cog):
     try:
       async with self.bot.db_pool.acquire() as conn:
         rows = await conn.fetch(
-          "SELECT name, emoji_id FROM emojis ORDER BY usage_count DESC LIMIT $1",
+          "SELECT name, emoji_id, is_animated FROM emojis ORDER BY usage_count DESC LIMIT $1",
           limit
         )
-        return [f"{row['name']}:{row['emoji_id']}" for row in rows]
+        return [f"{int(row['is_animated'])}:{row['name']}:{row['emoji_id']}" for row in rows]
     except Exception as e:
       print(f"[EmojiCollector] get_top_emojis error: {e}")
       return []
