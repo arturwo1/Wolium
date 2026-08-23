@@ -44,6 +44,7 @@ class CreateDateModal(Modal):
       max_length=int(str(datetime.now().year)[2:]),
       required=True,
       placeholder=translate_to_all_languages("profile.enter_telegram_id", 'message', 'en'),
+      custom_id=f"create_date_modal_text_input",
     )
     self.add_item(self.user_telegram_id)
 
@@ -123,6 +124,7 @@ class ProfileView(View):
       row=0,
       placeholder='❓ ' + translate_to_all_languages("profile.choose_section", 'message', language),
       options=options,
+      custom_id=f"select_menu_{self.user_id}",
     )
     select_menu.callback = self.select_callback
     self.add_item(select_menu)
