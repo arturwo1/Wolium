@@ -1,15 +1,16 @@
 from datetime import datetime, timezone
 import ctypes
 
-kernel32 = ctypes.windll.kernel32
-handle = kernel32.GetStdHandle(-11)
-
-mode = ctypes.c_uint()
-if kernel32.GetConsoleMode(handle, ctypes.byref(mode)):
-  kernel32.SetConsoleMode(handle, mode.value | 0x0004)
-
 time_when_bot_run_firts = datetime.now()
+
 if __name__=='__main__':
+  kernel32 = ctypes.windll.kernel32
+  handle = kernel32.GetStdHandle(-11)
+
+  mode = ctypes.c_uint()
+  if kernel32.GetConsoleMode(handle, ctypes.byref(mode)):
+    kernel32.SetConsoleMode(handle, mode.value | 0x0004)
+
   print(f"Скрипт запустился в \033[38;5;226m{time_when_bot_run_firts}\033[0m")
 
 import os
@@ -41,12 +42,13 @@ if __name__=='__main__':
   logging.getLogger("nextcord.http").setLevel(logging.ERROR)
 
   print(f"Библиотеки загрузились в: \033[38;5;226m{datetime.now()}\033[0m, загрузка шла: \033[38;5;226m{datetime.now()-time_when_bot_run_firts}\033[0m")
-tracemalloc.start()
-load_dotenv()
+  tracemalloc.start()
+  load_dotenv()
 
+  script_directory = os.path.dirname(os.path.abspath(__file__))
+  os.chdir(script_directory)
 
-script_directory = os.path.dirname(os.path.abspath(__file__))
-os.chdir(script_directory)
+  store = JsonFeedbackStore("channel_feedback.json")
 
 bot = commands.AutoShardedBot(
   command_prefix="_",
@@ -322,9 +324,7 @@ async def PostgreSQL_backup_data():
     
     await asyncio.sleep(5*60*60)
 
-store = JsonFeedbackStore("channel_feedback.json")
-
-bot_started = False
+"""bot_started = False
 bot.db_pool = None
 @bot.event
 async def on_ready():
@@ -360,38 +360,49 @@ async def on_ready():
     print(f"В общем запуск длился \033[38;5;226m{datetime.now()-time_when_bot_run_firts}\033[0m")
     print("\033[38;5;240m-" * 50 + "\033[0m")
     bot_started = True
+"""
 
-if __name__=='__main__':
-  print(f"Скрипт закончил запуск в \033[38;5;226m{datetime.now()}\033[0m, Скрипт запускался \033[38;5;226m{datetime.now()-time_when_bot_run_firts}\033[0m")
-  bot_started_launch = datetime.now()
+bot_started_launch = datetime.now()
+if __name__ == "__main__":
+  print(f"Скрипт закончил запуск в \033[38;5;226m{datetime.now()}\033[0m, скрипт запускался \033[38;5;226m{datetime.now() - time_when_bot_run_firts}\033[0m")
+
   print(f"Начало запуска бота: \033[38;5;226m{bot_started_launch}\033[0m")
+
+  async def load_cog(cog_path: str):
+    start = datetime.now()
+    print(f"🔹Загружаем cog: \033[38;5;21m{cog_path}\033[0m в \033[38;5;226m{start}\033[0m{' ' * 50}", end="")
+
+    try:
+      bot.load_extension(cog_path)
+      print(f"\r🔹\033[38;5;82mCog загружен:\033[0m \033[38;5;21m{cog_path}\033[0m \033[38;5;82mв\033[0m \033[38;5;226m{datetime.now()}\033[0m \033[38;5;82m(заняло\033[0m \033[38;5;226m{datetime.now() - start}\033[0m\033[38;5;82m)\033[0m" + " " * 50)
+    except Exception as e:
+      print(f"\r🔹\033[38;5;196mCog не загружен:\033[0m \033[38;5;21m{cog_path}\033[0m\n\033[38;5;196mОшибка: {e}\033[0m\n\033[38;5;196mВремя:\033[0m \033[38;5;226m{datetime.now()}\033[0m \033[38;5;196m(заняло\033[0m \033[38;5;226m{datetime.now() - start}\033[0m\033[38;5;196m)\033[0m")
+
   async def load_cogs():
     for root, _, files in os.walk("cogs"):
       for file in files:
-        if file.endswith(".py") and file!="on_connect.py":
-          cog_path = f"{root.replace(os.sep, '.')}.{file[:-3]}"
-          a = datetime.now()
-          print(f"🔹Загружаем cog: \033[38;5;21m{cog_path}\033[0m в \033[38;5;226m{datetime.now()}\033[0m"+" "*50, end="")
-          try:
-            bot.load_extension(cog_path)
-            print(f"\r🔹\033[38;5;82mCog загружен:\033[0m \033[38;5;21m{cog_path}\033[0m \033[38;5;82mв\033[0m \033[38;5;226m{datetime.now()}\033[0m\033[38;5;82m, загрузка длилась\033[0m \033[38;5;226m{datetime.now()-a}\033[0m"+" "*50)
-          except Exception as e:
-            print(f"\r🔹\033[38;5;196mCog\033[0m \033[38;5;21m{cog_path}\033[0m \033[38;5;196mне загружен, ошибка: {e}\033[0m. \033[38;5;226m{datetime.now()}\033[0m\033[38;5;196m, загрузка длилась\033[0m \033[38;5;226m{datetime.now()-a}\033[0m"+" "*50)
+        if file.endswith(".py") and file not in {"on_connect.py"}:
+          await load_cog(f"{root.replace(os.sep, '.')}.{file[:-3]}")
+
     await asyncio.sleep(3)
-    a = datetime.now()
+
+    await load_cog("cogs.events.on_connect")
+
+  async def main():
     try:
-      bot.load_extension(f"cogs.events.on_connect")
-      print(f"\r🔹\033[38;5;82mCog загружен:\033[0m \033[38;5;21mcogs.events.on_connect\033[0m \033[38;5;82mв\033[0m \033[38;5;226m{datetime.now()}\033[0m\033[38;5;82m, загрузка длилась\033[0m \033[38;5;226m{datetime.now()-a}\033[0m"+" "*50)
-    except Exception as e:
-      print(f"\r🔹\033[38;5;196mCog\033[0m \033[38;5;21mcogs.events.on_connect\033[0m \033[38;5;196mне загружен, ошибка: {e}\033[0m. \033[38;5;226m{datetime.now()}\033[0m\033[38;5;196m, загрузка длилась\033[0m \033[38;5;226m{datetime.now()-a}\033[0m"+" "*50)
-  async def main_code():
-    await load_cogs()
-    print(f"\033[38;5;82m🔹Все cog'и загружены и запущены в\033[0m \033[38;5;226m{datetime.now()}\033[0m\033[38;5;82m, загрузка длилась\033[0m \033[38;5;226m{datetime.now()-bot_started_launch}\033[0m")
-    try:
+      await load_cogs()
+
+      print(f"\033[38;5;82m🔹Все cog'и загружены в\033[0m \033[38;5;226m{datetime.now()}\033[0m \033[38;5;82m(общее время:\033[0m \033[38;5;226m{datetime.now() - bot_started_launch}\033[0m\033[38;5;82m)\033[0m")
+
       await bot.start(os.getenv("DISCORD_BOT_TOKEN"))
+
+    except Exception as e:
+      e = "".join(format_exception(type(e), e, e.__traceback__))[:5000]
+      print(e)
+
     finally:
       tracker = bot.get_cog("ActivityTracker")
       if tracker:
         await tracker.flush_all_open_sessions()
 
-  bot.loop.run_until_complete(main_code())
+  bot.loop.run_until_complete(main())
