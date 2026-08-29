@@ -160,7 +160,7 @@
   "gpt.tool_status.get_channels": "",
   "gpt.tool_status.get_history": "Копаюсь в истории сообщений...",
   "gpt.tool_status.get_message": "",
-  "gpt.tool_status.get_user_profile": "",
+  "gpt.tool_status.get_user_profile": "Проверка их профиля...",
   "gpt.tool_status.get_users": "Ищем пользователя...",
   "gpt.tool_status.perform_moderation_action": "Разбираюсь с этим...",
   "gpt.tool_status.remove_guild_memory": "",
