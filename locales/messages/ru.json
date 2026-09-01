@@ -169,6 +169,7 @@
   "gpt.tool_status.save_user_memory": "",
   "gpt.tool_status.search_and_scrape": "Поиск в интернете...",
   "gpt.tool_status.set_reaction": "Добавление реакции...",
+  "gpttalk.no_auth": "",
   "halloween": "",
   "hello": "привет",
   "holiday.field_title_prefix": "",

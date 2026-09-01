@@ -621,6 +621,7 @@
     "gpt.tool_status.save_user_memory": "Remembering that...",
     "gpt.tool_status.search_and_scrape": "Searching the web...",
     "gpt.tool_status.set_reaction": "Adding a reaction...",
+    "gpttalk.no_auth": "Who even are you? I don't waste my time on unauthorized nonames. *[Go fix your status]({link})* or don't bother me. 🙄",
     "halloween": "Halloween",
     "help.ai.chat.title": "💬 Let's Chat!",
     "help.ai.chat.value": "Just @mention me! I know the context of our conversation and what server we are on.",
