@@ -169,7 +169,7 @@
   "gpt.tool_status.save_user_memory": "",
   "gpt.tool_status.search_and_scrape": "Поиск в интернете...",
   "gpt.tool_status.set_reaction": "Добавление реакции...",
-  "gpttalk.no_auth": "",
+  "gpttalk.no_auth": "Кто ты вообще такой? Я не трачу время на неавторизованных ноунеймов. *[Иди исправь свой статус]({link})* или не беспокой меня. 🙄",
   "halloween": "",
   "hello": "привет",
   "holiday.field_title_prefix": "",
