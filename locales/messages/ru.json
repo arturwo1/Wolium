@@ -92,7 +92,7 @@
   "economy.boost_active": "",
   "economy.boost_inactive": "Неактивный",
   "economy.cooldown_footer": "Время восстановления: {minutes} минут.",
-  "economy.cooldown_remaining": "",
+  "economy.cooldown_remaining": "Вы можете снова работать в {time}.",
   "economy.double_earnings_boosts_left": "Осталось усиление X2",
   "economy.formulas": "",
   "economy.hand_balance_label": "Баланс рук",
