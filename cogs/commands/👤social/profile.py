@@ -50,7 +50,7 @@ class CreateDateModal(Modal):
 
   async def callback(self, interaction: Interaction):
     tm = self.bot.get_cog("TranslateMessage")
-    gd = self.bot.get_cog("GetData")
+    dm = self.bot.get_cog("DataManager")
     lang = _get_locale(interaction.locale)
 
     tid = self.user_telegram_id.value
@@ -58,18 +58,14 @@ class CreateDateModal(Modal):
       return await interaction.send(
         await tm.translate_message("profile.invalid_telegram_id", lang, variables={"id": tid}),ephemeral=True)
 
-    user_settings = await gd.get_data(tid, ['language'], 'users', 'user_id', interaction.guild)
-    language = user_settings['language']
+    user_settings = await dm.get_row("users", {"user_id":int(tid)}, ["language"], guild=interaction.guild, user=interaction.user) or {}
+    language = user_settings.get("language", "en")
 
-    if not (hasattr(self.bot, 'db_pool') and self.bot.db_pool):
-      return await interaction.send('PostgreSQL not loaded in profile', ephemeral=True)
-
-    async with self.bot.db_pool.acquire() as conn:
-      try:
-        await conn.execute("UPDATE users SET discord_id = $1 WHERE telegram_id = $2",interaction.user.id, tid)
-      except Exception:
-        return await interaction.send(
-          await tm.translate_message("profile.invalid_telegram_id", lang, variables={"id": tid}), ephemeral=True)
+    try:
+      await dm.set_fields("users", {"telegram_id": tid}, {"discord_id": interaction.user.id}, ttl_seconds=300, guild=interaction.guild, user=interaction.user)
+    except Exception:
+      return await interaction.send(
+        await tm.translate_message("profile.invalid_telegram_id", lang, variables={"id": tid}), ephemeral=True)
 
     return await interaction.send(await tm.translate_message("profile.telegram_linked_success", language), ephemeral=True)
 
@@ -507,8 +503,8 @@ class Profile(commands.Cog):
       current_time = time()
 
       tm = self.bot.get_cog("TranslateMessage")
-      gd = self.bot.get_cog("GetData")
       gi = self.bot.get_cog("GetInvite")
+      dm = self.bot.get_cog("DataManager")
       lang_for_cooldown = _get_locale(interaction.locale)
 
       if caller_id in slash_command_cooldown:
@@ -528,12 +524,13 @@ class Profile(commands.Cog):
 
       viewing_own = (target_id is None or target_id == caller_id)
       effective_target_id = target_id if target_id else caller_id
+      effective_target_user = interaction.user if caller_id==target_id else user
 
-      caller_settings = await gd.get_data(caller_id, ['language', 'variation', 'discord_id', 'telegram_id', 'reg_data', 'badges'],'users', 'user_id', interaction.guild)
-      caller_privacy = await gd.get_data(caller_id, ['publicity'], 'user_privacy', 'user_id', interaction.guild)
-      language = caller_settings['language']
-      variation = caller_settings['variation']
-      caller_public = caller_privacy['publicity']
+      caller_settings = await dm.get_row("users", {"user_id": caller_id}, ['language', 'variation', 'discord_id', 'telegram_id', 'reg_data', 'badges'], guild=interaction.guild, user=interaction.user) or {}
+      caller_privacy = await dm.get_row("user_privacy", {"user_id": caller_id}, ['publicity'], guild=interaction.guild, user=interaction.user) or {}
+      language = caller_settings.get('language', 'en')
+      variation = caller_settings.get('variation', 'normal')
+      caller_public = caller_privacy.get('publicity', False)
 
       if not viewing_own:
         if not caller_public:
@@ -545,8 +542,8 @@ class Profile(commands.Cog):
               await tm.translate_message("error.your_profile_hidden",language,),ephemeral=True)
           return
 
-        target_privacy = await gd.get_data(effective_target_id, ['publicity'], 'user_privacy', 'user_id', interaction.guild)
-        if not target_privacy['publicity']:
+        target_privacy = await dm.get_row("user_privacy", {"user_id": effective_target_id}, ['publicity'], guild=interaction.guild, user=effective_target_user) or {}
+        if not target_privacy.get('publicity', False):
           try:
             await interaction.response.send_message(await tm.translate_message("profile.target_profile_hidden", language),ephemeral=True)
           except InteractionResponded:
@@ -562,62 +559,72 @@ class Profile(commands.Cog):
       invite = await gi.invite(interaction.guild)
 
       if not viewing_own:
-        tgt_settings = await gd.get_data(effective_target_id,['variation', 'discord_id', 'telegram_id', 'reg_data', 'badges'],'users', 'user_id', interaction.guild)
-        variation = tgt_settings['variation']
-        reg_data = tgt_settings['reg_data']
-        badges = tgt_settings['badges']
+        tgt_settings = await dm.get_row("users", {"user_id": effective_target_id}, ['variation', 'discord_id', 'telegram_id', 'reg_data', 'badges'], guild=interaction.guild, user=effective_target_user) or {}
+        variation = tgt_settings.get('variation', 'normal')
+        reg_data = tgt_settings.get('reg_data')
+        badges = tgt_settings.get('badges')
       else:
-        reg_data = caller_settings['reg_data']
-        badges = caller_settings['badges']
+        reg_data = caller_settings.get('reg_data')
+        badges = caller_settings.get('badges')
 
       if not (hasattr(self.bot, 'db_pool') and self.bot.db_pool):
         await loading_msg.edit('postgresql not loaded in profile')
         return
 
-      async with self.bot.db_pool.acquire() as conn:
-        row = await conn.fetchrow("SELECT bank_balance, balance, xp, x2workamount, x2buyamount, upgrade FROM user_data WHERE user_id = $1",effective_target_id)
-        xp = row['xp'] if row else 0
-        bank_balance = row['bank_balance'] if row else 0
-        balance = row['balance'] if row else 0
-        x2workamount = row['x2workamount'] if row else 0
-        x2buyamount = row['x2buyamount'] if row else 0
-        upgrade = row['upgrade'] if row else 0
+      row = await dm.get_row("user_data", {"user_id":effective_target_id}, ["bank_balance", "balance", "xp", "x2workamount", "x2buyamount", "upgrade"], guild=interaction.guild, user=effective_target_user) or {}
+      xp = row.get('xp', 0)
+      bank_balance = row.get('bank_balance', 0)
+      balance = row.get('balance', 0)
+      x2workamount = row.get('x2workamount', 0)
+      x2buyamount = row.get('x2buyamount', 0)
+      upgrade = row.get('upgrade', 0)
 
-        rank_row = await conn.fetchrow(
-          """
-          SELECT
+      async def fetch_rank():
+        async with self.bot.db_pool.acquire() as conn:
+          record = await conn.fetchrow("""SELECT
             (SELECT COUNT(*) FROM user_data WHERE xp > $1) + 1 AS rank,
             (SELECT COUNT(*) FROM user_data) AS total
-          """,
-          xp
-        )
-        global_rank  = rank_row['rank']  if rank_row else None
-        total_users  = rank_row['total'] if rank_row else None
+          """, xp)
+          return [dict(record)] if record else []
+    
+      rank_list = await dm.get_or_query("global_rank", {"xp":xp}, ttl_seconds=300, query_fn=fetch_rank) or []
+      rank_row = rank_list[0] if rank_list else {}
+      global_rank = rank_row.get('rank')
+      total_users = rank_row.get('total')
 
-        cd_rows = await conn.fetch("SELECT command, timestamp FROM cooldowns WHERE user_id = $1",effective_target_id)
+      async def fetch_cooldowns():
+        async with self.bot.db_pool.acquire() as conn:
+          records = await conn.fetch("SELECT command, timestamp FROM cooldowns WHERE user_id = $1", effective_target_id)
+          return [dict(r) for r in records]
+
+      cd_rows = await dm.get_or_query("cooldowns_rows", {"user_id":effective_target_id}, ttl_seconds=300, query_fn=fetch_cooldowns) or []
       worka = rob = insert_data = 0
       for r in cd_rows:
-        if r['command'] == 'work': worka = r['timestamp']
-        elif r['command'] == 'rob': rob = r['timestamp']
-        elif r['command'] == 'insert_data': insert_data = r['timestamp']
+        if r.get('command') == 'work': worka = r.get('timestamp')
+        elif r.get('command') == 'rob': rob = r.get('timestamp')
+        elif r.get('command') == 'insert_data': insert_data = r.get('timestamp')
 
       violation: dict = {}
       if interaction.guild:
-        async with self.bot.db_pool.acquire() as conn:
-          v_rows = await conn.fetch("SELECT type, reason, duration, timestamp, mod_id FROM violations WHERE user_id = $1 AND guild_id = $2", effective_target_id, interaction.guild.id)
+        async def fetch_violations():
+          async with self.bot.db_pool.acquire() as conn:
+            records = await conn.fetch("SELECT type, reason, duration, timestamp, mod_id FROM violations WHERE user_id = $1 AND guild_id = $2", effective_target_id, interaction.guild.id)
+            return [dict(r) for r in records]
+          
+        v_rows = await dm.get_or_query("violations_rows", {"user_id": effective_target_id, "guild_id": interaction.guild.id}, ttl_seconds=120, query_fn=fetch_violations) or []
         for r in v_rows:
-          vtype = r['type']
+          vtype = r.get('type')
           entry = {
-            "reason": r['reason'],
-            "mod": f"{self.bot.get_user(int(r['mod_id'])).name if self.bot.get_user(int(r['mod_id'])) else 'Not Found'}({r['mod_id']})",
-            "timestamp": datetime.fromtimestamp(r['timestamp']).strftime('%d.%m.%y %H:%M:%S'),
+            "reason": r.get('reason'),
+            "mod": f"{getattr(self.bot.get_user(int(r.get('mod_id'))), 'name', 'Not Found')}({r.get('mod_id')})",
+            "timestamp": datetime.fromtimestamp(r.get('timestamp')).strftime('%d.%m.%y %H:%M:%S'),
           }
           if vtype in ('ban', 'mute', 'unmute'):
-            entry['duration'] = timedelta(seconds=r['duration']) if r['duration'] else '∞'
+            entry['duration'] = timedelta(seconds=r.get('duration')) if r.get('duration') else '∞'
           violation.setdefault(vtype, []).append(entry)
 
       sbank_balance = await suffics(number=bank_balance, variation=variation)
-      sbalance = await suffics(number=balance,      variation=variation)
+      sbalance = await suffics(number=balance, variation=variation)
       stotal = await suffics(number=bank_balance + balance, variation=variation)
 
       headers = {
@@ -665,18 +672,40 @@ class Profile(commands.Cog):
         )
 
         if tipe in ('discord', 'server'):
-          async with self.bot.db_pool.acquire() as conn:
-            if tipe == 'discord':
-              messages = await conn.fetchval("SELECT COUNT(*) FROM messages WHERE user_id = $1", effective_target_id)
-              voice_row = await conn.fetchrow("SELECT COALESCE(SUM(time_spent), '0 seconds'::interval) AS t FROM voice WHERE user_id = $1",effective_target_id)
-            else:
-              messages = await conn.fetchval("SELECT COUNT(*) FROM messages WHERE user_id = $1 AND guild_id = $2",effective_target_id, interaction.guild.id if interaction.guild else 0)
-              voice_row = await conn.fetchrow("SELECT COALESCE(SUM(time_spent), '0 seconds'::interval) AS t FROM voice WHERE user_id = $1 AND guild_id = $2",effective_target_id, interaction.guild.id if interaction.guild else 0)
-          v: timedelta = voice_row['t']
+          async def fetch_messages_and_voice():
+            async with self.bot.db_pool.acquire() as conn:
+              if tipe == 'discord':
+                row = await conn.fetchrow("""
+                  SELECT
+                    (SELECT COUNT(*) FROM messages WHERE user_id = $1) AS messages,
+                    (SELECT COALESCE(SUM(time_spent), '0 seconds'::interval) FROM voice WHERE user_id = $1) AS voice_time
+                """, effective_target_id)
+              else:
+                row = await conn.fetchrow("""
+                  SELECT
+                    (SELECT COUNT(*) FROM messages WHERE user_id = $1 AND guild_id = $2) AS messages,
+                    (SELECT COALESCE(SUM(time_spent), '0 seconds'::interval) FROM voice WHERE user_id = $1 AND guild_id = $2) AS voice_time
+                """, effective_target_id, interaction.guild.id if interaction.guild else 0)
+            
+            msgs = row['messages'] if row else 0
+            v_time = row['voice_time'] if row else timedelta(0)
+            total_sec = int(v_time.total_seconds()) if isinstance(v_time, timedelta) else 0
+            return [{"messages": msgs, "voice_seconds": total_sec}]
+          
+          data_list = await dm.get_or_query("messages_and_voice", {"user_id": effective_target_id, "guild_id": interaction.guild.id if interaction.guild else 0, "tipe": tipe}, ttl_seconds=600, query_fn=fetch_messages_and_voice) or []
+          
+          stats = data_list[0] or {}
+          messages_count = stats.get('messages', 0)
+          total_seconds = stats.get('voice_seconds', 0)
+
+          days = total_seconds // 86400
+          hours = (total_seconds % 86400) // 3600
+          minutes = (total_seconds % 3600) // 60
+
           common.update(
-            reg_data=datetime.fromtimestamp(reg_data).strftime('%d.%m.%y'),
-            messages=messages,
-            voice=f"{v.days}d {v.seconds // 3600}h {(v.seconds % 3600) // 60}m",
+            reg_data=reg_data,
+            messages=messages_count,
+            voice=f"{days}d {hours}h {minutes}m",
           )
 
         elif tipe == 'economy':

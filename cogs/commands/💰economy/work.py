@@ -1,4 +1,4 @@
-﻿from os import getenv
+from os import getenv
 from aiohttp import ClientSession
 from nextcord import SlashOption, IntegrationType, InteractionContextType, slash_command, Interaction, Embed, Color, ButtonStyle
 from nextcord.ext import commands
@@ -67,6 +67,7 @@ class Work(commands.Cog):
       gd = self.bot.get_cog("GetData")
       gi = self.bot.get_cog("GetInvite")
       ud = self.bot.get_cog("UpdateData")
+      dm = self.bot.get_cog("DataManager")
       lang = _get_locale(interaction.locale)
 
       if user_id in slash_command_cooldown:
@@ -92,7 +93,7 @@ class Work(commands.Cog):
       sbank_balance = await suffics(number=bank_balance, variation=variation)
       sbalance = await suffics(number=balance, variation=variation)
 
-      if hasattr(self.bot, 'db_pool') and self.bot.db_pool:
+      async def fetch_cooldowns():
         async with self.bot.db_pool.acquire() as conn:
           wquery = "SELECT timestamp FROM cooldowns WHERE user_id = $1 AND command = $2"
           equery = "INSERT INTO cooldowns (user_id, command, timestamp) VALUES ($1, $2, $3) ON CONFLICT (user_id, command) DO UPDATE SET timestamp = EXCLUDED.timestamp"
@@ -100,19 +101,21 @@ class Work(commands.Cog):
           if worka is None:
             await conn.execute(equery, user_id, 'work', int(time()-60*40))
             worka = await conn.fetchval(wquery, user_id, 'work')
-      else:
-        return
+
+        return [{"timestamp": worka}]
+
+      worka_row = await dm.get_or_query("work_cds", {"user_id":user_id}, 600, fetch_cooldowns) or [{}]
+      worka = worka_row[0].get("timestamp", time())
 
       time_since_last_usage=time()-worka
       if time_since_last_usage<(60*39):
         await interaction.response.send_message(await tm.translate_message("economy.cooldown_remaining", language, variables={"time": f"<t:{round(worka + 60 * 39)}:R>"}), ephemeral=True)
         return
       else:
-        if hasattr(self.bot, 'db_pool') and self.bot.db_pool:
-          async with self.bot.db_pool.acquire() as conn:
-            await conn.execute(equery, user_id, 'work', int(time()))
-        else:
-          return
+        try:
+          await dm.set_fields("cooldowns", {"user_id": user_id, "command": "work"}, {"timestamp": int(time())}, 600, guild=interaction.guild, user=interaction.user)
+        except Exception:
+          await dm.insert_row("cooldowns", {"user_id": user_id, "command": "work"}, {"timestamp": int(time())}, 300)
 
       try:
         work_send_message = await interaction.response.send_message(await tm.translate_message('common.loading', language))

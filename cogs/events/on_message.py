@@ -430,6 +430,7 @@ class OnMessage(commands.Cog):
     gd = self.bot.get_cog("GetData")
     gi = self.bot.get_cog("GetInvite")
     ud = self.bot.get_cog("UpdateData")
+    dm = self.bot.get_cog("DataManager")
 
     if message.guild:
       guild_settings = await gd.get_data(message.guild.id,['banned'],'guilds','guild_id',message.guild)
@@ -492,21 +493,7 @@ class OnMessage(commands.Cog):
         content = message.content if user_privacy['save_message_data'] else None
         message_url = message.jump_url
         attachments = ([str(a.url) for a in message.attachments] if user_privacy['save_message_data'] else [])
-
-        if hasattr(self.bot, 'db_pool') and self.bot.db_pool:
-          async with self.bot.db_pool.acquire() as connection:
-            query = """
-            INSERT INTO messages (guild_id, channel_id, user_id, date_time, content, message_url, attachments)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            """
-            await connection.execute(query, guild_id, channel_id, user_id, date_time, content, message_url, dumps(attachments))
-
-            if user_id not in users:
-              ensure_guild_exists = self.bot.get_cog("EnsureGuildExists")
-              ensure_user_exists = self.bot.get_cog("EnsureUserExists")
-              await ensure_guild_exists.ensure_guild_exists(message.guild.id)
-              await ensure_user_exists.ensure_user_exists(user_id,message.author.name,language,message.guild) 
-              users.add(user_id)
+        await dm.insert_row("messages", {}, {"guild_id":guild_id,"channel_id":channel_id,"user_id":user_id,"date_time":date_time,"content":content,"message_url":message_url,"attachments":dumps(attachments)}, 600)
       
       user_data = await gd.get_data(user_id,['xp','bank_balance','balance','upgrade'],'user_data','user_id',message.guild)
       xp = user_data['xp']

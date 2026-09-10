@@ -41,6 +41,7 @@ if __name__=='__main__':
   )
 
   bot.db_pool = None
+  bot.redis = None
 
 bot_started_launch = datetime.now()
 if __name__ == "__main__":
@@ -70,7 +71,10 @@ if __name__ == "__main__":
 
   async def main():
     try:
+      
       bot.db_pool = await init_database()
+      bot.redis = Redis(host=getenv("REDIS_HOST"), port=int(getenv("REDIS_PORT")), decode_responses=True)
+
       await load_cogs()
 
       print(f"\033[38;5;82m🔹Все cog'и загружены в\033[0m \033[38;5;226m{datetime.now()}\033[0m \033[38;5;82m(общее время:\033[0m \033[38;5;226m{datetime.now() - bot_started_launch}\033[0m\033[38;5;82m)\033[0m")
@@ -82,6 +86,8 @@ if __name__ == "__main__":
       print(e)
 
     finally:
+      await bot.redis.aclose()
+
       tracker = bot.get_cog("ActivityTracker")
       if tracker:
         await tracker.flush_all_open_sessions()
