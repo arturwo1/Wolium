@@ -1,4 +1,4 @@
-﻿import nextcord
+import nextcord
 from nextcord import SlashOption, IntegrationType, InteractionContextType
 from nextcord.ext import commands
 from Utils.suffics import suffics
