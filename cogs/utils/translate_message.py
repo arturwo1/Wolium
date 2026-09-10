@@ -218,7 +218,7 @@ class TranslateMessage(commands.Cog):
       if not self.cache[key]:
         del self.cache[key]
 
-  async def _background_translate(self, text: str, lang: str, source_text: str | None, source_lang: str | None):
+  async def _background_translate(self, text: str, lang: str, source_text: str | None, source_lang: str | None, save: bool = True):
     translated = None
     try:
       translated = await to_thread(_gemini_translate_sync, source_text or text, source_lang or "auto", lang)
@@ -261,10 +261,13 @@ class TranslateMessage(commands.Cog):
         )
 
     if translated:
-      await write_locale_async('messages', lang, text, translated)
+      if save:
+        await write_locale_async('messages', lang, text, translated)
       self.cache.setdefault(text, {})[lang] = {"translation": translated, "timestamp": time()}
     else:
       self.cache.get(text, {}).pop(lang, None)
+    
+    return translated
 
   async def translate_message(self, text: str, message_language: str | None = None, message_language_for_now: str | None = None, save: bool = True, variables: dict | None = None):
     if not text: return "<None>"
@@ -282,8 +285,17 @@ class TranslateMessage(commands.Cog):
         source_text, _ = await find_base_text_async(text, 'messages')
         return format_text(source_text or text, variables)
 
+    if not save:
+      translation = await self._background_translate(text, lang, None, None, save)
+      self.cache.setdefault(text, {})[lang] = {
+        "translation": translation,
+        "timestamp": time()
+      }
+
+      return format_text(translation or text, variables)
+
     new_data = await read_locale_async('messages', lang)
-    if save and text in new_data:
+    if text in new_data:
       if new_data[text]:
         self.cache.setdefault(text, {})[lang] = {
           "translation": new_data[text],
@@ -292,8 +304,8 @@ class TranslateMessage(commands.Cog):
         return format_text(new_data[text], variables)
 
     source_text, source_lang = await find_base_text_async(text, 'messages')
-    
-    if not source_text and save:
+
+    if not source_text:
       print(f"[ОШИБКА] Ключ перевода '{text}' не найден ни в одном файле.")
       return format_text(text, variables)
 
@@ -305,10 +317,8 @@ class TranslateMessage(commands.Cog):
       return format_text(source_text, variables)
 
     fallback = source_text or text
-
-    if save:
-      self.cache.setdefault(text, {})[lang] = {"pending": True, "timestamp": time()}
-      self.bot.loop.create_task(self._background_translate(text, lang, source_text, source_lang))
+    self.cache.setdefault(text, {})[lang] = {"pending": True, "timestamp": time()}
+    self.bot.loop.create_task(self._background_translate(text, lang, source_text, source_lang))
 
     return format_text(fallback, variables)
 

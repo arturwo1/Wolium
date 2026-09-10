@@ -50,6 +50,8 @@ class OnMessage(commands.Cog):
 
           if message.guild and gd:
             guild_config = await gd.get_data(message.guild.id,['aibot', 'ai_message_ttl', 'ai_long_message_ttl', 'ai_message_delete', 'aibot_whitelist_channels', 'aibot_blacklist_channels'],'guild_settings','guild_id',message.guild)
+            user_settings = await gd.get_data(message.author.id,['auth_user_id'],'users','user_id',message.guild)
+
             guild_config['aibot_whitelist_channels'] = loads(guild_config['aibot_whitelist_channels'])
             guild_config['aibot_blacklist_channels'] = loads(guild_config['aibot_blacklist_channels'])
             str_channel_id = str(message.channel.id)
@@ -58,6 +60,14 @@ class OnMessage(commands.Cog):
             if (guild_config['aibot_whitelist_channels'] and str_channel_id not in guild_config['aibot_whitelist_channels']) or (guild_config['aibot_blacklist_channels'] and str_channel_id in guild_config['aibot_blacklist_channels']): return
 
           async with message.channel.typing():
+
+            if not user_settings['auth_user_id']:
+              try:
+                await message.reply(await tm.translate_message("gpttalk.no_auth", language, variables={"link": "https://wolium.netlify.app/login/"}), delete_after=15)
+                await message.delete(delay=15)
+                return
+              except Exception: return
+
             GPT = self.bot.get_cog("GPT").GPT
             edited, AI_message, status_msg = await GPT(message, language, invite)
             if AI_message not in [None, 'None', '']:
@@ -277,7 +287,7 @@ class OnMessage(commands.Cog):
     
     gd = self.bot.get_cog("GetData")
     tm = self.bot.get_cog("TranslateMessage")
-    update_data = self.bot.get_cog("UpdateData")
+    ud = self.bot.get_cog("UpdateData")
 
     guild_config = await gd.get_data(message.guild.id,['word_channel', 'number_channel', 'words', 'filter'],'guild_settings','guild_id',message.guild)
     word_channel: int = guild_config['word_channel']
@@ -370,7 +380,7 @@ class OnMessage(commands.Cog):
           return
 
       words.append(content)
-      await update_data.update_data(message.guild.id, {'words': dumps(words)}, 'guild_settings', 'guild_id', message.guild)
+      await ud.update_data(message.guild.id, {'words': dumps(words)}, 'guild_settings', 'guild_id', message.guild)
       await message.add_reaction('✅')
 
     if number_channel and message.channel.id == number_channel:
@@ -419,7 +429,7 @@ class OnMessage(commands.Cog):
     
     gd = self.bot.get_cog("GetData")
     gi = self.bot.get_cog("GetInvite")
-    update_data = self.bot.get_cog("UpdateData")
+    ud = self.bot.get_cog("UpdateData")
 
     if message.guild:
       guild_settings = await gd.get_data(message.guild.id,['banned'],'guilds','guild_id',message.guild)
@@ -511,7 +521,7 @@ class OnMessage(commands.Cog):
         'bank_balance': bank_balance+reward_per_message,
         'balance': balance+reward_per_message,
       }
-      await update_data.update_data(user_id, data, 'user_data', 'user_id', message.guild)
+      await ud.update_data(user_id, data, 'user_data', 'user_id', message.guild)
 
 def setup(bot:commands.Bot):
   bot.add_cog(OnMessage(bot))

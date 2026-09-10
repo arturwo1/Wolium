@@ -129,6 +129,8 @@ def _history_has_image(history: list) -> bool:
 _MAX_TOOL_ITERATIONS = 6
  
 _XML_TOOL_RE = compile(r'<:?\w[\w_]*\s[^>]*/>', DOTALL)
+_TOOL_CODE_BLOCK_RE = compile(r'<tool_code>.*?</tool_code>', DOTALL)
+_TEXT_RESPONSE_WRAPPER_RE = compile(r'<text_response>(.*?)</text_response>', DOTALL)
 
 _FILLER_PREFIXES = (
   "Certainly! ", "Certainly, ", "Of course! ", "Of course, ",
@@ -155,7 +157,12 @@ TOOL_STATUS_KEYS = {
 _STATUS_LABEL_MAX_LEN = 100
 
 def _sanitize_response(text: str) -> str:
-  text = _XML_TOOL_RE.sub('', text).strip()
+  text = _XML_TOOL_RE.sub('', text)
+  text = _TOOL_CODE_BLOCK_RE.sub('', text)
+  wrapper_match = _TEXT_RESPONSE_WRAPPER_RE.search(text)
+  if wrapper_match:
+    text = wrapper_match.group(1)
+  text = text.strip()
   for prefix in _FILLER_PREFIXES:
     if text.startswith(prefix):
       text = text[len(prefix):].lstrip()

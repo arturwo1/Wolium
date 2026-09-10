@@ -23,8 +23,8 @@ class EnsureUserExists(commands.Cog):
 						async with self.bot.db_pool.acquire() as conn:
 							async with conn.transaction():
 								await conn.execute(
-									"INSERT INTO users (user_id, username, reg_data, language, telegram_id, discord_id, badges) VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (user_id) DO NOTHING",
-									user_id, username if username!=None else name, time.time(), language if language else 'en', None, user_id, json.dumps(["discord"])
+									"INSERT INTO users (user_id, username, language, discord_id, badges) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (user_id) DO NOTHING",
+									user_id, username if username!=None else name, language if language else 'en', user_id, json.dumps(["discord"])
 								)
 
 								await conn.execute(
