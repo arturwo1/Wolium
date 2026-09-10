@@ -1,23 +1,21 @@
-from __future__ import annotations
 from json import loads, dumps
 from asyncio import Lock, Semaphore, Event, create_task, wait_for, TimeoutError, sleep, to_thread
 from time import time
 from decimal import Decimal
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from traceback import format_exception
 from nextcord.errors import Forbidden, NotFound
 from nextcord.ext import commands, tasks
+from nextcord.utils import snowflake_time
 from nextcord import Embed, Colour, CategoryChannel, Guild, VoiceChannel
 from Utils.calculate_LvL import calculate_LvL
-import asyncpg
 from asyncpg import ConnectionDoesNotExistError, InterfaceError, PostgresConnectionError
 from math import ceil
-from os import environ
 
 QUEUE_TABLE = "public.web_requests"
 NOTIFY_CHANNEL = "new_web_request"
 
-SAFETY_POLL_SECONDS = 3
+SAFETY_POLL_SECONDS = 6
 MAX_CONCURRENCY = 8
 BATCH_PER_TICK = 12
 
@@ -287,14 +285,12 @@ class WebRequestsWorker(commands.Cog):
     cid = None
 
     try:
-      if guild_id_raw not in (None, "", "0", 0):
-        gid = int(guild_id_raw)
+      gid = int(guild_id_raw)
     except:
       gid = None
 
     try:
-      if channel_id_raw not in (None, "", "0", 0):
-        cid = int(channel_id_raw)
+      cid = int(channel_id_raw)
     except:
       cid = None
 
@@ -314,7 +310,7 @@ class WebRequestsWorker(commands.Cog):
       if ch:
         ch_name = getattr(ch, "name", None)
 
-    channel_name = f"#{ch_name}" if ch_name else (f"channel {cid}" if cid else "channel")
+    channel_name = f"#{ch_name}" if ch_name else (f"channel {cid}" if cid else None)
     return (guild_name, channel_name)
 
   def _safe_int(self, v, default=None):
@@ -369,11 +365,10 @@ class WebRequestsWorker(commands.Cog):
       "limit": limit_n,
       "guild_id": guild_id,
       "channel_id": channel_id,
-      "guild_name": self._clean_text(payload.get("guild_name")),
-      "channel_name": self._clean_text(payload.get("channel_name")),
       "role_id": payload.get("role_id", None),
       "min_duration_seconds": min_sec,
-      "max_duration_seconds": max_sec
+      "max_duration_seconds": max_sec,
+      "only_jumps": payload.get("only_jumps", False),
     }
 
   async def resolve_user(self, user_id):
@@ -533,6 +528,10 @@ class WebRequestsWorker(commands.Cog):
     if kind not in BOT_KINDS:
       return None, f"Kind is handled by Netlify Functions, not bot: {kind}"
 
+    created_at = snowflake_time(discord_id)
+
+    if created_at+timedelta(days=30)>datetime.now(timezone.utc): return None, "You are too new to use me."
+
     gd = self.bot.get_cog("GetData")
     ud = self.bot.get_cog("UpdateData")
     tm = self.bot.get_cog("TranslateMessage")
@@ -554,8 +553,8 @@ class WebRequestsWorker(commands.Cog):
 
       await ud.update_data(discord_id, {"auth_user_id": new_auth_user_id}, "users", "user_id", None)
 
-    elif current_auth_user_id != new_auth_user_id:
-      return None, "You already logged in another account."
+    elif str(current_auth_user_id) != str(new_auth_user_id):
+      return None, f"You have two active sessions at the same time: '{current_auth_user_id}' and '{new_auth_user_id}'."
 
     if kind == "user_profile_stats":
       req = """
@@ -808,26 +807,97 @@ class WebRequestsWorker(commands.Cog):
       p = self._voice_series_params(payload)
 
       rows = await conn.fetch("""
+        with raw_voice as (
+          select
+            id::bigint as id,
+            guild_id,
+            before_channel_id,
+            after_channel_id,
+            (extract(epoch from enter_time) * 1000)::bigint as sess_start_ms,
+            (extract(epoch from coalesce(leave_time, CURRENT_TIMESTAMP)) * 1000)::bigint as sess_end_ms,
+            greatest(
+              0,
+              extract(epoch from (coalesce(leave_time, CURRENT_TIMESTAMP) - enter_time))
+            )::bigint as seconds,
+            (before_channel_id is not null
+              and after_channel_id is not null
+              and before_channel_id is distinct from after_channel_id) as is_jump
+          from voice
+          where user_id = $1::bigint
+            and coalesce(leave_time, CURRENT_TIMESTAMP) >= to_timestamp($2::bigint / 1000.0)
+            and enter_time <= to_timestamp($3::bigint / 1000.0)
+            and ($4::bigint is null or guild_id = $4::bigint)
+            and ($5::bigint is null or before_channel_id = $5::bigint)
+        ),
+        filtered as (
+          select *
+          from raw_voice
+          where ($6::bigint is null or seconds >= $6::bigint)
+            and ($7::bigint is null or seconds <= $7::bigint)
+            and ($9::boolean is null or not $9::boolean or is_jump = true)
+        ),
+        bucketed as (
+          select
+            ((f.sess_start_ms / $8::bigint) * $8::bigint) as bucket_start,
+            f.*
+          from filtered f
+        ),
+        buck as (
+          select
+            bucket_start,
+            bucket_start + $8::bigint as bucket_end,
+            count(*)::bigint as total_count,
+            sum(
+              greatest(
+                0,
+                least(sess_end_ms, bucket_start + $8::bigint)
+                - greatest(sess_start_ms, bucket_start)
+              )
+            ) / 1000 as total_duration,
+            count(*) filter (where is_jump)::bigint as jump_count,
+            count(distinct before_channel_id)::bigint as distinct_channels,
+            min(sess_start_ms) as min_ts
+          from bucketed
+          group by 1
+        ),
+        sample as (
+          select distinct on (bucket_start)
+            bucket_start,
+            id as sample_id,
+            guild_id as sample_guild_id,
+            before_channel_id as sample_before_channel_id,
+            after_channel_id as sample_after_channel_id,
+            sess_start_ms as sample_start_ms,
+            sess_end_ms as sample_end_ms,
+            seconds as sample_seconds,
+            is_jump as sample_is_jump
+          from bucketed
+          order by bucket_start, seconds desc
+        )
         select
-          (extract(epoch from enter_time) * 1000)::bigint as ts_ms,
-          greatest(0, extract(epoch from (leave_time - enter_time)))::bigint as seconds,
-          guild_id,
-          after_channel_id as channel_id
-        from voice
-        where user_id = $1::bigint
-          and enter_time >= to_timestamp($2::bigint / 1000.0)
-          and enter_time <= to_timestamp($3::bigint / 1000.0)
-          and ($4::bigint is null or guild_id = $4::bigint)
-          and ($5::bigint is null or after_channel_id = $5::bigint)
-          and (
-            $6::bigint is null
-            or greatest(0, extract(epoch from (leave_time - enter_time)))::bigint >= $6::bigint
-          )
-          and (
-            $7::bigint is null
-            or greatest(0, extract(epoch from (leave_time - enter_time)))::bigint <= $7::bigint
-          )
-        order by enter_time asc;
+          (
+            case
+              when b.total_count = 1 then b.min_ts
+              else b.bucket_start + ($8::bigint / 2)
+            end
+          )::bigint as ts,
+          b.bucket_start::bigint as bucket_start,
+          b.bucket_end::bigint as bucket_end,
+          b.total_count as y_count,
+          b.total_duration::bigint as y_duration,
+          b.jump_count as y_jumps,
+          b.distinct_channels as y_distinct_channels,
+          s.sample_id as id,
+          s.sample_guild_id as guild_id,
+          s.sample_before_channel_id as before_channel_id,
+          s.sample_after_channel_id as after_channel_id,
+          s.sample_start_ms as started_at_ms,
+          s.sample_end_ms as ended_at_ms,
+          s.sample_seconds as duration_seconds,
+          s.sample_is_jump as is_jump
+        from buck b
+        left join sample s using (bucket_start)
+        order by b.bucket_start asc;
       """,
         discord_id,
         p["from_ms"],
@@ -835,7 +905,9 @@ class WebRequestsWorker(commands.Cog):
         p["guild_id"],
         p["channel_id"],
         p["min_duration_seconds"],
-        p["max_duration_seconds"]
+        p["max_duration_seconds"],
+        p["bucket_ms"],
+        p["only_jumps"]
       )
 
       buckets = {}
@@ -843,36 +915,46 @@ class WebRequestsWorker(commands.Cog):
       for r in rows:
         d = dict(r)
 
-        guild_name, channel_name = self._resolve_guild_channel_names(
+        guild_name, before_channel_name = self._resolve_guild_channel_names(
           d.get("guild_id"),
-          d.get("channel_id")
+          d.get("before_channel_id")
+        )
+        _, after_channel_name = self._resolve_guild_channel_names(
+          d.get("guild_id"),
+          d.get("after_channel_id")
         )
 
-        if not self._contains_ci(guild_name, p["guild_name"]):
-          continue
-        if not self._contains_ci(channel_name, p["channel_name"]):
-          continue
+        before_channel_url = f"https://discord.com/channels/{d.get("guild_id")}/{d.get("before_channel_id")}" if d.get("guild_id") and d.get("before_channel_id") else None
+        after_channel_url = f"https://discord.com/channels/{d.get("guild_id")}/{d.get("after_channel_id")}" if d.get("guild_id") and d.get("after_channel_id") else None
 
-        ts_ms = int(d["ts_ms"])
-        seconds = int(d["seconds"])
-        bucket_start = (ts_ms // p["bucket_ms"]) * p["bucket_ms"]
+        bucket_start = int(d["bucket_start"])
 
-        item = buckets.get(bucket_start)
-        if not item:
-          buckets[bucket_start] = {
-            "ts": bucket_start + (p["bucket_ms"] // 2),
-            "y": seconds,
-            "bucket_start": bucket_start,
-            "bucket_end": bucket_start + p["bucket_ms"],
-            "meta": {
-              "guild_id": d.get("guild_id"),
-              "channel_id": d.get("channel_id"),
-              "guild_name": guild_name,
-              "channel_name": channel_name
-            }
+        buckets[bucket_start] = {
+          "ts": int(d["ts"]),
+          "y": int(d["y_duration"] or 0),
+          "count": int(d["y_count"] or 0),
+          "bucket_start": bucket_start,
+          "bucket_end": int(d["bucket_end"]),
+          "meta": {
+            "id": d.get("id"),
+            "duration_seconds": int(d["duration_seconds"] or 0),
+            "total_bucket_duration": int(d["y_duration"] or 0),
+            "total_bucket_count": int(d["y_count"] or 0),
+            "jumps_in_bucket": int(d["y_jumps"] or 0),
+            "distinct_channels_in_bucket": int(d["y_distinct_channels"] or 0),
+            "is_jump": bool(d.get("is_jump")),
+            "guild_id": d.get("guild_id"),
+            "guild_name": guild_name,
+            "before_channel_id": d.get("before_channel_id"),
+            "before_channel_name": before_channel_name,
+            "before_channel_url": before_channel_url,
+            "after_channel_id": d.get("after_channel_id"),
+            "after_channel_name": after_channel_name,
+            "after_channel_url": after_channel_url,
+            "started_at_ms": d.get("started_at_ms"),
+            "ended_at_ms": d.get("ended_at_ms"),
           }
-        else:
-          item["y"] += seconds
+        }
 
       return [buckets[k] for k in sorted(buckets.keys())[:p["limit"]]], None
 
@@ -1498,26 +1580,96 @@ class WebRequestsWorker(commands.Cog):
           return [], None
 
       rows = await conn.fetch("""
+        with raw_voice as (
+          select
+            id::bigint as id,
+            guild_id,
+            before_channel_id,
+            after_channel_id,
+            (extract(epoch from enter_time) * 1000)::bigint as sess_start_ms,
+            (extract(epoch from coalesce(leave_time, CURRENT_TIMESTAMP)) * 1000)::bigint as sess_end_ms,
+            greatest(
+              0,
+              extract(epoch from (coalesce(leave_time, CURRENT_TIMESTAMP) - enter_time))
+            )::bigint as seconds,
+            (before_channel_id is not null
+              and after_channel_id is not null
+              and before_channel_id is distinct from after_channel_id) as is_jump
+          from voice
+          where guild_id = $1::bigint
+            and coalesce(leave_time, CURRENT_TIMESTAMP) >= to_timestamp($2::bigint / 1000.0)
+            and enter_time <= to_timestamp($3::bigint / 1000.0)
+            and ($4::bigint is null or before_channel_id = $4::bigint)
+            and ($8::bigint[] is null or user_id = any($8::bigint[]))
+        ),
+        filtered as (
+          select * from raw_voice
+          where ($5::bigint is null or seconds >= $5::bigint)
+            and ($6::bigint is null or seconds <= $6::bigint)
+            and ($9::boolean is null or not $9::boolean or is_jump = true)
+        ),
+        bucketed as (
+          select
+            ((f.sess_start_ms / $7::bigint) * $7::bigint) as bucket_start,
+            f.*
+          from filtered f
+        ),
+        buck as (
+          select
+            bucket_start,
+            bucket_start + $7::bigint as bucket_end,
+            count(*)::bigint as total_count,
+            sum(
+              greatest(
+                0,
+                least(sess_end_ms, bucket_start + $7::bigint)
+                - greatest(sess_start_ms, bucket_start)
+              )
+            ) / 1000 as total_duration,
+            count(*) filter (where is_jump)::bigint as jump_count,
+            count(distinct before_channel_id)::bigint as distinct_channels,
+            min(sess_start_ms) as min_ts
+          from bucketed
+          group by 1
+        ),
+        sample as (
+          select distinct on (bucket_start)
+            bucket_start,
+            id as sample_id,
+            guild_id as sample_guild_id,
+            before_channel_id as sample_before_channel_id,
+            after_channel_id as sample_after_channel_id,
+            sess_start_ms as sample_start_ms,
+            sess_end_ms as sample_end_ms,
+            seconds as sample_seconds,
+            is_jump as sample_is_jump
+          from bucketed
+          order by bucket_start, seconds desc
+        )
         select
-          (extract(epoch from enter_time) * 1000)::bigint as ts_ms,
-          greatest(0, extract(epoch from (leave_time - enter_time)))::bigint as seconds,
-          guild_id,
-          after_channel_id as channel_id
-        from voice
-        where guild_id = $1::bigint
-          and enter_time >= to_timestamp($2::bigint / 1000.0)
-          and enter_time <= to_timestamp($3::bigint / 1000.0)
-          and ($4::bigint is null or after_channel_id = $4::bigint)
-          and (
-            $5::bigint is null
-            or greatest(0, extract(epoch from (leave_time - enter_time)))::bigint >= $5::bigint
-          )
-          and (
-            $6::bigint is null
-            or greatest(0, extract(epoch from (leave_time - enter_time)))::bigint <= $6::bigint
-          )
-          and ($7::bigint[] is null or user_id = any($7::bigint[]))
-        order by enter_time asc;
+          (
+            case
+              when b.total_count = 1 then b.min_ts
+              else b.bucket_start + ($7::bigint / 2)
+            end
+          )::bigint as ts,
+          b.bucket_start::bigint as bucket_start,
+          b.bucket_end::bigint as bucket_end,
+          b.total_count as y_count,
+          b.total_duration::bigint as y_duration,
+          b.jump_count as y_jumps,
+          b.distinct_channels as y_distinct_channels,
+          s.sample_id as id,
+          s.sample_guild_id as guild_id,
+          s.sample_before_channel_id as before_channel_id,
+          s.sample_after_channel_id as after_channel_id,
+          s.sample_start_ms as started_at_ms,
+          s.sample_end_ms as ended_at_ms,
+          s.sample_seconds as duration_seconds,
+          s.sample_is_jump as is_jump
+        from buck b
+        left join sample s using (bucket_start)
+        order by b.bucket_start asc;
       """,
         guild_id,
         p["from_ms"],
@@ -1525,7 +1677,9 @@ class WebRequestsWorker(commands.Cog):
         p["channel_id"],
         p["min_duration_seconds"],
         p["max_duration_seconds"],
-        members_id
+        p["bucket_ms"],
+        members_id,
+        p["only_jumps"]
       )
 
       buckets = {}
@@ -1533,36 +1687,46 @@ class WebRequestsWorker(commands.Cog):
       for r in rows:
         d = dict(r)
 
-        guild_name, channel_name = self._resolve_guild_channel_names(
+        guild_name, after_channel_name = self._resolve_guild_channel_names(
           d.get("guild_id"),
-          d.get("channel_id")
+          d.get("after_channel_id")
+        )
+        _, before_channel_name = self._resolve_guild_channel_names(
+          d.get("guild_id"),
+          d.get("before_channel_id")
         )
 
-        if not self._contains_ci(guild_name, p["guild_name"]):
-          continue
-        if not self._contains_ci(channel_name, p["channel_name"]):
-          continue
+        before_channel_url = f"https://discord.com/channels/{d.get("guild_id")}/{d.get("before_channel_id")}" if d.get("guild_id") and d.get("before_channel_id") else None
+        after_channel_url = f"https://discord.com/channels/{d.get("guild_id")}/{d.get("after_channel_id")}" if d.get("guild_id") and d.get("after_channel_id") else None
 
-        ts_ms = int(d["ts_ms"])
-        seconds = int(d["seconds"])
-        bucket_start = (ts_ms // p["bucket_ms"]) * p["bucket_ms"]
+        bucket_start = int(d["bucket_start"])
 
-        item = buckets.get(bucket_start)
-        if not item:
-          buckets[bucket_start] = {
-            "ts": bucket_start + (p["bucket_ms"] // 2),
-            "y": seconds,
-            "bucket_start": bucket_start,
-            "bucket_end": bucket_start + p["bucket_ms"],
-            "meta": {
-              "guild_id": d.get("guild_id"),
-              "channel_id": d.get("channel_id"),
-              "guild_name": guild_name,
-              "channel_name": channel_name
-            }
+        buckets[bucket_start] = {
+          "ts": int(d["ts"]),
+          "y": int(d["y_duration"] or 0),
+          "count": int(d["y_count"] or 0),
+          "bucket_start": bucket_start,
+          "bucket_end": int(d["bucket_end"]),
+          "meta": {
+            "id": d.get("id"),
+            "duration_seconds": int(d["duration_seconds"] or 0),
+            "total_bucket_duration": int(d["y_duration"] or 0),
+            "total_bucket_count": int(d["y_count"] or 0),
+            "jumps_in_bucket": int(d["y_jumps"] or 0),
+            "distinct_channels_in_bucket": int(d["y_distinct_channels"] or 0),
+            "is_jump": bool(d.get("is_jump")),
+            "guild_id": d.get("guild_id"),
+            "guild_name": guild_name,
+            "before_channel_id": d.get("before_channel_id"),
+            "before_channel_name": before_channel_name,
+            "before_channel_url": before_channel_url,
+            "after_channel_id": d.get("after_channel_id"),
+            "after_channel_name": after_channel_name,
+            "after_channel_url": after_channel_url,
+            "started_at_ms": d.get("started_at_ms"),
+            "ended_at_ms": d.get("ended_at_ms"),
           }
-        else:
-          item["y"] += seconds
+        }
 
       return [buckets[k] for k in sorted(buckets.keys())[:p["limit"]]], None
 
