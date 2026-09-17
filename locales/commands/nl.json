@@ -4,6 +4,8 @@
   "command.help": "Hulp",
   "command.settings": "Instellingen",
   "command.transfer": "Overdracht",
+  "commands.fun.bunker.description": "Start een nieuw Bunker-spel.",
+  "commands.fun.bunker.name": "bunker",
   "commands.link.description": "Maak een klikbare link.",
   "commands.link.name": "Link",
   "commands.link.options.ephemeral.description": "Alleen jij ziet het bericht of iedereen.",

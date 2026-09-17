@@ -4,6 +4,8 @@
   "command.help": "Auttaa",
   "command.settings": "Asetukset",
   "command.transfer": "Siirtää",
+  "commands.fun.bunker.description": "Aloita uusi Bunker-peli.",
+  "commands.fun.bunker.name": "bunker",
   "commands.link.description": "Luo napsautettava linkki.",
   "commands.link.name": "Link",
   "commands.link.options.ephemeral.description": "Vain sinä näet viestin tai kaikki.",

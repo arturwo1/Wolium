@@ -4,6 +4,8 @@
   "command.help": "돕다",
   "command.settings": "설정",
   "command.transfer": "옮기다",
+  "commands.fun.bunker.description": "새로운 벙커 게임을 시작합니다.",
+  "commands.fun.bunker.name": "bunker",
   "commands.link.description": "클릭 가능한 링크를 만듭니다.",
   "commands.link.name": "Link",
   "commands.link.options.ephemeral.description": "나만 메시지를 보거나 모두가 봅니다.",

@@ -4,6 +4,8 @@
   "command.help": "Довідка",
   "command.settings": "Налаштування",
   "command.transfer": "Трансфер",
+  "commands.fun.bunker.description": "Розпочати нову гру в Бункер.",
+  "commands.fun.bunker.name": "bunker",
   "commands.link.description": "Створіть клікабельне посилання.",
   "commands.link.name": "Link",
   "commands.link.options.ephemeral.description": "Тільки ви бачите повідомлення або всі.",

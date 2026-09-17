@@ -4,6 +4,8 @@
   "command.help": "Helfen",
   "command.settings": "Einstellungen",
   "command.transfer": "Überweisen",
+  "commands.fun.bunker.description": "Starte ein neues Bunker-Spiel.",
+  "commands.fun.bunker.name": "bunker",
   "commands.link.description": "Erstellen Sie einen klickbaren Link.",
   "commands.link.name": "Link",
   "commands.link.options.ephemeral.description": "Nur Sie sehen die Nachricht oder alle.",

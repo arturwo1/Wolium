@@ -4,6 +4,8 @@
   "command.help": "ヘルプ",
   "command.settings": "設定",
   "command.transfer": "移行",
+  "commands.fun.bunker.description": "新しいバンカーゲームを開始します。",
+  "commands.fun.bunker.name": "bunker",
   "commands.link.description": "クリック可能なリンクを作成します。",
   "commands.link.name": "Link",
   "commands.link.options.ephemeral.description": "あなたのみ、または全員がメッセージを見ます。",

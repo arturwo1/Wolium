@@ -4,6 +4,8 @@
   "command.help": "ช่วย",
   "command.settings": "การตั้งค่า",
   "command.transfer": "โอนย้าย",
+  "commands.fun.bunker.description": "เริ่มเกม Bunker ใหม่",
+  "commands.fun.bunker.name": "bunker",
   "commands.link.description": "สร้างลิงก์ที่คลิกได้",
   "commands.link.name": "Link",
   "commands.link.options.ephemeral.description": "เฉพาะคุณที่เห็นข้อความ หรือทุกคน",

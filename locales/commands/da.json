@@ -4,6 +4,8 @@
   "command.help": "Hjælp",
   "command.settings": "Indstillinger",
   "command.transfer": "Overførsel",
+  "commands.fun.bunker.description": "Start et nyt Bunker-spil.",
+  "commands.fun.bunker.name": "bunker",
   "commands.link.description": "Opret et klikbart link.",
   "commands.link.name": "Link",
   "commands.link.options.ephemeral.description": "Kun du ser beskeden eller alle.",

@@ -4,6 +4,8 @@
   "command.help": "Pomoc",
   "command.settings": "Nastavení",
   "command.transfer": "Převod",
+  "commands.fun.bunker.description": "Spustit novou hru Bunker.",
+  "commands.fun.bunker.name": "bunker",
   "commands.link.description": "Vytvořte klikací odkaz.",
   "commands.link.name": "Link",
   "commands.link.options.ephemeral.description": "Zprávu vidíte pouze vy, nebo všichni.",

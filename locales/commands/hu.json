@@ -4,6 +4,8 @@
   "command.help": "Segítség",
   "command.settings": "Beállítások elemre",
   "command.transfer": "Átruházás",
+  "commands.fun.bunker.description": "Új Bunker játék indítása.",
+  "commands.fun.bunker.name": "bunker",
   "commands.link.description": "Hozzon létre kattintható linket.",
   "commands.link.name": "Link",
   "commands.link.options.ephemeral.description": "Csak te látod az üzenetet, vagy mindenki.",

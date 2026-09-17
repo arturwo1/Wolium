@@ -4,6 +4,8 @@
   "command.help": "幫助",
   "command.settings": "設定",
   "command.transfer": "轉移",
+  "commands.fun.bunker.description": "開始新的 Bunker 遊戲。",
+  "commands.fun.bunker.name": "bunker",
   "commands.link.description": "創建一個可點擊的連結。",
   "commands.link.name": "Link",
   "commands.link.options.ephemeral.description": "僅您看到訊息或所有人。",

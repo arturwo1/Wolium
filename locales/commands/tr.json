@@ -4,6 +4,8 @@
   "command.help": "Yardım",
   "command.settings": "Ayarlar",
   "command.transfer": "Aktarım",
+  "commands.fun.bunker.description": "Yeni bir Bunker oyunu başlat.",
+  "commands.fun.bunker.name": "bunker",
   "commands.link.description": "Tıklanabilir bir bağlantı oluşturun.",
   "commands.link.name": "Link",
   "commands.link.options.ephemeral.description": "Mesajı yalnızca siz veya herkes görür.",

@@ -4,6 +4,8 @@
   "command.help": "Pomoć",
   "command.settings": "postavke",
   "command.transfer": "Prijenos",
+  "commands.fun.bunker.description": "Započni novu igru Bunker.",
+  "commands.fun.bunker.name": "bunker",
   "commands.link.description": "Stvorite klikabilnu poveznicu.",
   "commands.link.name": "Link",
   "commands.link.options.ephemeral.description": "Samo vi vidite poruku ili svi.",

@@ -4,6 +4,8 @@
   "command.help": "Pagalba",
   "command.settings": "Nustatymai",
   "command.transfer": "Perdavimas",
+  "commands.fun.bunker.description": "Pradėkite naują Bunker žaidimą.",
+  "commands.fun.bunker.name": "bunker",
   "commands.link.description": "Sukurkite spustelėjamą nuorodą.",
   "commands.link.name": "Link",
   "commands.link.options.ephemeral.description": "Tik jūs matote pranešimą arba visi.",

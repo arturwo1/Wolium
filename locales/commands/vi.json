@@ -4,6 +4,8 @@
   "command.help": "Giúp đỡ",
   "command.settings": "Cài đặt",
   "command.transfer": "Chuyển khoản",
+  "commands.fun.bunker.description": "Bắt đầu trò chơi Bunker mới.",
+  "commands.fun.bunker.name": "bunker",
   "commands.link.description": "Tạo một liên kết có thể nhấp.",
   "commands.link.name": "Link",
   "commands.link.options.ephemeral.description": "Chỉ bạn thấy tin nhắn hoặc mọi người.",

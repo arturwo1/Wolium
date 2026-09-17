@@ -4,6 +4,8 @@
   "command.help": "मदद",
   "command.settings": "सेटिंग्स",
   "command.transfer": "स्थानांतरण",
+  "commands.fun.bunker.description": "एक नया बंकर गेम शुरू करें।",
+  "commands.fun.bunker.name": "bunker",
   "commands.link.description": "एक क्लिक करने योग्य लिंक बनाएं।",
   "commands.link.name": "Link",
   "commands.link.options.ephemeral.description": "केवल आप संदेश देखते हैं या सभी।",

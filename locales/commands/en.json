@@ -3,6 +3,8 @@
   "command.graph": "graph",
   "command.help": "Help",
   "command.settings": "Settings",
+  "commands.fun.bunker.description": "Start a new Bunker game.",
+  "commands.fun.bunker.name": "bunker",
   "commands.link.description": "Link parameters.",
   "commands.link.name": "link",
   "commands.link.options.ephemeral.description": "Only you see the message or everyone.",

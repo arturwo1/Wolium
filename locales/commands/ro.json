@@ -4,6 +4,8 @@
   "command.help": "Ajutor",
   "command.settings": "Setări",
   "command.transfer": "Transfer",
+  "commands.fun.bunker.description": "Începe un joc nou de Bunker.",
+  "commands.fun.bunker.name": "bunker",
   "commands.link.description": "Creează un link pe care se poate face clic.",
   "commands.link.name": "Link",
   "commands.link.options.ephemeral.description": "Doar tu vezi mesajul sau toată lumea.",

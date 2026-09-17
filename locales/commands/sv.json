@@ -4,6 +4,8 @@
   "command.help": "Hjälp",
   "command.settings": "Inställningar",
   "command.transfer": "Överföra",
+  "commands.fun.bunker.description": "Starta ett nytt Bunker-spel.",
+  "commands.fun.bunker.name": "bunker",
   "commands.link.description": "Skapa en klickbar länk.",
   "commands.link.name": "Link",
   "commands.link.options.ephemeral.description": "Endast du ser meddelandet eller alla.",

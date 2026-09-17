@@ -4,6 +4,8 @@
   "command.help": "Βοήθεια",
   "command.settings": "Ρυθμίσεις",
   "command.transfer": "Μεταφορά",
+  "commands.fun.bunker.description": "Ξεκινήστε ένα νέο παιχνίδι Bunker.",
+  "commands.fun.bunker.name": "bunker",
   "commands.link.description": "Δημιουργήστε έναν σύνδεσμο που μπορεί να γίνει κλικ.",
   "commands.link.name": "Link",
   "commands.link.options.ephemeral.description": "Μόνο εσείς βλέπετε το μήνυμα ή όλοι.",

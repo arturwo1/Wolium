@@ -4,6 +4,8 @@
   "command.help": "Помощь",
   "command.settings": "Настройки",
   "command.transfer": "Передача",
+  "commands.fun.bunker.description": "Начать новую игру в Бункер.",
+  "commands.fun.bunker.name": "bunker",
   "commands.link.description": "Создайте кликабельную ссылку.",
   "commands.link.name": "Link",
   "commands.link.options.ephemeral.description": "Только вы видите сообщение или все.",

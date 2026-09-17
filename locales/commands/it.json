@@ -4,6 +4,8 @@
   "command.help": "Aiuto",
   "command.settings": "Impostazioni",
   "command.transfer": "Trasferire",
+  "commands.fun.bunker.description": "Inizia una nuova partita a Bunker.",
+  "commands.fun.bunker.name": "bunker",
   "commands.link.description": "Crea un link cliccabile.",
   "commands.link.name": "Link",
   "commands.link.options.ephemeral.description": "Solo tu vedi il messaggio o tutti.",
