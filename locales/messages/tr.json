@@ -1,0 +1,6 @@
+{
+  "command.translate.name": "Çeviri",
+  "command.translate.result": "Şu dile çevrildi",
+  "command.translate.title": "Şu dile metin çevirisi",
+  "gpttalk.no_auth": "Sen de kimsin? Yetkisiz isimsizlerle vaktimi harcayamam. *[Git durumunu düzelt]({link})* ya da beni rahatsız etme. 🙄"
+}
