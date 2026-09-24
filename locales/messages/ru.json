@@ -780,7 +780,7 @@
   "settings.privacy_desc": "Контролировать приватность пользователей",
   "settings.scientific_notation_selected": "",
   "settings.select_log_channel": "Выберите канал логов",
-  "settings.time_until_deletion": "",
+  "settings.time_until_deletion": "Время до удаления",
   "spam.user_sent_tables": "",
   "spring": "",
   "sstv.command.description": "",
