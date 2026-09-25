@@ -346,6 +346,7 @@
     "bunker.settings.discussion_duration.title": "Discussion time (sec)",
     "bunker.settings.game_duration.title": "Total game duration",
     "bunker.settings.max_players.title": "Max players",
+    "bunker.settings.modal_placeholder": "e.g. 60s, 5m, 1d",
     "bunker.settings.modal_placeholder_count": "e.g. 8",
     "bunker.settings.modal_placeholder_duration": "e.g. 60s, 5m, 1d",
     "bunker.settings.round_pause_duration.title": "Pause between rounds (sec)",
