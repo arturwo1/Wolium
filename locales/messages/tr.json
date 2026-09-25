@@ -1,4 +1,8 @@
 {
+  "bunker.messages.need_more_players_than_capacity": "",
+  "bunker.settings.game_duration.title": "",
+  "bunker.settings.modal_placeholder_count": "",
+  "bunker.settings.modal_placeholder_duration": "",
   "command.translate.name": "Çeviri",
   "command.translate.result": "Şu dile çevrildi",
   "command.translate.title": "Şu dile metin çevirisi",
