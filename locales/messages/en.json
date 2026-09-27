@@ -30,6 +30,7 @@
   "bunker.difficulty.nightmare.label": "Nightmare",
   "bunker.difficulty.normal.description": "Standard difficulty balance",
   "bunker.difficulty.normal.label": "Normal",
+  "bunker.game_channel.create_reason": "Creating the game channel for a Bunker session",
   "bunker.main.addbot_button": "Add bot",
   "bunker.main.bots_label": "Bots",
   "bunker.main.cancel_button": "Cancel",

@@ -1,8 +1,10 @@
 {
+  "bunker.game_channel.create_reason": "",
   "bunker.main.removebot_button": "",
   "bunker.main.title": "",
   "bunker.messages.already_has_active_game": "",
   "bunker.messages.guild_game_limit_reached": "",
+  "bunker.messages.invalid_setting_value": "",
   "bunker.messages.need_more_players_than_capacity": "",
   "bunker.messages.no_bots_to_remove": "",
   "bunker.messages.only_creator_removebot": "",
