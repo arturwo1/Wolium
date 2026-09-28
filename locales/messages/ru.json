@@ -67,6 +67,8 @@
   "bunker.messages.setting_error_range": "Значение вне допустимого диапазона",
   "bunker.messages.start_channel_error": "Не удалось создать игровой канал. Попробуй ещё раз или проверь права бота в категории.",
   "bunker.messages.threads_failed_warning": "Не удалось создать личный тред для",
+  "bunker.messages.threads_retry_exhausted": "⚠️ Не удалось создать личный тред после нескольких попыток для",
+  "bunker.messages.threads_retry_success": "✅ Личные треды успешно досозданы для всех участников.",
   "bunker.permission_error.body": "Боту не хватает прав",
   "bunker.permission_error.hint": "Выдайте эти права роли бота и попробуйте снова.",
   "bunker.permission_error.in_category": "в категории",

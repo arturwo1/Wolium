@@ -67,6 +67,8 @@
   "bunker.messages.setting_error_range": "Value is outside the allowed range",
   "bunker.messages.start_channel_error": "Could not create the game channel. Try again or check the bot's permissions in the category.",
   "bunker.messages.threads_failed_warning": "Could not create a private thread for",
+  "bunker.messages.threads_retry_exhausted": "⚠️ Could not create a private thread after several attempts for",
+  "bunker.messages.threads_retry_success": "✅ Private threads were successfully created for all remaining participants.",
   "bunker.permission_error.body": "The bot is missing permissions",
   "bunker.permission_error.hint": "Grant these permissions to the bot's role and try again.",
   "bunker.permission_error.in_category": "in category",

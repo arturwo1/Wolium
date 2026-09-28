@@ -14,6 +14,8 @@
   "bunker.messages.setting_error_range": "",
   "bunker.messages.start_channel_error": "",
   "bunker.messages.threads_failed_warning": "",
+  "bunker.messages.threads_retry_exhausted": "",
+  "bunker.messages.threads_retry_success": "",
   "bunker.rules.body": "",
   "bunker.rules.title": "",
   "bunker.settings.ai_story.off.description": "",
