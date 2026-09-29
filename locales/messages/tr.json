@@ -8,6 +8,7 @@
   "bunker.messages.guild_game_limit_reached": "",
   "bunker.messages.invalid_setting_value": "",
   "bunker.messages.need_more_players_than_capacity": "",
+  "bunker.messages.need_two_players": "",
   "bunker.messages.no_bots_to_remove": "",
   "bunker.messages.only_creator_removebot": "",
   "bunker.messages.setting_error_parse": "",
