@@ -52,7 +52,7 @@
   "bunker.messages.guild_game_limit_reached": "На сервере уже максимум одновременных игр в Бункер (5). Дождись завершения одной из них.",
   "bunker.messages.invalid_setting_value": "Недопустимое значение. Проверьте допустимый диапазон и попробуйте еще раз.",
   "bunker.messages.lobby_full": "Лобби уже заполнено.",
-  "bunker.messages.need_more_players_than_capacity": "Участников должно быть больше, чем вместимость бункера — иначе некого будет выгонять.",
+  "bunker.messages.need_more_players_than_capacity": "Участников должно быть как минимум на 2 больше, чем вместимость бункера — иначе будет либо некого выгонять, либо голосование пройдёт совсем без раскрытых карточек.",
   "bunker.messages.need_two_players": "Нужно минимум 2 участника.",
   "bunker.messages.no_bots_to_remove": "Ботов пока нет.",
   "bunker.messages.only_creator_addbot": "Добавлять ботов может только создатель игры.",

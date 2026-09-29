@@ -52,7 +52,7 @@
   "bunker.messages.guild_game_limit_reached": "This server already has the maximum number of concurrent Bunker games (5). Wait for one to finish.",
   "bunker.messages.invalid_setting_value": "Invalid value. Check the allowed range and try again.",
   "bunker.messages.lobby_full": "The lobby is already full.",
-  "bunker.messages.need_more_players_than_capacity": "The number of participants must be greater than the bunker capacity — otherwise there's no one to vote out.",
+  "bunker.messages.need_more_players_than_capacity": "There must be at least 2 more participants than the bunker capacity — otherwise there's either no one to vote out, or voting happens with no revealed cards at all.",
   "bunker.messages.need_two_players": "At least 2 participants are required.",
   "bunker.messages.no_bots_to_remove": "There are no bots to remove.",
   "bunker.messages.only_creator_addbot": "Only the host can add bots.",
