@@ -1,4 +1,7 @@
 {
+  "bunker.board.eliminated": "",
+  "bunker.board.nothing": "",
+  "bunker.board.title": "",
   "bunker.game.apocalypse_duration_label": "",
   "bunker.game.bunker_capacity_label": "",
   "bunker.game.bunker_description_label": "",
@@ -19,6 +22,8 @@
   "bunker.game_channel.name_prefix": "",
   "bunker.main.game_channel_label": "",
   "bunker.main.removebot_button": "",
+  "bunker.main.status_ended": "",
+  "bunker.main.status_finished": "",
   "bunker.main.status_in_progress": "",
   "bunker.main.title": "",
   "bunker.messages.already_has_active_game": "",
