@@ -431,6 +431,7 @@
     "bunker.result.vote.body": "Vote totals:\n{votes}",
     "bunker.result.vote.eliminated": "Excluded from the bunker: {player}",
     "bunker.result.vote.item": "{player}: **{votes}**",
+    "bunker.result.vote.item_named": "{player}: **{votes}** — {voters}",
     "bunker.result.vote.tie": "The vote was tied; a random choice excluded {player}.",
     "bunker.result.vote.title": "Voting results",
     "bunker.reveal.body": "Choose one trait card to reveal this round.",
