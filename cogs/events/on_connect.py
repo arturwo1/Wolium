@@ -2,9 +2,29 @@ from nextcord.ext import commands
 from datetime import datetime
 from asyncio import sleep
 
+from nextcord.http import Route
+
 class OnConnect(commands.Cog):
   def __init__(self, bot):
     self.bot: commands.Bot = bot
+
+  async def ensure_launch_command(self, app_id: int):
+    raw_commands = await self.bot.http.get_global_commands(app_id)
+    has_launch = any(cmd.get('name') == 'launch' and cmd.get('type') == 4 for cmd in raw_commands)
+
+    if not has_launch:
+      payload = {
+        "name": "launch",
+        "description": "Launch Wolium Activity",
+        "type": 4,
+        "handler": 2
+      }
+      try:
+        route = Route("POST", "/applications/{application_id}/commands", application_id=app_id)
+        await self.bot.http.request(route, json=payload)
+        print("🚀 Восстановлена команда /launch (Primary Entry Point)")
+      except Exception as e:
+        print(f"❌ Не удалось восстановить /launch: {e}")
 
   async def cleanup_duplicate_commands(self, guild_id: int = None):
     app_id = self.bot.application_id or (await self.bot.application_info()).id
@@ -21,6 +41,9 @@ class OnConnect(commands.Cog):
       name = cmd['name']
       cmd_type = cmd.get('type', 1)
       identifier = (name, cmd_type)
+
+      if name == 'launch':
+        continue
 
       if identifier in seen_commands:
         to_delete.append(cmd['id'])
@@ -40,11 +63,18 @@ class OnConnect(commands.Cog):
   
   @commands.Cog.listener()
   async def on_connect(self):
+    app_id = self.bot.application_id or (await self.bot.application_info()).id
+
     await self.cleanup_duplicate_commands()
+
     for guild in self.bot.guilds:
       await self.cleanup_duplicate_commands(guild.id)
+
     self.bot.add_all_application_commands()
     await self.bot.sync_application_commands()
+
+    await self.ensure_launch_command(app_id)
+
     print(f'🔗\033[38;5;51m{self.bot.user if self.bot.user else "Bot"}\033[0m \033[38;5;82mconnected to Discord at\033[0m \033[38;5;226m{datetime.now()}\033[0m')
 
 def setup(bot: commands.Bot):
