@@ -1,5 +1,6 @@
 from nextcord.ext import commands
 from nextcord.errors import ConnectionClosed
+from sys import exc_info
 
 class OnError(commands.Cog):
   def __init__(self, bot):
@@ -7,8 +8,7 @@ class OnError(commands.Cog):
   
   @commands.Cog.listener()
   async def on_error(self, event, *args, **kwargs):
-    import sys
-    exc_type, exc_value, _ = sys.exc_info()
+    exc_type, exc_value, _ = exc_info()
 
     if isinstance(exc_value, ConnectionClosed):
       if exc_value.code == 1000:

@@ -29,6 +29,8 @@ class OnCommandError(commands.Cog):
         await ctx.message.delete(delay=15)
       except nextcord.errors.HTTPException:
         pass
+    elif isinstance(error, commands.NotOwner):
+      pass
     else:
       raise error
 

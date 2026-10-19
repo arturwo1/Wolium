@@ -67,15 +67,7 @@ class Text(commands.Cog):
       if bank_balance<50 or balance<50:
         await interaction.followup.send(await tm.translate_message("fun.insufficient_balance", language), ephemeral=True)
         return
-      for ban_word in {"@here","@everyone"}:
-        if ban_word in text_content:
-          await interaction.followup.send(await tm.translate_message("fun.abuse_attempt_penalty", language), ephemeral=True)
-          data = {
-            'bank_balance': bank_balance-125,
-            'balance': balance-125,
-          }
-          await ud.update_data(user_id, data, 'user_data', 'user_id', interaction.guild)
-          return
+
       if not interaction.guild:
         await interaction.followup.send(await tm.translate_message("fun.guild_only", language), ephemeral=True)
         return

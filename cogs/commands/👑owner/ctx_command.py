@@ -16,7 +16,6 @@ class ctx_Command(commands.Cog):
   async def execute(self,ctx: commands.Context, *, command: str):
     try:
       if ctx.author.id != self.bot.owner_id:
-        await ctx.send(f"Ты не <@{self.bot.owner_id}>!", delete_after=15)
         return
 
       embeds = []

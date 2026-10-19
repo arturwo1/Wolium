@@ -41,7 +41,7 @@ class Translate(commands.Cog):
     )
     translate_embed.add_field(
       name=await tm.translate_message(f"command.translate.name",language),
-      value=await tm.translate_message(message.content,language,save=False),
+      value=(await tm.translate_message(message.content,language,save=False))[:1024],
       inline=True
     )
     translate_embed.set_footer(
