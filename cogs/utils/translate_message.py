@@ -1,4 +1,4 @@
-from asyncio import Lock, to_thread
+from asyncio import Lock, to_thread, sleep as a_sleep
 from threading import Lock as ThreadLock
 from nextcord import Colour
 from nextcord.ext import commands, tasks
@@ -6,17 +6,24 @@ from deep_translator import GoogleTranslator
 from traceback import format_exception
 from json import load, dump, loads
 from os import replace, path, makedirs, listdir
-from time import time, sleep
+from time import time
 from re import compile as re_compile
-from google import genai
-from google.genai import types
-from Utils.config import gemini_api_keys, system_instruction, gemini_models, g_temperature, g_top_p, g_top_k
+from langdetect import detect
+from langdetect.lang_detect_exception import LangDetectException
+from Utils.config import system_instruction, g_temperature, g_top_p, g_top_k
+from Utils.ai_client import AIClient, GenAIConfig
 
 json_lock = Lock()
 stats_lock = ThreadLock()
 gemini_idx = 0
 gemini_cooldown = 0
 gemini_usage_stats = {}
+ai = AIClient([GenAIConfig(models=None, strategy="default", priority=1)])
+schema = {
+  "type": "object",
+  "properties": {"translation": {"type": "string"}},
+  "required": ["translation"]
+}
 
 PLACEHOLDER_RE = re_compile(r'\{[^{}]*\}')
 
@@ -32,122 +39,35 @@ def protect_placeholders(text: str) -> tuple[str, dict]:
 
 def restore_placeholders(text: str, mapping: dict) -> str:
   for token, original in mapping.items():
-    text = text.replace(token, original)
-  return text
+    text = str(text).replace(token, original)
+  return str(text)
 
-def get_gemini_model():
-  global gemini_idx, gemini_cooldown, gemini_usage_stats
-  with stats_lock:
-    current_time = time()
-    if current_time < gemini_cooldown:
-      return None, None, None
-
-    if not gemini_usage_stats:
-      for key in gemini_api_keys:
-        gemini_usage_stats[key] = {
-          m: {"rpm": 0, "rpd": 0, "last_reset": current_time} 
-          for m in gemini_models
-        }
-
-    start_idx = gemini_idx
-    while True:
-      current_key = gemini_api_keys[gemini_idx]
-      key_stats = gemini_usage_stats[current_key]
-      
-      for model_name, limits in gemini_models.items():
-        stats = key_stats[model_name]
-        
-        if current_time - stats["last_reset"] >= 60:
-          stats["rpm"] = 0
-          stats["last_reset"] = current_time
-          
-        rpd_ok = limits["rpd"] == -1 or stats["rpd"] < limits["rpd"]
-        rpm_ok = limits["rpm"] == -1 or stats["rpm"] < limits["rpm"]
-        
-        if rpd_ok and rpm_ok:
-          stats["rpm"] += 1
-          stats["rpd"] += 1
-          
-          client = genai.Client(api_key=current_key)
-          config = types.GenerateContentConfig(
-            system_instruction=system_instruction,
-            response_mime_type="application/json",
-            temperature=g_temperature,
-            top_p=g_top_p,
-            top_k=g_top_k,
-            safety_settings=[
-              types.SafetySetting(category=types.HarmCategory.HARM_CATEGORY_HARASSMENT, threshold=types.HarmBlockThreshold.BLOCK_NONE),
-              types.SafetySetting(category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold=types.HarmBlockThreshold.BLOCK_NONE),
-              types.SafetySetting(category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold=types.HarmBlockThreshold.BLOCK_NONE),
-              types.SafetySetting(category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold=types.HarmBlockThreshold.BLOCK_NONE)
-            ]
-          )
-          return client, config, model_name
-      
-      gemini_idx += 1
-      if gemini_idx >= len(gemini_api_keys):
-        gemini_idx = 0
-      
-      if gemini_idx == start_idx:
-        gemini_cooldown = current_time + 60
-        print("[LOCALIZATION] All Gemini API keys exhausted. Cooldown 60 seconds.")
-        return None, None, None
-
-def switch_gemini_key():
-  global gemini_idx, gemini_cooldown
-  with stats_lock:
-    if time() < gemini_cooldown: 
-      return 
-
-    gemini_idx += 1
-    if gemini_idx >= len(gemini_api_keys):
-      gemini_idx = 0
-      gemini_cooldown = time() + 60
-      print("[LOCALIZATION] All Gemini API keys exhausted. Cooldown 60 seconds.")
-
-def parse_gemini_json(text: str) -> dict:
-  text = text.strip()
-  if text.startswith("```json"):
-    text = text[7:-3]
-  elif text.startswith("```"):
-    text = text[3:-3]
-  return loads(text.strip())
-
-def _gemini_translate_sync(source_text: str, source_lang: str, target_lang: str) -> str:
+async def gemini_translate(source_text: str, source_lang: str, target_lang: str) -> str:
   protected_text, mapping = protect_placeholders(source_text)
-  prompt = f'Translate "{protected_text}" from {source_lang} to {target_lang}. Do NOT translate or alter tokens like §0§, §1§ - keep them exactly as-is. Return ONLY a JSON object: {{"translation": "text"}}'
-  
-  max_attempts = len(gemini_api_keys) * len(gemini_models)
-  for _ in range(max_attempts):
-    client, config, selected_model = get_gemini_model()
-    if not client:
-      sleep(1)
-      continue
-    
+  prompt = f'Translate "{protected_text}" from {source_lang} to {target_lang}. Do NOT translate or alter tokens like §0§, §1§ - keep them exactly as-is.'
+  for _ in range(10):
     try:
-      response = client.models.generate_content(
-        model=selected_model,
-        contents=prompt,
-        config=config
+      result = await ai.complete(
+        [{"role": "system", "content": system_instruction}, {"role": "user", "content": prompt}],
+        temperature=g_temperature,
+        top_p=g_top_p,
+        top_k=g_top_k,
+        max_tokens=2048,
+        response_json=True,
+        response_schema=schema
       )
-      data = parse_gemini_json(response.text)
-      sleep(0.5)
-      return restore_placeholders(data["translation"], mapping)
-    except Exception as e:
-      err = str(e).lower()
-      if "429" in err or "quota" in err or "exhausted" in err or "504" in err:
-        switch_gemini_key()
-      else:
-        raise e
-  raise Exception("All Gemini keys and models failed")
+      return restore_placeholders(loads(result.content)["translation"], mapping)
+    except RuntimeError:
+      await a_sleep(5)
+  raise RuntimeError("translation failed")
 
 def format_text(text: str, variables: dict | None) -> str:
   if not variables:
-    return text
+    return str(text)
   try:
-    return text.format(**variables)
+    return str(text).format(**variables)
   except Exception:
-    return text
+    return str(text)
 
 async def read_locale_async(category: str, lang: str) -> dict:
   file_path = f'locales/{category}/{lang}.json'
@@ -197,11 +117,21 @@ async def find_base_text_async(key: str, category: str):
           return data[key], lang_code
   return None, None
 
+async def detect_language(text: str) -> str:
+  try:
+    return await to_thread(detect, text)
+  except LangDetectException:
+    return None
+
 class TranslateMessage(commands.Cog):
   def __init__(self, bot: commands.Bot):
     self.bot = bot
+
     self.cache = {}
     self.clear_cache.start()
+
+    self.translate_lock = Lock()
+    self.translate_last_request = 0.0
 
   def cog_unload(self):
     self.clear_cache.cancel()
@@ -221,14 +151,26 @@ class TranslateMessage(commands.Cog):
   async def _background_translate(self, text: str, lang: str, source_text: str | None, source_lang: str | None, save: bool = True):
     translated = None
     try:
-      translated = await to_thread(_gemini_translate_sync, source_text or text, source_lang or "auto", lang)
+      translated = await gemini_translate(source_text or text, source_lang or "auto", lang)
     except Exception:
       try:
         protected_text, mapping = protect_placeholders(source_text or text)
+        
+        async with self.translate_lock:
+          now = time()
+          wait = 0.25 - (now - self.translate_last_request)
+          if wait > 0:
+            await a_sleep(wait)
+          self.translate_last_request = time()
+
         translation = await to_thread(GoogleTranslator(source=source_lang or "auto", target=lang).translate, protected_text)
         if translation:
           translated = restore_placeholders(translation, mapping)
       except Exception as a:
+        a = str(a)
+        if "too many requests" in a:
+          return str(text)
+
         traceback_exception = ''.join(format_exception(type(a), a, a.__traceback__))[:4000]
         fields = [
           {
@@ -267,7 +209,7 @@ class TranslateMessage(commands.Cog):
     else:
       self.cache.get(text, {}).pop(lang, None)
     
-    return translated
+    return str(translated or text)
 
   async def translate_message(self, text: str, message_language: str | None = None, message_language_for_now: str | None = None, save: bool = True, variables: dict | None = None):
     if not text: return "<None>"
@@ -286,6 +228,10 @@ class TranslateMessage(commands.Cog):
         return format_text(source_text or text, variables)
 
     if not save:
+      source_lang = await detect_language(text)
+      if source_lang==lang:
+        return format_text(text, variables)
+
       translation = await self._background_translate(text, lang, None, None, save)
       self.cache.setdefault(text, {})[lang] = {
         "translation": translation,

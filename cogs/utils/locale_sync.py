@@ -83,8 +83,6 @@ class LocaleSync(commands.Cog):
       if not added and not removed and not changed:
         continue
 
-      affected = added | changed
-
       for lang_file in current_dir.glob("*.json"):
         if lang_file.stem == BASE_LANG or lang_file.name.startswith('.'):
           continue
@@ -100,9 +98,14 @@ class LocaleSync(commands.Cog):
             lang_data.pop(key)
             needs_save = True
 
-        for key in affected:
+        for key in added:
           if key not in lang_data:
             lang_data[key] = ""
+            needs_save = True
+
+        for key in changed:
+          if key in lang_data:
+            lang_data[key] = "" 
             needs_save = True
 
         if needs_save:
