@@ -1,10 +1,9 @@
-from nextcord import Guild, Member, Message, Embed, Color, Invite, TextChannel
+from nextcord import Message, Color, Invite
 from nextcord.ext import commands
-from datetime import datetime, timezone
 from time import time
 from traceback import format_exception
 from asyncio import sleep, create_task, wait, get_running_loop
-from re import search, DOTALL, compile
+from re import DOTALL, compile
 from json import loads, JSONDecodeError, dumps
 from Utils.config import tools, temperature, max_tokens, top_p, automod_history, rules_data, o_models, o_url, message_for_wolium
 from Utils.ai_client import AIClient, HuggingFaceConfig, OllamaConfig, GroqConfig
@@ -78,14 +77,14 @@ def _trim_history_sync(items: list, max_size: int = 22, max_tokens_budget: int =
       turn_starts.append(idx)
       idx += _turn_length(items, idx)
       turn_count += 1
- 
+
     total_tokens = sum(_estimate_tokens(m) for m in items)
     if turn_count <= max_size and total_tokens <= max_tokens_budget:
       break
- 
+
     if not turn_starts:
       break
- 
+
     latest_user_start = max(
       (start for start in turn_starts if items[start].get("role") == "user"),
       default=None,
@@ -103,15 +102,6 @@ async def _trim_history(items: list, max_size: int = 22):
   _trim_history_sync(items, max_size)
   return items
 
-async def _extract_automod_verdict(text: str):
-  await sleep(0)
-  match = search(r'(True|False)\s*`([^`]*)`', text, DOTALL)
-  if match:
-    flagged = match.group(1) == "True"
-    reason = match.group(2).strip() or None
-    return flagged, reason
-  return None, None
-
 _RETRYABLE = (
   'Connection aborted', 'Payment Required', 'Bad Gateway',
   'Gateway Timeout', 'overloaded', 'Model too busy', 'Internal Server Error',
@@ -127,7 +117,7 @@ def _history_has_image(history: list) -> bool:
   return False
 
 _MAX_TOOL_ITERATIONS = 6
- 
+
 _XML_TOOL_RE = compile(r'<:?\w[\w_]*\s[^>]*/>', DOTALL)
 _TOOL_CODE_BLOCK_RE = compile(r'<tool_code>.*?</tool_code>', DOTALL)
 _TEXT_RESPONSE_WRAPPER_RE = compile(r'<text_response>(.*?)</text_response>', DOTALL)
@@ -168,7 +158,7 @@ def _sanitize_response(text: str) -> str:
       text = text[len(prefix):].lstrip()
       break
   return text
- 
+
 _TOOL_RESULT_MAX_LEN = 1500
 
 def _make_tool_result(tool_name: str, result: str, is_error: bool = False) -> str:
@@ -225,6 +215,8 @@ class GPT(commands.Cog):
   def __init__(self, bot: commands.Bot):
     self.bot = bot
     self.history: dict[int, dict] = {}
+    self._automod_perm_warned: dict[int, float] = {}
+    self._automod_warn_cooldown = 3600
 
   @commands.Cog.listener()
   async def on_ready(self):
@@ -474,8 +466,7 @@ User: {display_name} (ID: {ctx['user_id']})
 
         result = await complete_task
 
-        print(f"[GPT DEBUG] provider={result.provider} model={result.model} "
-                  f"content={result.content!r} tool_calls={result.tool_calls}")
+        # print(f"[GPT DEBUG] provider={result.provider} model={result.model} content={result.content!r} tool_calls={result.tool_calls}")
 
         response_text = result.content
         tool_calls = result.tool_calls
@@ -561,65 +552,167 @@ User: {display_name} (ID: {ctx['user_id']})
             return None, await tm.translate_message(key, language), status_msg
 
       traceback_msg = "".join(format_exception(type(e), e, e.__traceback__))[:5000]
-      log = Embed(
+      se = self.bot.get_cog("SendEmbed")
+      fields = []
+      if request_had_image:
+        fields.append({'name': "Debug", 'value': "Request contained an image (vision path)", 'inline': False})
+      if message.guild:
+        fields.append({'name': "Server", 'value': f"{message.guild.id} | {message.guild.name}", 'inline': False})
+        fields.append({'name': "Channel", 'value': f"{message.channel.name} | {message.channel.id}", 'inline': False})
+      fields.append({'name': "Error", 'value': f"```py\n{traceback_msg[:800]}```", 'inline': False})
+      await se.send_embed(
         title=await tm.translate_message("gpt.ai_error_title", language),
         description=str(e)[:500],
         color=Color.red(),
-        timestamp=datetime.now(timezone.utc),
+        fields=fields,
+        footer_text="AI | GPT",
+        author_text="ERROR",
+        guild_id=807304463449849938,
+        channel_id=1159138280651104256,
       )
-      if request_had_image:
-        log.add_field(name="Debug", value="Request contained an image (vision path)", inline=False)
-      if message.guild:
-        log.add_field(name="Server",  value=f"{message.guild.id} | {message.guild.name}", inline=False)
-        log.add_field(name="Channel", value=f"{message.channel.name} | {message.channel.id}", inline=False)
-      log.add_field(name="Error", value=f"**```py\n{traceback_msg[:800]}```**", inline=False)
-      await self.bot.get_channel(1159138280651104256).send(embed=log)
       return None, await tm.translate_message("gpt.generation_error", language), status_msg
 
     return action_view, response_text, status_msg
-  
+
+  def _check_automod_permissions(self, message: Message, mod_log_channel_id: int) -> tuple[bool, list[str]]:
+    missing = []
+    guild = message.guild
+    me = guild.me if guild else None
+    if me is None:
+      return False, ["not_in_guild"]
+
+    chan_perms = message.channel.permissions_for(me)
+    if not chan_perms.manage_messages:
+      missing.append("manage_messages (channel)")
+    if not chan_perms.read_message_history:
+      missing.append("read_message_history (channel)")
+
+    mod_channel = self.bot.get_channel(mod_log_channel_id)
+    if mod_channel is None:
+      missing.append("mod_log_channel_not_found")
+    else:
+      mod_perms = mod_channel.permissions_for(me)
+      if not mod_perms.send_messages:
+        missing.append("send_messages (mod_log)")
+      if not mod_perms.embed_links:
+        missing.append("embed_links (mod_log)")
+
+    return (len(missing) == 0), missing
+
+  async def _warn_missing_perms_once(self, guild_id: int, missing: list[str], language: str):
+    now = time()
+    last = self._automod_perm_warned.get(guild_id, 0)
+    if now - last < self._automod_warn_cooldown:
+      return
+    self._automod_perm_warned[guild_id] = now
+
+    tm = self.bot.get_cog("TranslateMessage")
+    se = self.bot.get_cog("SendEmbed")
+    await se.send_embed(
+      title=await tm.translate_message("automod.missing_permissions_title", language),
+      description=", ".join(missing),
+      color=Color.red(),
+      fields=[{'name': "Guild", 'value': str(guild_id), 'inline': False}],
+      footer_text="AI | AutoMod",
+      author_text="ERROR",
+      guild_id=807304463449849938,
+      channel_id=1159138280651104256,
+    )
+
+  def _build_automod_system_message(self, rules: str, language: str) -> dict:
+    content = (
+      f"Server Rules:\n\n"
+      f"{rules or 'Prohibited: Insults, Spam, Profanity, Advertising, Flood, Disrespect to Staff, Threats, Discrimination and other violations.'}\n\n"
+      f"{rules_data}\n\n"
+      f"Server language: {language}\n"
+      f"Write the \"reason\" field in this language.\n"
+    )
+    return {"role": "system", "content": content}
+
+  def _parse_automod_verdict(self, response_text: str) -> tuple[bool, str | None, int]:
+    try:
+      verdict = loads(response_text)
+      flagged = bool(verdict.get("violation"))
+      reason = verdict.get("reason")
+      delete_previous = max(0, min(int(verdict.get("delete_previous") or 0), 10))
+      return flagged, reason, delete_previous
+    except (JSONDecodeError, AttributeError, TypeError, ValueError):
+      return False, None, 0
+
+  async def _delete_previous_messages(self, message: Message, count: int) -> list[Message]:
+    if count <= 0:
+      return []
+
+    found = []
+    try:
+      async for prev in message.channel.history(limit=100, before=message):
+        if prev.author.id == message.author.id:
+          found.append(prev)
+          if len(found) >= count:
+            break
+    except Exception:
+      return []
+
+    for prev in found:
+      try:
+        await prev.delete()
+      except Exception:
+        pass
+
+    return found
+
+  def _format_deleted_listing(self, deleted_previous: list[Message]) -> str:
+    listing = "\n".join(
+      f"{i + 1}. {(m.content or '-')[:80]}"
+      for i, m in enumerate(reversed(deleted_previous))
+    )
+    return listing[:1000]
+
   async def automod(self, message: Message, language: str, invite: Invite, guild_config: dict, retries: int = 0):
     tm = self.bot.get_cog("TranslateMessage")
     channel_id = guild_config['mod_log_channel']
     rules: str = guild_config.get('rules', '')
     guild_id = message.guild.id
+    history_key = str(message.channel.id)
+
+    ok, missing = self._check_automod_permissions(message, channel_id)
+    if not ok:
+      if retries == 0:
+        await self._warn_missing_perms_once(guild_id, missing, language)
+      return
 
     ai = _make_ai_client()
 
     try:
-      if str(guild_id) not in automod_history:
-        rules_header = await tm.translate_message('gpt.rules_header', language)
-        automod_history[str(guild_id)] = [{
-          "role": "system",
-          "content": f"{rules_header}\n\n{rules or 'Prohibited: Insults, Spam, Profanity, Advertising, Flood, Disrespect to Staff, Threats, Discrimination and other violations.'}\n\n{rules_data}"
-        }]
+      if history_key not in automod_history:
+        automod_history[history_key] = [self._build_automod_system_message(rules, language)]
 
-      source_block = (
-        f'"Source": {{"Channel": "{message.channel.name}"}}'
-        if message.guild else '"Source": "DM"'
-      )
-      user_message_content = f'''{{
-        "User": {{"Name": "{message.author.name}", "Display Name": "{message.author.display_name}"}},
-        "Message": {{"Content": "{message.content}"}},
-        {source_block},
-        "Additional": {{"Time": "{message.created_at} UTC+0", "User_Language": "{language}"}}
-      }}'''
+      history = automod_history[history_key]
+      history[0] = self._build_automod_system_message(rules, language)
 
-      automod_history[str(guild_id)].append({"role": "user", "content": user_message_content})
+      history.append({
+        "role": "user",
+        "content": dumps({
+          "author_id": message.author.id,
+          "author": message.author.display_name,
+          "content": message.content,
+          "ts": int(message.created_at.timestamp()),
+        }, ensure_ascii=False)
+      })
 
       result = await ai.complete(
-        messages=automod_history[str(guild_id)],
-        tools=[],
+        messages=history,
         temperature=temperature,
-        max_tokens=100,
+        max_tokens=80,
         top_p=top_p,
+        response_format={"type": "json_object"},
       )
       response_text = result.content
 
-      automod_history[str(guild_id)].append({"role": "assistant", "content": response_text})
-      await _trim_history(automod_history[str(guild_id)])
+      history.append({"role": "assistant", "content": response_text})
+      await _trim_history(history)
 
-      flagged, reason = await _extract_automod_verdict(response_text)
+      flagged, reason, delete_previous = self._parse_automod_verdict(response_text)
       if not flagged:
         return
 
@@ -628,19 +721,27 @@ User: {display_name} (ID: {ctx['user_id']})
       except Exception:
         pass
 
+      deleted_previous = await self._delete_previous_messages(message, delete_previous)
+
       se = self.bot.get_cog("SendEmbed")
       fields = [
         {'name': await tm.translate_message('general.channel', language), 'value': f"{message.channel.id} | {message.channel.mention} | {message.channel.name}", 'inline': True},
         {'name': await tm.translate_message('report.user_message', language), 'value': str(message.content), 'inline': True},
       ]
       if reason:
-        fields.append({'name': await tm.translate_message('punishment.violation_reason', language), 'value': str(await tm.translate_message(reason, language, save=False))[:1000], 'inline': True})
+        fields.append({'name': await tm.translate_message('punishment.violation_reason', language), 'value': str(reason)[:1000], 'inline': True})
 
-      reason_translated = await tm.translate_message(reason, language, save=False) if reason else ''
+      if deleted_previous:
+        fields.append({
+          'name': await tm.translate_message('automod.also_deleted', language),
+          'value': self._format_deleted_listing(deleted_previous),
+          'inline': False,
+        })
+
       description = (
         f"## {await tm.translate_message('general.message', language)} **{message.author.mention}** {await tm.translate_message('automod.suspected_suspicious', language)}\n"
         f"### {await tm.translate_message('general.text_label', language)}\n-# {message.content}\n"
-        f"### {await tm.translate_message('automod.what_it_counts', language)}\n-# {reason_translated}"
+        f"### {await tm.translate_message('automod.what_it_counts', language)}\n-# {reason or ''}"
       )[:4000]
 
       embed_message, embed = await se.send_embed(
@@ -667,7 +768,7 @@ User: {display_name} (ID: {ctx['user_id']})
 
     except Exception as e:
       try:
-        automod_history[str(guild_id)].pop()
+        automod_history[history_key].pop()
       except Exception:
         pass
 
@@ -678,19 +779,23 @@ User: {display_name} (ID: {ctx['user_id']})
         return
 
       traceback_msg = "".join(format_exception(type(e), e, e.__traceback__))[:5000]
-      log = Embed(
+      se = self.bot.get_cog("SendEmbed")
+      fields = [
+        {'name': "Server", 'value': f"{message.guild.id} | {invite} | {message.guild.name}", 'inline': False},
+        {'name': "Channel", 'value': f"<#{message.channel.id}> (`{message.channel.id}` | `{message.channel.name}`)", 'inline': False},
+      ]
+      for i in range(0, len(traceback_msg), 1000):
+        fields.append({'name': "Error", 'value': f"```py\n{traceback_msg[i:i + 1000]}```", 'inline': False})
+      await se.send_embed(
         title=await tm.translate_message("gpt.ai_automod_error_title", language),
         description=f"{e}"[:500],
         color=Color.red(),
-        timestamp=datetime.now(timezone.utc),
+        fields=fields,
+        footer_text="AI | AutoMod",
+        author_text="ERROR",
+        guild_id=807304463449849938,
+        channel_id=1159138280651104256,
       )
-      log.set_author(name="ERROR")
-      log.add_field(name="Server",  value=f"{message.guild.id} | {invite} | {message.guild.name}" if message.guild else "DM", inline=False)
-      log.add_field(name="Channel", value=f"<#{message.channel.id}> (`{message.channel.id}` | `{getattr(message.channel, 'name', None) or f'[<@{message.author.id}>]'}`)", inline=False)
-      for i in range(0, len(traceback_msg), 1000):
-        log.add_field(name="Error", value=f"```py\n{traceback_msg[i:i + 1000]}```", inline=False)
-      log.set_footer(text="AI | AutoMod", icon_url="https://cdn.discordapp.com/attachments/886241481118068906/1145385898637271060/2088617.png")
-      await self.bot.get_guild(807304463449849938).get_channel(1159138280651104256).send(embed=log)
 
 def setup(bot: commands.Bot):
   bot.add_cog(GPT(bot))
