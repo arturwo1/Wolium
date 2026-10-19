@@ -51,5 +51,7 @@ def parse_time(value):
     factor = timeUNITS.get(unit.lower())
     if factor:
       sec += n * factor
+    else:
+      sec += n
 
   return sec

@@ -35,7 +35,7 @@ def deserialize_row(values: Dict[str, str], types: Dict[str, str]) -> Dict[str, 
   for k, v in values.items():
     tag = types.get(k)
     if tag == "b": res[k] = v == "True"
-    elif tag == "i": res[k] = int(float(v))
+    elif tag == "i": res[k] = int(v)
     elif tag == "f": res[k] = float(v)
     elif tag == "d": res[k] = Decimal(v)
     elif tag == "j": res[k] = loads(v)

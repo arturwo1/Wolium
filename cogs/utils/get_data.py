@@ -13,8 +13,8 @@ class GetData(commands.Cog):
       user = user or self.bot.get_user(user_id)
       get_user_data = "None"
       
-      get_user_data = await dm.get_row(table, {checker:user_id}, data, guild, user)
-      row_data = {got_data: get_user_data[got_data] for got_data in data} if get_user_data else {name: None for name in data}
+      get_user_data = await dm.get_row(table, {checker:user_id}, data, guild, user) or {}
+      row_data = {got_data: get_user_data.get(got_data, None) for got_data in data} if get_user_data else {name: None for name in data}
       return row_data
     except Exception as e:
       traceback_msg = ((''.join(format_exception(type(e), e, e.__traceback__)))[:5000])

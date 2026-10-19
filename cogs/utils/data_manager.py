@@ -24,7 +24,7 @@ class DataManager(commands.Cog):
       return None
 
     resolved_keys = await self._keys_resolver(keys, guild, user)
-    await self.bot.get_cog("EnsureAllTablesExists").ensure_all_tables_exists(keys, resolved_keys)
+    _ = await self.bot.get_cog("EnsureAllTablesExists").ensure_all_tables_exists(keys, resolved_keys)
 
     cached_data = await self.bot.redis.hgetall(key)
     cache_dict = None
