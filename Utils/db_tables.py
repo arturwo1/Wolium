@@ -32,7 +32,10 @@ tables = {
   },
   "guild_settings_privacy": {
     "guild_id": resolvers["guild_id"]
-  }
+  },
+  "guild_settings_bunker": {
+    "guild_id": resolvers["guild_id"]
+  },
 }
 
 table_pk = {
@@ -43,5 +46,6 @@ table_pk = {
   "guild_users": ("user_id", "guild_id"),
   "guilds": ("guild_id",),
   "guild_settings": ("guild_id",),
-  "guild_settings_privacy": ("guild_id",)
+  "guild_settings_privacy": ("guild_id",),
+  "guild_settings_bunker": ("guild_id",),
 }

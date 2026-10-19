@@ -5,6 +5,8 @@ from json import loads
 from time import time
 from uuid import uuid4
 from datetime import datetime
+from graphlib import TopologicalSorter, CycleError
+from asyncpg import ForeignKeyViolationError
 from Utils.redis_keys import build_key, parse_key, serialize_row, deserialize_row
 
 logger = getLogger(__name__)
@@ -14,6 +16,7 @@ FLUSH_KEYS_PREFIX = "flush_keys:"
 SYNC_QUEUE_KEY = "sys:sync_queue"
 FLUSHING_SUFFIX = ":flushing"
 SCAN_PREFIXES = ("insert:", "delta:", "override:", "delete:")
+SCHEMA_RELOAD_COOLDOWN = 60
 
 class RedisCacheManager(commands.Cog):
   def __init__(self, bot: commands.Bot):
@@ -22,6 +25,25 @@ class RedisCacheManager(commands.Cog):
 
     self._last_sync_time = time()
     self._sync_counter = 0
+
+    self._table_order: dict[str, int] = {}
+    self._order_loaded_at = 0.0
+
+  @staticmethod
+  def _normalize_db_value(value):
+    if not isinstance(value, str):
+      return value
+
+    if value.startswith("\\x"):
+      try:
+        return bytes.fromhex(value[2:])
+      except ValueError:
+        pass
+
+    try:
+      return datetime.fromisoformat(value)
+    except ValueError:
+      return value
 
   def cog_unload(self):
     self.global_sync_worker.cancel()
@@ -97,7 +119,7 @@ class RedisCacheManager(commands.Cog):
 
   async def _maybe_start_new_batch(self):
     now = int(time())
-    
+
     earliest = await self.bot.redis.zrange(SYNC_QUEUE_KEY, 0, 0, withscores=True)
     if not earliest or earliest[0][1] > now:
       return
@@ -137,6 +159,32 @@ class RedisCacheManager(commands.Cog):
       return
 
     await self._process_batch(flush_id)
+
+  async def _load_table_order(self, conn):
+    rows = await conn.fetch("""
+      SELECT conrelid::regclass::text AS child, confrelid::regclass::text AS parent
+      FROM pg_constraint
+      WHERE contype = 'f' AND connamespace = 'public'::regnamespace
+    """)
+
+    deps: dict[str, set[str]] = {}
+    for r in rows:
+      deps.setdefault(r["child"], set())
+      deps.setdefault(r["parent"], set())
+      if r["child"] != r["parent"]:
+        deps[r["child"]].add(r["parent"])
+
+    try:
+      order = list(TopologicalSorter(deps).static_order())
+    except CycleError:
+      logger.warning("FK cycle detected, table order may be incomplete")
+      order = list(deps)
+
+    self._table_order = {t: i for i, t in enumerate(order)}
+    self._order_loaded_at = time()
+
+  def _rank(self, table: str) -> int:
+    return self._table_order.get(table, 10**6)
 
   async def _process_batch(self, flush_id: str):
     now = time()
@@ -189,15 +237,28 @@ class RedisCacheManager(commands.Cog):
           _, keys_dict = parse_key(member)
           deletes.setdefault(table, []).append(keys_dict)
 
+    try:
+      await self._write_batch(flush_id, inserts, overrides, deltas, deletes)
+    except ForeignKeyViolationError:
+      if time() - self._order_loaded_at < SCHEMA_RELOAD_COOLDOWN:
+        raise
+      logger.warning("FK violation in flush %s, reloading table order", flush_id)
+      self._table_order = {}
+      await self._write_batch(flush_id, inserts, overrides, deltas, deletes)
+
+    await self._cleanup_batch(flush_id)
+
+  async def _write_batch(self, flush_id, inserts, overrides, deltas, deletes):
     async with self.bot.db_pool.acquire() as conn:
+      if not self._table_order:
+        await self._load_table_order(conn)
+
       async with conn.transaction():
         await self._flush_inserts(conn, inserts)
         await self._flush_overrides(conn, overrides)
         await self._flush_deltas(conn, deltas)
         await self._flush_deletes(conn, deletes)
         await conn.execute("INSERT INTO sync_batches (flush_id) VALUES ($1) ON CONFLICT DO NOTHING", flush_id)
-
-    await self._cleanup_batch(flush_id)
 
   async def _cleanup_batch(self, flush_id: str):
     flush_keys_set = f"{FLUSH_KEYS_PREFIX}{flush_id}"
@@ -214,7 +275,8 @@ class RedisCacheManager(commands.Cog):
       await conn.execute("DELETE FROM sync_batches WHERE flush_id = $1", flush_id)
 
   async def _flush_inserts(self, conn, inserts: dict[str, list[dict]]):
-    for table, rows in inserts.items():
+    for table in sorted(inserts, key=self._rank):
+      rows = inserts[table]
       if not rows:
         continue
 
@@ -227,16 +289,22 @@ class RedisCacheManager(commands.Cog):
       placeholders = ", ".join(f"${i + 1}" for i in range(len(cols)))
       query = f"INSERT INTO {table} ({', '.join(cols)}) VALUES ({placeholders}) ON CONFLICT DO NOTHING"
       values_list = [[row.get(col) for col in cols] for row in rows]
-      
+
       fixed_values = []
       for row in values_list:
         fixed_row = []
         for val in row:
-          if isinstance(val, str) and len(val) >= 19:
-            try:
-              val = datetime.fromisoformat(val)
-            except ValueError:
-              pass
+          if isinstance(val, str):
+            if val.startswith("\\x"):
+              try:
+                val = bytes.fromhex(val[2:])
+              except ValueError:
+                pass
+            elif len(val) >= 19:
+              try:
+                val = datetime.fromisoformat(val)
+              except ValueError:
+                pass
           fixed_row.append(val)
         fixed_values.append(fixed_row)
       values_list = fixed_values
@@ -248,11 +316,22 @@ class RedisCacheManager(commands.Cog):
       for keys_dict, fields in entries:
         if not fields:
           continue
+
         set_cols = list(fields.keys())
         set_clause = ", ".join(f"{col} = ${i + 1}" for i, col in enumerate(set_cols))
         where_clause, where_values = self._build_where(len(set_cols), keys_dict)
         query = f"UPDATE {table} SET {set_clause} WHERE {where_clause}"
-        await conn.execute(query, *[fields[col] for col in set_cols], *where_values)
+
+        values = [
+          self._normalize_db_value(fields[col])
+          for col in set_cols
+        ]
+        values.extend(
+          self._normalize_db_value(value)
+          for value in where_values
+        )
+
+        await conn.execute(query, *values)
 
   async def _flush_deltas(self, conn, deltas: dict[str, list[tuple[dict, dict]]]):
     for table, entries in deltas.items():
@@ -266,8 +345,8 @@ class RedisCacheManager(commands.Cog):
         await conn.execute(query, *[delta_fields[col] for col in delta_cols], *where_values)
 
   async def _flush_deletes(self, conn, deletes: dict[str, list[dict]]):
-    for table, entries in deletes.items():
-      for keys_dict in entries:
+    for table in sorted(deletes, key=self._rank, reverse=True):
+      for keys_dict in deletes[table]:
         where_clause, where_values = self._build_where(0, keys_dict)
         query = f"DELETE FROM {table} WHERE {where_clause}"
         await conn.execute(query, *where_values)

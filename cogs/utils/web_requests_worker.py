@@ -604,6 +604,14 @@ class WebRequestsWorker(commands.Cog):
             select count(*)::bigint as user_commands
             from user_commands
             where user_id = $1::bigint
+          ),
+
+          bunker as (
+            select count(*)::bigint as bunker_sessions
+            from bunker_game_players bgp
+            join bunker_games bg on bg.id = bgp.game_id
+            where bgp.user_id = $1::bigint
+              and bg.status in (1, 2, 3)
           )
         select
           (select messages from msg) as messages,
@@ -638,6 +646,8 @@ class WebRequestsWorker(commands.Cog):
           ) as activity_seconds,
 
           (select user_commands from cmd) as user_commands,
+
+          (select bunker_sessions from bunker) as bunker_sessions,
 
           coalesce((select bank_balance + balance from bal), 0) as total_balance,
           coalesce((select bank_balance from bal), 0) as bank_balance,
