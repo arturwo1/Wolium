@@ -419,6 +419,11 @@ class OnMessage(commands.Cog):
 
       await message.add_reaction('✅')
 
+  async def bunker_chat_hook(self, message):
+    bunker_utils = self.bot.get_cog("BunkerUtils")
+    if bunker_utils:
+      await bunker_utils.handle_chat_message(message)
+
   @commands.Cog.listener()
   async def on_message(self, message: Message):
     user_id = message.author.id
@@ -441,9 +446,6 @@ class OnMessage(commands.Cog):
       servers_with_no_acces_for_bot.append(message.guild.id)
       users_with_no_acces_for_bot.append(user_id)
       return
-
-    if not message.content:
-      return
     
     invite = await gi.invite(message.guild)
     
@@ -458,7 +460,7 @@ class OnMessage(commands.Cog):
         guild_config['moderation_whitelist_channels'] = loads(guild_config['moderation_whitelist_channels'])
         guild_config['moderation_blacklist_channels'] = loads(guild_config['moderation_blacklist_channels'])
         str_channel_id = str(message.channel.id)
-        if not (guild_config['moderation_whitelist_channels'] and str_channel_id not in guild_config['moderation_whitelist_channels']) or (guild_config['moderation_blacklist_channels'] and str_channel_id in guild_config['moderation_blacklist_channels']):
+        if not message.author.bot and not (guild_config['moderation_whitelist_channels'] and str_channel_id not in guild_config['moderation_whitelist_channels']) or (guild_config['moderation_blacklist_channels'] and str_channel_id in guild_config['moderation_blacklist_channels']):
           automod = self.bot.get_cog("GPT").automod
           await automod(message,mod_lang,invite,guild_config)
 
@@ -474,13 +476,19 @@ class OnMessage(commands.Cog):
           g = pending.setdefault(guild_id, {})
           bucket = g.setdefault(ch_key, {})
           bucket[str(message.id)] = created_ts
+
+    try:
+      await self.bunker_chat_hook(message)
+    except Exception:
+      pass
     
-    if search(f"[{гласные}]{3}",message.content) or search(f"[{согласные}]{3}",message.content) or not any(c in ascii_letters + " " for c in message.content) or match(r"^[\W\d_]+$", message.content.strip()) or len(message.content.strip()) < 3 or not message.guild:
+    if message.content and (search(f"[{гласные}]{3}",message.content) or search(f"[{согласные}]{3}",message.content) or not any(c in ascii_letters + " " for c in message.content) or match(r"^[\W\d_]+$", message.content.strip()) or len(message.content.strip()) < 3 or not message.guild):
       return
     if 'http' in message.content:
       return
 
-    create_task(self.GPTTalk(message, language, invite))
+    if not message.author.bot:
+      create_task(self.GPTTalk(message, language, invite))
 
     if message.author!=self.bot.user and message.guild:
       guild_id = message.guild.id

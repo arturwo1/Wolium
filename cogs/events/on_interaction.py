@@ -152,13 +152,19 @@ class OnComponentInteraction(commands.Cog):
   @commands.Cog.listener()
   async def on_interaction(self, interaction: nextcord.Interaction):
     try:
+
+      bunker_utils = self.bot.get_cog("BunkerUtils")
+      if bunker_utils and await bunker_utils.handle_interaction(interaction):
+        return
+
       if interaction.type == nextcord.InteractionType.component:
         custom_id = interaction.data.get("custom_id")
         if not custom_id:
           return
         if custom_id == "welcome_menu_select":
           await self._handle_welcome_select(interaction)
-
+          return
+        
     except Exception as e:
       traceback_msg = ''.join(format_exception(type(e), e, e.__traceback__))[:2000]
       error_log = nextcord.Embed(
